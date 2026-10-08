@@ -1,0 +1,19 @@
+{
+  "nodes": [
+    {"id":"vision","type":"file","file":"01 Vision/Product Vision.md","x":-600,"y":-300,"width":360,"height":220,"color":"6"},
+    {"id":"design","type":"file","file":"03 Design/Design Overview.md","x":-150,"y":-300,"width":360,"height":220,"color":"5"},
+    {"id":"skills","type":"file","file":"04 Skills/Skill Map.md","x":300,"y":-300,"width":420,"height":320,"color":"4"},
+    {"id":"p1","type":"text","text":"## Phase 1 — Design\nBrainstorm → spec → plan","x":-600,"y":100,"width":300,"height":120,"color":"5"},
+    {"id":"p2","type":"text","text":"## Phase 2 — v1 build\nSkill map, problem maker, engine, kid model, kid app + voice, tutor voice, parent side","x":-250,"y":100,"width":340,"height":160,"color":"4"},
+    {"id":"p3","type":"text","text":"## Phase 3 — Beta\n~10 families\nGoal: 3+ sessions/week","x":140,"y":100,"width":300,"height":140,"color":"3"},
+    {"id":"p4","type":"text","text":"## Later\nMore strands · mood · interests · dashboard · payments · native app · schools","x":490,"y":100,"width":320,"height":160,"color":"1"}
+  ],
+  "edges": [
+    {"id":"e1","fromNode":"p1","fromSide":"right","toNode":"p2","toSide":"left"},
+    {"id":"e2","fromNode":"p2","fromSide":"right","toNode":"p3","toSide":"left"},
+    {"id":"e3","fromNode":"p3","fromSide":"right","toNode":"p4","toSide":"left"},
+    {"id":"e4","fromNode":"vision","fromSide":"bottom","toNode":"p1","toSide":"top"},
+    {"id":"e5","fromNode":"design","fromSide":"bottom","toNode":"p2","toSide":"top"},
+    {"id":"e6","fromNode":"skills","fromSide":"bottom","toNode":"p2","toSide":"top"}
+  ]
+}

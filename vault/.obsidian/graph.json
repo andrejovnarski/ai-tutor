@@ -1,0 +1,13 @@
+{
+  "showTags": false,
+  "showAttachments": false,
+  "showOrphans": true,
+  "showArrow": true,
+  "colorGroups": [
+    {"query": "tag:#skill OR tag:#skill-map", "color": {"a": 1, "rgb": 5025616}},
+    {"query": "tag:#decision", "color": {"a": 1, "rgb": 15105570}},
+    {"query": "tag:#design", "color": {"a": 1, "rgb": 3447003}},
+    {"query": "tag:#vision", "color": {"a": 1, "rgb": 10181046}},
+    {"query": "tag:#roadmap OR tag:#home", "color": {"a": 1, "rgb": 15844367}}
+  ]
+}
