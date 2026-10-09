@@ -4,3 +4,8 @@ node_modules/
 vault/.obsidian/workspace*.json
 vault/.obsidian/cache
 .trash/
+test-results/
+playwright-report/
+!.env.example
+next-env.d.ts
+*.tsbuildinfo
