@@ -50,18 +50,20 @@ const TABLE: Record<TutorEvent, Record<AgeBand, Entry[]>> = {
       e("calm", "Almost there, {name}. Let's go back through it step by step."),
     ],
   },
+  // A hint follows a finished placement problem: a new problem is already on screen, so it is a calm move-on with
+  // no clue, no cue and nothing about the old problem.
   hint: {
     "5-7": [
-      e("calm", "Here's a clue, {name}: count slowly, bit by bit.", "count-along"),
-      e("curious", "Let's look at the picture. What can you count?", "show-style"),
-      e("calm", "Take a small step first. What do you notice?", "highlight-numbers"),
-      e("cheer", "You can do it, {name}! Try counting on your fingers."),
+      e("calm", "Good try, {name}. Let's look at a new puzzle."),
+      e("calm", "Thanks for trying! Here comes a new puzzle."),
+      e("calm", "Nice effort, {name}. On to the next puzzle!"),
+      e("calm", "You gave it a go! Let's see what's next."),
     ],
     "8-11": [
-      e("calm", "Here's a hint, {name}: break the problem into smaller steps.", "show-style"),
-      e("curious", "What are the key numbers here? Start with those.", "highlight-numbers"),
-      e("calm", "Try drawing it or picturing it. Does that help?"),
-      e("cheer", "You're closer than you think, {name}. Try working it step by step."),
+      e("calm", "Good try, {name}. Let's move on to a new problem."),
+      e("calm", "Thanks for giving that a go. Here's a fresh problem."),
+      e("calm", "Nice effort, {name}. Let's see what comes next."),
+      e("calm", "That's okay, {name}. On to the next problem."),
     ],
   },
   explain: {

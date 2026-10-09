@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cannedLine } from "./canned";
-import { checkLine } from "./guards";
+import { checkLine, numbersIn } from "./guards";
 import type { TurnPlan, TutorEvent } from "./types";
 
 const EVENTS: TutorEvent[] = ["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said"];
@@ -24,6 +24,18 @@ describe("cannedLine", () => {
         }
     });
   }
+  it("hint is a calm move-on after a finished placement problem: no clue, no cue, no number", () => {
+    for (const ageBand of ["5-7", "8-11"] as const)
+      for (let s = 0; s < 8; s++) {
+        const p = plan("hint", ageBand);
+        const l = cannedLine(p, s);
+        expect(l.say, l.say).not.toMatch(/\b(count|clue|hint|step|draw|finger|break|tens|ones|picture|numbers?)/i);
+        expect(l.show, l.say).toBeUndefined();
+        expect(l.tone).toBe("calm");
+        expect(numbersIn(l.say), l.say).toEqual([]);
+        expect(checkLine(l, p)).toEqual({ ok: true });
+      }
+  });
   it("fills the answer for correct and explain(revealed)", () => {
     const hasAnswer = (e: TutorEvent, o: Partial<TurnPlan>) =>
       [0, 1, 2, 3, 4, 5].some((s) => cannedLine(plan(e, "5-7", o), s).say.includes("7"));

@@ -30,9 +30,12 @@ it("maps feedback to events", () => {
   expect(w).toMatchObject({ event: "wrong", mistakeTag: "off-by-one-counting", style: "blocks", kidAnswer: 6 });
   const e = feedbackPlan(turn(), fb({ result: { kind: "wrong" }, reveal: true }), 2, "5-7", []);
   expect(e).toMatchObject({ event: "explain", revealed: true });
-  const h = feedbackPlan(turn("placement"), fb({ result: { kind: "wrong" } }), 2, "5-7", []);
+  const h = feedbackPlan(turn("placement"), fb({ result: { kind: "known-mistake", tag: "off-by-one-counting" }, style: "blocks" }), 2, "5-7", []);
   expect(h.event).toBe("hint");
   expect(h.revealed).toBeFalsy();
+  // A finished placement problem: the hint moves on, so there is no mistake or style to aim a clue at.
+  expect(h.mistakeTag).toBeUndefined();
+  expect(h.style).toBeUndefined();
 });
 
 it("trims kidSaid to 200 chars", () => {

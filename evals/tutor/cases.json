@@ -54,9 +54,7 @@
   ],
   "answer": 7,
   "recentLines": [],
-  "kidAnswer": 6,
-  "mistakeTag": "off-by-one-counting",
-  "style": "number-line"
+  "kidAnswer": 6
  },
  {
   "id": "explain-5-7-0",
@@ -146,9 +144,7 @@
   ],
   "answer": 5,
   "recentLines": [],
-  "kidAnswer": 13,
-  "mistakeTag": "added-instead",
-  "style": "number-line"
+  "kidAnswer": 13
  },
  {
   "id": "explain-5-7-1",
@@ -238,9 +234,7 @@
   ],
   "answer": 68,
   "recentLines": [],
-  "kidAnswer": 14,
-  "mistakeTag": "added-digits",
-  "style": "number-line"
+  "kidAnswer": 14
  },
  {
   "id": "explain-8-11-0",
@@ -330,9 +324,43 @@
   ],
   "answer": 35,
   "recentLines": [],
-  "kidAnswer": 69,
-  "mistakeTag": "added-instead",
-  "style": "number-line"
+  "kidAnswer": 69
+ },
+ {
+  "id": "hint-placement-move-on-5-7",
+  "event": "hint",
+  "ageBand": "5-7",
+  "skill": "Add within 10",
+  "problem": "What is 5 + 3?",
+  "problemNumbers": [
+   5,
+   3
+  ],
+  "answer": 8,
+  "recentLines": [
+   "Look at this, {name}! What do you think?"
+  ],
+  "kidAnswer": 9
+ },
+ {
+  "id": "hint-placement-move-on-8-11",
+  "event": "hint",
+  "ageBand": "8-11",
+  "skill": "Add within 100",
+  "problem": "What is 36 + 47?",
+  "problemNumbers": [
+   36,
+   47,
+   3,
+   6,
+   4,
+   7
+  ],
+  "answer": 83,
+  "recentLines": [
+   "Here's a new puzzle, {name}. Read it carefully, then give it a go."
+  ],
+  "kidAnswer": 73
  },
  {
   "id": "explain-8-11-1",
@@ -694,8 +722,7 @@
   ],
   "answer": 2,
   "recentLines": [],
-  "kidAnswer": 3,
-  "style": "story"
+  "kidAnswer": 3
  },
  {
   "id": "answer-in-problem-2",

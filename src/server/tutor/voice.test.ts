@@ -3,7 +3,7 @@ import { AnthropicError, APIConnectionError, InternalServerError } from "@anthro
 import type Anthropic from "@anthropic-ai/sdk";
 import { SKILLS } from "../../domain/curriculum";
 import type { Turn } from "../../domain/session/types";
-import { checkLine } from "./guards";
+import { checkLine, numbersIn } from "./guards";
 import { kidSaidPlan, presentPlan } from "./plan";
 import type { TurnPlan } from "./types";
 
@@ -218,6 +218,18 @@ describe("prompt", () => {
     expect(new Set(EXAMPLES.map((e) => e.plan.event))).toEqual(
       new Set(["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said"]));
     expect(new Set(EXAMPLES.map((e) => e.plan.ageBand))).toEqual(new Set(["5-7", "8-11"]));
+  });
+
+  it("hint is a move-on: its goal and worked examples give no clue about the finished problem", () => {
+    expect(SYSTEM_PROMPT).toMatch(/- hint: [^\n]*move on/i);
+    const hints = EXAMPLES.filter((e) => e.plan.event === "hint");
+    expect(hints.length).toBeGreaterThan(0);
+    for (const ex of hints) {
+      expect(ex.line.say).not.toMatch(/\b(count|clue|hint|step|draw|tens|ones)/i);
+      expect(numbersIn(ex.line.say), ex.line.say).toEqual([]);
+      expect(ex.plan.mistakeTag).toBeUndefined();
+      expect(ex.plan.style).toBeUndefined();
+    }
   });
 
   it("serialises the plan with sorted keys", () => {

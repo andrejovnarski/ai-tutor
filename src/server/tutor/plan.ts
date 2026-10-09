@@ -72,7 +72,9 @@ export function feedbackPlan(
   if (feedback.reveal) return { event: "explain", ...b, revealed: true, ...(mistakeTag && { mistakeTag }), ...(feedback.style && { style: feedback.style }) };
   if (feedback.then === "retry")
     return { event: "wrong", ...b, ...(mistakeTag && { mistakeTag }), ...(feedback.style && { style: feedback.style }) };
-  return { event: "hint", ...b, ...(mistakeTag && { mistakeTag }) };
+  // A finished placement problem (no retry, no reveal): the hint is a calm move-on to the problem already on screen,
+  // so it gets nothing to aim a clue at.
+  return { event: "hint", ...b };
 }
 
 export function kidSaidPlan(turn: ProblemTurn, kidSaid: string, ageBand: AgeBand, recentLines: string[]): TurnPlan {

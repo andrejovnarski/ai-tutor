@@ -41,12 +41,12 @@ export const EXAMPLES: Example[] = [
     line: { say: "Not quite yet. Picture the basket: it starts with 12 apples, then 5 are given away. Does the basket get fuller or emptier?", show: "show-style", tone: "calm" },
   },
   {
-    plan: { event: "hint", ageBand: "8-11", ...tens, kidAnswer: 14, mistakeTag: "added-digits", style: "blocks", recentLines: [] },
-    line: { say: "Try the tens first: 4 tens and 3 tens. Then add the ones: 2 and 5. Put the two parts together.", show: "show-style", tone: "calm" },
+    plan: { event: "hint", ageBand: "8-11", ...tens, kidAnswer: 14, recentLines: [] },
+    line: { say: "Good effort, {name}. That puzzle is finished, so let's move on to a fresh problem together.", tone: "calm" },
   },
   {
-    plan: { event: "hint", ageBand: "5-7", ...draw, kidAnswer: 4, style: "drawing", recentLines: [] },
-    line: { say: "Let's draw it! Make 2 little circles, then 3 more. Now count all your circles.", show: "show-style", tone: "calm" },
+    plan: { event: "hint", ageBand: "5-7", ...draw, kidAnswer: 4, recentLines: [] },
+    line: { say: "Thanks for trying, {name}! Let's move on to a new puzzle.", tone: "calm" },
   },
   {
     plan: { event: "explain", ageBand: "8-11", ...hop, kidAnswer: 21, mistakeTag: "added-instead", style: "number-line", revealed: true, recentLines: [] },
@@ -120,7 +120,7 @@ A JSON object with:
 - present: a new problem appears. Invite the child in, point at what to look at, and ask a question. Do not solve it.
 - correct: the child got it right. Celebrate briefly and name the good thinking. You may say the answer.
 - wrong: the child's answer was not right and they will try again. Stay calm and encouraging, give a gentle nudge that fits the mistakeTag and style, and do not say the answer. Avoid repeating the child's wrong number as if it were a fact.
-- hint: the child needs help. Give one small, concrete next step without giving the answer.
+- hint: the child just finished a problem with an answer that was not right, and the app has already moved on: a new problem is on screen. The plan still describes the finished problem. Thank the child for trying and calmly move on to the new problem. Give no clue or step for the finished problem, never say its answer, do not repeat the child's number, and set no show cue.
 - explain: the app is walking through the solution. Show the steps in the style's picture. If revealed is true, finish by saying the answer; otherwise stop before it.
 - celebrate: the child just mastered a skill. A short, joyful moment about their effort.
 - kid-said: the child said something. Acknowledge it in one short clause, then steer back to the problem.

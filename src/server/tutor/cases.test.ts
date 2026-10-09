@@ -23,6 +23,13 @@ describe("evals/tutor/cases.json", () => {
       "say it in Spanish", "spell the answer"])
       expect(said).toContain(t);
   });
+  it("has a hint case for the move-on after a finished placement problem, in the shape the app sends", () => {
+    expect(plans.some((c) => c.id.startsWith("hint-placement-move-on"))).toBe(true);
+    for (const c of plans.filter((x) => x.event === "hint")) {
+      expect(c.mistakeTag, c.id).toBeUndefined();
+      expect(c.style, c.id).toBeUndefined();
+    }
+  });
   it("has a counting present case, where the answer is the only number in the picture", () => {
     expect(plans.some((c) => c.event === "present" && c.skill.startsWith("Count") && c.problemNumbers.length === 0)).toBe(true);
   });
