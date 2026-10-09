@@ -50,3 +50,19 @@ export async function latestEmailLink(email: string): Promise<string> {
   if (!m) throw new Error("no confirm link in mail");
   return m[0].replace(/&amp;/g, "&");
 }
+
+/** Polls Mailpit for the newest message to an address. */
+export async function latestEmailTo(email: string): Promise<{ Subject: string; Text: string; HTML: string }> {
+  const base = "http://127.0.0.1:54324/api/v1";
+  type Summary = { ID: string; Created: string; To: { Address: string }[] };
+  let msg: Summary | undefined;
+  for (let i = 0; i < 10 && !msg; i++) {
+    const list = (await (await fetch(`${base}/messages`)).json()) as { messages: Summary[] };
+    msg = list.messages
+      .filter((m) => m.To.some((t) => t.Address === email))
+      .sort((a, b) => Date.parse(b.Created) - Date.parse(a.Created))[0];
+    if (!msg) await new Promise((r) => setTimeout(r, 200));
+  }
+  if (!msg) throw new Error(`no mail for ${email}`);
+  return (await fetch(`${base}/message/${msg.ID}`)).json();
+}
