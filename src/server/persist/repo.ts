@@ -10,7 +10,7 @@ export interface Repo {
   openSession(kidId: string): Promise<OpenSession | null>;
   /** null if the kid already has an open session (a lost create race). */
   createSession(kidId: string, state: Session): Promise<OpenSession | null>;
-  /** The new version, or -1 if `s.version` is stale (nothing is written then). */
+  /** The new version, or -1 if `s.version` is stale or the session already ended (nothing is written then). */
   saveStep(s: OpenSession, next: Session, ended: boolean, writes: Writes | null): Promise<number>;
 }
 
@@ -54,7 +54,7 @@ export class MemoryRepo implements Repo {
 
   async saveStep(s: OpenSession, next: Session, ended: boolean, writes: Writes | null): Promise<number> {
     const stored = this.sessions.find((x) => x.id === s.id);
-    if (!stored || stored.version !== s.version) return -1;
+    if (!stored || stored.ended || stored.version !== s.version) return -1;
     stored.version += 1;
     stored.state = copy(next);
     if (ended) stored.ended = true;

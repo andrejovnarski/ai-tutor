@@ -43,3 +43,14 @@ it("closes the session when ended, which frees the kid for a new one", async () 
   expect(await repo.openSession(kid.kidId)).toBeNull();
   await repo.createSession(kid.kidId, startSession(kid, 2, 0));
 });
+
+it("returns -1 and writes nothing when the session already ended", async () => {
+  const repo = setup();
+  const s = (await repo.createSession(kid.kidId, startSession(kid, 1, 0)))!;
+  expect(await repo.saveStep(s, s.state, true, null)).toBe(1);
+  const attempt = { kidId: kid.kidId, skillId: "x", templateId: "t", seed: 1, level: 1 as const, answer: 1, result: "correct" as const,
+    mistakeTag: null, style: null, timeMs: 1, at: 1, try: 1 as const, mode: "practice" as const };
+  const writes = { kidId: kid.kidId, attempts: [attempt], skillStates: [], styleStats: [], kidPlaced: true as const };
+  expect(await repo.saveStep({ ...s, version: 1 }, s.state, false, writes)).toBe(-1);
+  expect(repo.attempts).toHaveLength(0);
+});
