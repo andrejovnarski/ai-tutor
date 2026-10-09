@@ -98,7 +98,7 @@ export function nextTurn(s: Session, now: number, deps: Deps = DEFAULT_DEPS): { 
 
   const current = s.current && !isMastered(s.kid.skills[s.current]!) ? s.current : frontier(s.kid);
   const wrong = s.recent.filter((ok) => !ok).length;
-  const easy = easyReview(s.kid);
+  const easy = easyReview(s.kid, current);
   if (wrong >= LOW_ACCURACY_WRONG && easy && s.lastMode !== "review") return review(s, now, deps, easy, 1, current);
   const due = reviewTarget(s.kid, current);
   if ((s.count + 1) % REVIEW_EVERY === 0 && due) return review(s, now, deps, due, s.kid.skills[due]!.level, current);
@@ -116,7 +116,7 @@ function review(s: Session, now: number, deps: Deps, skillId: string, level: Lev
 function windDown(s: Session, now: number, deps: Deps) {
   const served = s.windDown ?? 0;
   if (served >= WIND_DOWN_MAX || (served > 0 && s.lastCorrect)) return end(s, now);
-  const skillId = easyReview(s.kid) ?? s.current ?? frontier(s.kid);
+  const skillId = easyReview(s.kid, s.current) ?? s.current ?? frontier(s.kid);
   if (!skillId) return end(s, now);
   return serve({ ...s, windDown: served + 1 }, now, deps, skillId, 1, "wind-down");
 }

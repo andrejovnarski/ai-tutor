@@ -71,3 +71,10 @@ it("isStruggling", () => {
 
 it("weakestPrereq ties go to curriculum order, not the needs list order", () =>
   expect(weakestPrereq(kid(), "word-problems.to-100")).toBe("add-subtract-within-100.add-regroup"));
+
+it("easyReview near a skill: the easiest mastered skill of that skill's grade", () => {
+  const near = SKILLS[26]!;
+  const got = easyReview(master(kid(), first(26)), near.id)!;
+  expect(SKILLS.find((s) => s.id === got)!.grade).toBe(near.grade);
+  expect(got).toBe(SKILLS.slice(0, 26).find((s) => s.grade === near.grade)!.id);
+});

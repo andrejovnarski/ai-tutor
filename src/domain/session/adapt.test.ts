@@ -154,3 +154,11 @@ it("the minimum-time end does not cut off a prerequisite check", () => {
   expect(struggledAt).toBeGreaterThan(0);
   expect(problems(steps).filter((x) => x.turn.mode === "check")).toHaveLength(2);
 });
+
+it("an older kid's easy review stays at their grade, not counting to 10", () => {
+  const kid = placedKid(firstSkills(25), "8-11", "2");
+  const { steps } = play(fresh(kid), 0, (t) => (t.mode === "practice" ? wrongFor(t) : rightFor(t)), { max: 30 });
+  const easy = firstTries(steps).filter((x) => x.turn.mode === "review" && x.turn.level === 1);
+  expect(easy.length).toBeGreaterThan(0);
+  for (const x of easy) expect(SKILLS.find((s) => s.id === x.turn.skillId)!.grade).not.toBe("K");
+});

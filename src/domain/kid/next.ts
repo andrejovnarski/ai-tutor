@@ -21,9 +21,11 @@ export function reviewTarget(kid: KidState, exclude: string | null): string | nu
   return best?.skillId ?? null;
 }
 
-/** Easiest mastered skill: the earliest in curriculum order. */
-export function easyReview(kid: KidState): string | null {
-  return SKILLS.find((sk) => mastered(kid, sk.id))?.id ?? null;
+/** Easiest mastered skill of `near`'s grade (so older kids don't get kindergarten work); else the earliest mastered. */
+export function easyReview(kid: KidState, near: string | null = null): string | null {
+  const grade = near ? getSkill(near).grade : null;
+  const sameGrade = SKILLS.find((sk) => sk.grade === grade && mastered(kid, sk.id));
+  return (sameGrade ?? SKILLS.find((sk) => mastered(kid, sk.id)))?.id ?? null;
 }
 
 /** The need the kid knows least; ties go to curriculum order. */
