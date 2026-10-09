@@ -93,9 +93,8 @@ export function nextTurn(s: Session, now: number, deps: Deps = DEFAULT_DEPS): { 
   const elapsed = now - s.startedAt;
   if (s.windDown === null && elapsed >= maxMinutes * 60_000) s = { ...s, windDown: 0 };
   if (s.windDown !== null) return windDown(s, now, deps);
+  if (s.check) return serve(s, now, deps, s.check.prereqId, 1, "check"); // finish a check before ending
   if (elapsed >= minMinutes * 60_000 && s.lastCorrect) return end(s, now);
-
-  if (s.check) return serve(s, now, deps, s.check.prereqId, 1, "check");
 
   const current = s.current && !isMastered(s.kid.skills[s.current]!) ? s.current : frontier(s.kid);
   const wrong = s.recent.filter((ok) => !ok).length;

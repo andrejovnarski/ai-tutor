@@ -145,3 +145,12 @@ it("practice never stays on a skill that is already mastered", () => {
   const { steps } = play(s, 0, rightFor, { max: 3 });
   expect(problems(steps)[0]!.turn.skillId).toBe("compare-numbers.to-10");
 });
+
+it("the minimum-time end does not cut off a prerequisite check", () => {
+  // Struggle (same tag twice) right around the 10-minute mark; retries and checks are answered right.
+  const { steps } = play(fresh(placedKid(firstSkills(4))), 0, (t, i) =>
+    (t.mode === "practice" && t.try === 1 && i >= 27 ? t.problem.mistakes[0]!.answer : rightFor(t)));
+  const struggledAt = steps.findIndex((x, i) => i >= 27 && x.turn.kind === "problem" && x.turn.mode === "practice" && x.turn.try === 1);
+  expect(struggledAt).toBeGreaterThan(0);
+  expect(problems(steps).filter((x) => x.turn.mode === "check")).toHaveLength(2);
+});
