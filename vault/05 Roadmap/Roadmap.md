@@ -15,13 +15,15 @@ gantt
   Implementation plan       :active, d2, after d1, 3d
   section v1 build
   Skill map + problem maker :done, b1, after d2, 10d
-  Session engine + kid model:b2, after b1, 10d
+  Session engine + kid model:done, b2, after b1, 10d
   Kid app + voice           :b3, after d2, 20d
   Tutor voice (Claude)      :b4, after b2, 7d
   Parent sign-up + report   :b5, after b2, 7d
   section Beta
   Pilot with ~10 families   :p1, after b4, 21d
 ```
+
+BKT defaults: prior 0.2, learn 0.15, slip 0.1; guess from input (Plan 2).
 
 ## Later (not v1)
 - More strands: multiply/divide, fractions, geometry, time, money
