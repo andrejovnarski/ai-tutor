@@ -53,8 +53,9 @@ export async function runRetention(
   const db = createClient(env.supabaseUrl(), env.supabaseSecretKey(), { auth: { persistSession: false, autoRefreshToken: false } });
   const nowIso = now.toISOString();
   const inactiveBefore = new Date(now.getTime() - 365 * DAY).toISOString();
-  // Never warned, or claimed over a day ago and never sent (the run died or the release failed): claimable.
-  const unwarned = `retention_warned_at.is.null,and(retention_warn_sent_at.is.null,retention_warned_at.lte.${new Date(now.getTime() - DAY).toISOString()})`;
+  // Never warned, or claimed over a day ago and not sent for that claim (the run died or the release failed): claimable.
+  // retention_warn_unsent (generated, 0008) also treats a sent time older than the claim as unsent.
+  const unwarned = `retention_warned_at.is.null,and(retention_warn_unsent.is.true,retention_warned_at.lte.${new Date(now.getTime() - DAY).toISOString()})`;
   const warnedBefore = new Date(now.getTime() - 30 * DAY).toISOString();
 
   let warned = 0;
@@ -67,7 +68,8 @@ export async function runRetention(
     pageSize,
     async (ids) => {
       for (const id of ids) {
-        const claim = await db.from("parents").update({ retention_warned_at: nowIso })
+        // The claim also clears any sent time left from an earlier cycle, so it cannot vouch for this one.
+        const claim = await db.from("parents").update({ retention_warned_at: nowIso, retention_warn_sent_at: null })
           .eq("id", id).or(unwarned).lte("last_active_at", inactiveBefore).select("id");
         if (claim.error) throw claim.error;
         if (!claim.data.length) continue;
@@ -82,11 +84,13 @@ export async function runRetention(
             text: `Your Math Friend account has been inactive for a year, so we will delete it, and your children's progress, in 30 days.\n\nTo keep it, just sign in: ${link}\n\nSigning in keeps your account.`,
             html: `<p>Your Math Friend account has been inactive for a year, so we will delete it, and your children's progress, in 30 days.</p><p>To keep it, just <a href="${link}">sign in</a>. Signing in keeps your account.</p>`,
           });
-          const sent = await db.from("parents").update({ retention_warn_sent_at: new Date().toISOString() }).eq("id", id);
+          // Only for this claim: if the parent signed in meanwhile (claim cleared), nothing is recorded.
+          const sent = await db.from("parents").update({ retention_warn_sent_at: new Date().toISOString() })
+            .eq("id", id).eq("retention_warned_at", nowIso);
           if (sent.error) console.error("retention warn_sent_at not recorded", id, sent.error.message);
           warned++;
         } catch (e) {
-          const release = await db.from("parents").update({ retention_warned_at: null }).eq("id", id);
+          const release = await db.from("parents").update({ retention_warned_at: null }).eq("id", id).eq("retention_warned_at", nowIso);
           if (release.error) console.error("retention claim release failed", id, release.error.message);
           console.error("retention warning failed", id, e instanceof Error ? e.message : e);
         }
@@ -97,7 +101,7 @@ export async function runRetention(
   let deleted = 0;
   await eachPage(
     (after, size) => {
-      let q = db.from("parents").select("id").lte("retention_warned_at", warnedBefore).not("retention_warn_sent_at", "is", null).lte("last_active_at", inactiveBefore).order("id").limit(size);
+      let q = db.from("parents").select("id").lte("retention_warned_at", warnedBefore).eq("retention_warn_unsent", false).lte("last_active_at", inactiveBefore).order("id").limit(size);
       if (after) q = q.gt("id", after);
       return q;
     },

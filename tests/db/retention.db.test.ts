@@ -2,6 +2,20 @@ import { describe, it, expect, vi } from "vitest";
 import { admin, makeParent, latestEmailTo, mailCountTo } from "../helpers/admin";
 
 vi.mock("server-only", () => ({}));
+// onSend runs just before a mail goes out, e.g. to simulate a parent signing in mid-run.
+const hook = vi.hoisted(() => ({ onSend: null as null | ((to: string) => Promise<void>) }));
+vi.mock("../../src/server/email/mailer", async (orig) => {
+  const real = await orig<typeof import("../../src/server/email/mailer")>();
+  return {
+    ...real,
+    getMailer: () => ({
+      send: async (m: Parameters<ReturnType<typeof real.getMailer>["send"]>[0]) => {
+        if (hook.onSend) await hook.onSend(m.to);
+        return real.getMailer().send(m);
+      },
+    }),
+  };
+});
 const { runRetention, deleteIfStillInactive } = await import("../../src/server/retention");
 const { GET } = await import("../../src/app/api/cron/retention/route");
 
@@ -68,6 +82,53 @@ describe("retention", () => {
     expect(r.warned).toBeGreaterThanOrEqual(1);
     expect(await mailCountTo(emailOf("ns"), `subject:"${SUBJECT}"`)).toBe(1);
     expect((await row(p.userId))!.retention_warn_sent_at).not.toBeNull();
+  });
+
+  it("a sent time older than the current claim does not count: no deletion, the parent is warned again", async () => {
+    // Left over from an earlier cycle (a sign-in raced the sent_at write); the new claim's send never happened.
+    const p = await makeParent(emailOf("ss"), { consent: true });
+    await setRow(p.userId, { last_active_at: ago(800), retention_warned_at: ago(31), retention_warn_sent_at: ago(400) });
+    expect(await deleteIfStillInactive(admin(), p.userId, ago(30), ago(365))).toBe(false);
+    const r = await runRetention(NOW);
+    expect(await row(p.userId)).not.toBeNull();
+    expect(r.warned).toBeGreaterThanOrEqual(1);
+    expect(await mailCountTo(emailOf("ss"), `subject:"${SUBJECT}"`)).toBe(1);
+    const after = (await row(p.userId))!;
+    expect(new Date(after.retention_warned_at).getTime()).toBeGreaterThanOrEqual(NOW.getTime() - 1000);
+    expect(new Date(after.retention_warn_sent_at).getTime()).toBeGreaterThanOrEqual(new Date(after.retention_warned_at).getTime());
+  });
+
+  it("a sign-in between the claim and the sent_at write leaves no sent time behind", async () => {
+    const p = await makeParent(emailOf("rc"), { consent: true });
+    await setRow(p.userId, { last_active_at: ago(400) });
+    hook.onSend = async (to) => {
+      if (to === emailOf("rc")) expect((await p.client.rpc("touch_activity")).error).toBeNull();
+    };
+    try {
+      await runRetention(NOW);
+    } finally {
+      hook.onSend = null;
+    }
+    const after = (await row(p.userId))!;
+    expect(after.retention_warned_at).toBeNull();
+    expect(after.retention_warn_sent_at).toBeNull();
+  });
+
+  it("a new claim clears a leftover sent time", async () => {
+    const p = await makeParent(emailOf("cl"), { consent: true });
+    await setRow(p.userId, { last_active_at: ago(400), retention_warn_sent_at: ago(300) });
+    let atSend: unknown = "not called";
+    hook.onSend = async (to) => {
+      if (to !== emailOf("cl")) return;
+      atSend = (await row(p.userId))!.retention_warn_sent_at; // claimed, not yet sent
+      throw new Error("mail down"); // the run dies before the send
+    };
+    try {
+      await runRetention(NOW);
+    } finally {
+      hook.onSend = null;
+    }
+    expect(atSend).toBeNull();
   });
 
   it("retries a stale claim with no sent time, but not a fresh one", async () => {
