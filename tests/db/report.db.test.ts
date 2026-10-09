@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
+import { mailpitMailer } from "../../src/server/email/mailer";
 import { admin, makeParent, latestEmailTo } from "../helpers/admin";
 
 vi.mock("server-only", () => ({}));
@@ -8,6 +9,8 @@ const { GET } = await import("../../src/app/api/cron/weekly-report/route");
 const run = Date.now();
 const SUNDAY_5PM = new Date("2026-10-11T21:00:00Z"); // Sunday 17:00 EDT
 const SUNDAY_4PM = new Date("2026-10-11T20:00:00Z");
+const SUNDAY_6PM = new Date("2026-10-11T22:00:00Z");
+const SUNDAY_7PM = new Date("2026-10-11T23:00:00Z");
 const WEEK_START = "2026-10-04";
 const day = (d: number, minute = 0) => new Date(Date.UTC(2026, 9, d, 15, minute)).toISOString();
 
@@ -80,6 +83,41 @@ describe("weekly report", () => {
     await sendWeeklyReports(SUNDAY_5PM);
     expect(await reportRows(parent)).toHaveLength(1);
     expect(await mailCount(email)).toBe(1);
+  });
+
+  it("retries after a failed send in a later hour that Sunday, then stays idempotent", async () => {
+    const f = await makeParent(emailOf("f"), { consent: true });
+    await seedKid(f.userId, "Fay");
+    const real = mailpitMailer.send;
+    const spy = vi.spyOn(mailpitMailer, "send").mockImplementation((m) =>
+      m.to === emailOf("f") ? Promise.reject(new Error("boom")) : real(m));
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    await sendWeeklyReports(SUNDAY_5PM);
+    spy.mockRestore();
+    quiet.mockRestore();
+    expect(await reportRows(f.userId)).toHaveLength(0);
+    expect(await mailCount(emailOf("f"))).toBe(0);
+
+    expect((await sendWeeklyReports(SUNDAY_6PM)).sent).toBeGreaterThanOrEqual(1);
+    expect(await mailCount(emailOf("f"))).toBe(1);
+    expect((await reportRows(f.userId))[0].week_start).toBe(WEEK_START);
+    await sendWeeklyReports(SUNDAY_7PM);
+    expect(await mailCount(emailOf("f"))).toBe(1);
+    expect(await reportRows(f.userId)).toHaveLength(1);
+  });
+
+  it("pages through all consented parents", async () => {
+    const ids: string[] = [];
+    for (const n of ["g1", "g2", "g3"]) {
+      const g = await makeParent(emailOf(n), { consent: true });
+      await seedKid(g.userId, n);
+      ids.push(g.userId);
+    }
+    await sendWeeklyReports(SUNDAY_5PM, 1);
+    for (const [i, id] of ids.entries()) {
+      expect(await reportRows(id), `g${i + 1}`).toHaveLength(1);
+      expect(await mailCount(emailOf(`g${i + 1}`))).toBe(1);
+    }
   });
 
   it("sends nothing to a parent without consent", async () => {

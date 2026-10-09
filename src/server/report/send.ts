@@ -13,18 +13,26 @@ const PG_UNIQUE_VIOLATION = "23505";
 const minusDays = (date: string, n: number) => new Date(Date.parse(`${date}T00:00:00Z`) - n * DAY).toISOString().slice(0, 10);
 
 /**
- * Runs hourly on Sundays (UTC); sends only at 17:00 Sunday in New York. The window is the 7 days before `now`.
- * `report_sends(parent_id, week_start)` is claimed before sending, so overlapping or repeated runs send once.
+ * Runs hourly on Sundays (UTC); sends on Sunday in New York from 17:00 on, so a run after a failed send (claim
+ * released) retries the same week. The window is the 7 days before `now`.
+ * `report_sends(parent_id, week_start)` is claimed before sending, and every run that Sunday shares one
+ * `week_start`, so overlapping or repeated runs send once.
  */
-export async function sendWeeklyReports(now: Date): Promise<{ sent: number }> {
+export async function sendWeeklyReports(now: Date, pageSize = 500): Promise<{ sent: number }> {
   const slot = easternSlot(now);
-  if (slot.weekday !== "Sun" || slot.hour !== 17) return { sent: 0 };
+  if (slot.weekday !== "Sun" || slot.hour < 17) return { sent: 0 };
   const weekStart = minusDays(slot.date, 7);
   const from = new Date(now.getTime() - 7 * DAY);
 
   const db = createClient(env.supabaseUrl(), env.supabaseSecretKey(), { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: parents, error } = await db.from("parents").select("id, kids!inner(id)").not("consent_at", "is", null);
-  if (error) throw error;
+  const parents: { id: string }[] = [];
+  for (let i = 0; ; i += pageSize) {
+    const { data, error } = await db.from("parents").select("id, kids!inner(id)").not("consent_at", "is", null)
+      .order("id").range(i, i + pageSize - 1);
+    if (error) throw error;
+    parents.push(...data);
+    if (data.length < pageSize) break;
+  }
 
   let sent = 0;
   for (const { id } of parents) {
@@ -42,7 +50,8 @@ export async function sendWeeklyReports(now: Date): Promise<{ sent: number }> {
       sent++;
     } catch (e) {
       // Release the claim so the next hourly run retries; one parent's failure must not stop the others.
-      await db.from("report_sends").delete().eq("parent_id", id).eq("week_start", weekStart);
+      const release = await db.from("report_sends").delete().eq("parent_id", id).eq("week_start", weekStart);
+      if (release.error) console.error("weekly report claim release failed", id, release.error.message);
       console.error("weekly report failed", id, e instanceof Error ? e.message : e);
     }
   }
