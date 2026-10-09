@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { admin, makeParent, latestEmailTo, mailCountTo } from "../helpers/admin";
 
 vi.mock("server-only", () => ({}));
-const { runRetention } = await import("../../src/server/retention");
+const { runRetention, deleteIfStillInactive } = await import("../../src/server/retention");
 const { GET } = await import("../../src/app/api/cron/retention/route");
 
 const run = Date.now();
@@ -52,12 +52,41 @@ describe("retention", () => {
   it("deletes a parent warned 31 days ago who is still inactive, with their kids", async () => {
     const p = await makeParent(emailOf("d"), { consent: true });
     const kid = await seedKid(p.userId);
-    await setRow(p.userId, { last_active_at: ago(400), retention_warned_at: ago(31) });
+    await setRow(p.userId, { last_active_at: ago(400), retention_warned_at: ago(31), retention_warn_sent_at: ago(31) });
     const r = await runRetention(NOW);
     expect(r.deleted).toBeGreaterThanOrEqual(1);
     expect(await row(p.userId)).toBeNull();
     expect((await admin().auth.admin.getUserById(p.userId)).data.user).toBeNull();
     expect((await admin().from("kids").select("id").eq("id", kid)).data).toHaveLength(0);
+  });
+
+  it("never deletes a parent whose warning was claimed but not sent", async () => {
+    const p = await makeParent(emailOf("ns"), { consent: true });
+    await setRow(p.userId, { last_active_at: ago(400), retention_warned_at: ago(31) });
+    const r = await runRetention(NOW);
+    expect(await row(p.userId)).not.toBeNull(); // not deleted: it is re-claimed and warned instead
+    expect(r.warned).toBeGreaterThanOrEqual(1);
+    expect(await mailCountTo(emailOf("ns"), `subject:"${SUBJECT}"`)).toBe(1);
+    expect((await row(p.userId))!.retention_warn_sent_at).not.toBeNull();
+  });
+
+  it("retries a stale claim with no sent time, but not a fresh one", async () => {
+    const stale = await makeParent(emailOf("st"), { consent: true });
+    const fresh = await makeParent(emailOf("fr"), { consent: true });
+    await setRow(stale.userId, { last_active_at: ago(400), retention_warned_at: ago(2) });
+    await setRow(fresh.userId, { last_active_at: ago(400), retention_warned_at: new Date(NOW.getTime() - 3_600_000).toISOString() });
+    await runRetention(NOW);
+    expect(await mailCountTo(emailOf("st"), `subject:"${SUBJECT}"`)).toBe(1);
+    expect(await mailCountTo(emailOf("fr"), `subject:"${SUBJECT}"`)).toBe(0);
+  });
+
+  it("does not delete a stale candidate who touched activity after the list was built", async () => {
+    const p = await makeParent(emailOf("race"), { consent: true });
+    await setRow(p.userId, { last_active_at: ago(400), retention_warned_at: ago(31), retention_warn_sent_at: ago(31) });
+    await p.client.rpc("touch_activity");
+    const before = ago(30), inactive = ago(365);
+    expect(await deleteIfStillInactive(admin(), p.userId, before, inactive)).toBe(false);
+    expect(await row(p.userId)).not.toBeNull();
   });
 
   it("keeps a parent warned only 10 days ago", async () => {
@@ -69,7 +98,7 @@ describe("retention", () => {
 
   it("a warned parent who touches activity is cleared and survives the next run", async () => {
     const p = await makeParent(emailOf("t"), { consent: true });
-    await setRow(p.userId, { last_active_at: ago(400), retention_warned_at: ago(31) });
+    await setRow(p.userId, { last_active_at: ago(400), retention_warned_at: ago(31), retention_warn_sent_at: ago(31) });
     const { error } = await p.client.rpc("touch_activity");
     expect(error).toBeNull();
     expect((await row(p.userId))!.retention_warned_at).toBeNull();

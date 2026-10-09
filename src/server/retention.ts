@@ -3,7 +3,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getMailer } from "./email/mailer";
 import { sendPendingDistressEmails } from "./distress/report";
 import { env } from "./env";
-import { deleteAccount } from "./rights";
 
 const DAY = 86_400_000;
 
@@ -15,6 +14,13 @@ export async function touchActivity(db: SupabaseClient): Promise<void> {
   } catch (e) {
     console.error("touch_activity failed", e instanceof Error ? e.message : e);
   }
+}
+
+/** Deletes the account atomically, only if it is still warned (warning sent) and inactive; false if the parent came back. */
+export async function deleteIfStillInactive(db: SupabaseClient, id: string, warnedBefore: string, inactiveBefore: string): Promise<boolean> {
+  const { data, error } = await db.rpc("retention_delete", { p_parent: id, p_warned_before: warnedBefore, p_inactive_before: inactiveBefore });
+  if (error) throw new Error(error.message);
+  return data === true;
 }
 
 /** Calls `fn` on each page of matching parent ids. Keyset paging by id, so rows changed by `fn` do not shift the pages. */
@@ -47,12 +53,14 @@ export async function runRetention(
   const db = createClient(env.supabaseUrl(), env.supabaseSecretKey(), { auth: { persistSession: false, autoRefreshToken: false } });
   const nowIso = now.toISOString();
   const inactiveBefore = new Date(now.getTime() - 365 * DAY).toISOString();
+  // Never warned, or claimed over a day ago and never sent (the run died or the release failed): claimable.
+  const unwarned = `retention_warned_at.is.null,and(retention_warn_sent_at.is.null,retention_warned_at.lte.${new Date(now.getTime() - DAY).toISOString()})`;
   const warnedBefore = new Date(now.getTime() - 30 * DAY).toISOString();
 
   let warned = 0;
   await eachPage(
     (after, size) => {
-      let q = db.from("parents").select("id").lte("last_active_at", inactiveBefore).is("retention_warned_at", null).order("id").limit(size);
+      let q = db.from("parents").select("id").lte("last_active_at", inactiveBefore).or(unwarned).order("id").limit(size);
       if (after) q = q.gt("id", after);
       return q;
     },
@@ -60,7 +68,7 @@ export async function runRetention(
     async (ids) => {
       for (const id of ids) {
         const claim = await db.from("parents").update({ retention_warned_at: nowIso })
-          .eq("id", id).is("retention_warned_at", null).lte("last_active_at", inactiveBefore).select("id");
+          .eq("id", id).or(unwarned).lte("last_active_at", inactiveBefore).select("id");
         if (claim.error) throw claim.error;
         if (!claim.data.length) continue;
         try {
@@ -74,6 +82,8 @@ export async function runRetention(
             text: `Your Math Friend account has been inactive for a year, so we will delete it, and your children's progress, in 30 days.\n\nTo keep it, just sign in: ${link}\n\nSigning in keeps your account.`,
             html: `<p>Your Math Friend account has been inactive for a year, so we will delete it, and your children's progress, in 30 days.</p><p>To keep it, just <a href="${link}">sign in</a>. Signing in keeps your account.</p>`,
           });
+          const sent = await db.from("parents").update({ retention_warn_sent_at: new Date().toISOString() }).eq("id", id);
+          if (sent.error) console.error("retention warn_sent_at not recorded", id, sent.error.message);
           warned++;
         } catch (e) {
           const release = await db.from("parents").update({ retention_warned_at: null }).eq("id", id);
@@ -87,7 +97,7 @@ export async function runRetention(
   let deleted = 0;
   await eachPage(
     (after, size) => {
-      let q = db.from("parents").select("id").lte("retention_warned_at", warnedBefore).lte("last_active_at", inactiveBefore).order("id").limit(size);
+      let q = db.from("parents").select("id").lte("retention_warned_at", warnedBefore).not("retention_warn_sent_at", "is", null).lte("last_active_at", inactiveBefore).order("id").limit(size);
       if (after) q = q.gt("id", after);
       return q;
     },
@@ -95,8 +105,10 @@ export async function runRetention(
     async (ids) => {
       for (const id of ids) {
         try {
-          await deleteAccount(id);
-          deleted++;
+          if (await deleteIfStillInactive(db, id, warnedBefore, inactiveBefore)) {
+            deleted++;
+            console.info("retention deleted account", id);
+          }
         } catch (e) {
           console.error("retention delete failed", id, e instanceof Error ? e.message : e);
         }
