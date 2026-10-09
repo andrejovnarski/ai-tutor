@@ -18,4 +18,10 @@ export const env = {
   emailFrom: () => need("EMAIL_FROM"),
   cronSecret: () => need("CRON_SECRET"),
   appOrigin: () => need("APP_ORIGIN"),
+  /** "claude" or "canned"; unset means "canned" so nothing calls Claude by accident. */
+  tutorVoice: (): "claude" | "canned" => {
+    const v = process.env.TUTOR_VOICE || "canned";
+    if (v !== "claude" && v !== "canned") throw new Error(`TUTOR_VOICE must be "claude" or "canned", got "${v}"`);
+    return v;
+  },
 };

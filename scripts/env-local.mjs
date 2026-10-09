@@ -18,6 +18,7 @@ writeFileSync(
     `MAILER=${keep("MAILER", "mailpit")}`,
     `EMAIL_FROM=${keep("EMAIL_FROM", "Math Friend <hello@localhost>")}`,
     `APP_ORIGIN=${keep("APP_ORIGIN", "http://localhost:3000")}`,
+    `TUTOR_VOICE=${keep("TUTOR_VOICE", "canned")}`,
     `CRON_SECRET=${keep("CRON_SECRET", crypto.randomUUID() + crypto.randomUUID())}`,
     ...["STRIPE_SECRET_KEY", "RESEND_API_KEY"].flatMap((k) => (keep(k, "") ? [`${k}=${keep(k, "")}`] : [])),
     "",
