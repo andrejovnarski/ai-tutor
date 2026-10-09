@@ -11,11 +11,13 @@ const TENS: Record<string, number> = {
 };
 /** Speech-to-text mishears, trusted only when they are the whole answer. */
 const HOMOPHONES: Record<string, number> = { to: 2, too: 2, for: 4, won: 1, ate: 8 };
+/** "one" after these is a pronoun ("that one", "the first one"), not a number. */
+const DETERMINERS = new Set(["that", "this", "the", "which", "first", "other", "big", "bigger", "small", "smaller", "each", "every", "any"]);
 const FILLER = new Set(["um", "umm", "uh", "uhh", "er", "erm", "hmm", "its", "it", "is", "i", "think", "the", "answer", "so", "like", "ok", "okay"]);
 
 type Tok =
-  | { k: "unit"; v: number; single: true }
-  | { k: "digits"; v: number; single: boolean }
+  | { k: "unit"; v: number }
+  | { k: "digits"; v: number }
   | { k: "teen"; v: number }
   | { k: "tens"; v: number }
   | { k: "hundred" }
@@ -23,8 +25,8 @@ type Tok =
   | { k: "word"; w: string };
 
 function classify(w: string): Tok {
-  if (/^\d+$/.test(w)) return { k: "digits", v: Number(w), single: w.length === 1 };
-  if (w in UNITS) return { k: "unit", v: UNITS[w]!, single: true };
+  if (/^\d+$/.test(w)) return { k: "digits", v: Number(w) };
+  if (w in UNITS) return { k: "unit", v: UNITS[w]! };
   if (w in TEENS) return { k: "teen", v: TEENS[w]! };
   if (w in TENS) return { k: "tens", v: TENS[w]! };
   if (w === "hundred") return { k: "hundred" };
@@ -33,13 +35,9 @@ function classify(w: string): Tok {
 }
 
 const isNum = (t: Tok | undefined): boolean => !!t && t.k !== "word" && t.k !== "and";
-const singleDigit = (t: Tok): boolean => (t.k === "unit" || t.k === "digits") && t.single;
 
-/** Parses one run of number tokens into the numbers it says ("twenty three" → [23], "one two" → [12]). */
+/** Parses one run of number tokens into the numbers it says ("twenty three" → [23], "five six" → [5, 6]). */
 function parseRun(run: Tok[]): number[] {
-  if (run.length === 2 && run.every(singleDigit)) {
-    return [(run[0] as { v: number }).v * 10 + (run[1] as { v: number }).v];
-  }
   const out: number[] = [];
   let i = 0;
   while (i < run.length) {
@@ -82,7 +80,8 @@ export function parseSpokenNumber(text: string): number | null {
     }
   }
 
-  const toks = words.map(classify);
+  const toks = words.map((w, i): Tok =>
+    w === "one" && DETERMINERS.has(words[i - 1] ?? "") ? { k: "word", w } : classify(w));
   const numbers: number[] = [];
   let run: Tok[] = [];
   const flush = () => { if (run.length) numbers.push(...parseRun(run)); run = []; };
@@ -93,8 +92,8 @@ export function parseSpokenNumber(text: string): number | null {
   });
   flush();
 
-  if (numbers.length === 1) return numbers[0]!;
-  if (numbers.length > 1) return null;
+  // One number, or the same number repeated ("six. six!"). Different numbers are ambiguous: ask again.
+  if (numbers.length > 0) return numbers.every((n) => n === numbers[0]) ? numbers[0]! : null;
 
   const meaningful = words.filter((w) => !FILLER.has(w));
   if (meaningful.length === 1 && meaningful[0]! in HOMOPHONES) return HOMOPHONES[meaningful[0]!]!;
