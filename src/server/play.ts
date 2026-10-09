@@ -118,10 +118,12 @@ export async function playAnswer(repo: Repo, kidId: string, version: number, giv
   const answered = pendingTurn(open.state.pending!);
   const recent = recentOf(open.state);
   const plan = feedbackPlan(answered, taken.feedback, given, open.state.kid.ageBand, recent);
-  // Both lines at once: the feedback for this answer and the present line for the next problem.
+  // Both lines at once: the feedback for this answer and the present line for the next problem. A retry keeps the
+  // same problem on screen (try 2), so there is no new problem to present: the wrong line stays Nova's line.
+  const retry = taken.feedback.then === "retry" && turn.kind === "problem";
   const [line, presentLine] = await Promise.all([
     speak(plan, seedFor(open.version + 1, plan.event)),
-    present(c, turn, open.state, open.version + 1),
+    retry ? Promise.resolve(undefined) : present(c, turn, open.state, open.version + 1),
   ]);
   const step = await commit(c, open, session, turn, taken.writes, { feedback: line, present: presentLine });
   if (!step) return conflict();

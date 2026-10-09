@@ -124,11 +124,11 @@ describe("Nova in play", () => {
         const ans: number = state.pending.problem.answer;
         const nums = numbersIn(turn.prompt.say);
         check(line.say, ans, nums, "present");
-        // wrong first try: the feedback (wrong or hint) and the retry's present line must hold the answer back
+        // wrong first try: the feedback (wrong or hint) must hold the answer back; a retry has no present line
         let r = await (await answerPost(post({ version, given: ans + 1000 }), ctx(kid))).json();
         if (r.feedback.then === "retry") {
           check(r.line.say, ans, nums, "feedback");
-          check(r.nextLine.say, ans, nums, "present");
+          expect(r.nextLine).toBeUndefined();
           r = await (await answerPost(post({ version: r.version, given: ans + 1000 }), ctx(kid))).json();
         } else if (!r.feedback.reveal) check(r.line.say, ans, nums, "feedback");
         ({ version, line } = { version: r.version, line: r.nextLine });

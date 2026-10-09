@@ -45,7 +45,8 @@ test("tap Mia and answer problems; attempts are saved and responses never carry 
   const feedback: string[] = [];
   for (let i = 0; i < 6; i++) {
     await answerOnce(page, i % 3);
-    feedback.push(await page.getByTestId("feedback").innerText().catch(() => ""));
+    // A retry (same problem, try 2) shows its line as Nova's line, so the feedback slot may be empty.
+    if (await page.getByTestId("feedback").count()) feedback.push(await page.getByTestId("feedback").innerText());
   }
   for (const f of feedback) expect(f).not.toMatch(/undefined|NaN/);
   await expect.poll(() => attempts(parentId)).toBeGreaterThanOrEqual(target);
@@ -65,7 +66,9 @@ test("Nova speaks above the problem and after each answer, with Mia's name fille
   const lines = [await page.getByTestId("nova").innerText()];
   for (let i = 0; i < 6; i++) {
     await answerOnce(page, i % 3);
-    lines.push(await page.getByTestId("feedback").innerText(), await page.getByTestId("nova").innerText());
+    // After a retry the wrong line is Nova's line and there is no separate feedback line.
+    if (await page.getByTestId("feedback").count()) lines.push(await page.getByTestId("feedback").innerText());
+    lines.push(await page.getByTestId("nova").innerText());
   }
   for (const l of lines) {
     expect(l.length).toBeGreaterThan(0);

@@ -195,11 +195,25 @@ describe("tutor lines", () => {
     await playTurn(repo, kid.kidId, 1000, seed, r.speak);
     const answer = pendingAnswer(repo);
     const first = ok(await playAnswer(repo, kid.kidId, 1, answer + 1000, 2000, seed, r.speak));
-    expect(first.line.say).toMatch(/^(wrong|hint) /);
+    expect(first.line.say).toMatch(/^wrong /);
     const second = ok(await playAnswer(repo, kid.kidId, first.version, answer + 1000, 3000, seed, r.speak));
     expect(second.line.say).toMatch(/^explain /);
     expect(stored(repo).tutorRecent).toHaveLength(3);
-    expect(stored(repo).tutorRecent).toEqual([first.nextLine!.say, second.line.say, second.nextLine!.say]);
+    // The retry added only its wrong line: [present, wrong, explain, present] keeps the last 3.
+    expect(stored(repo).tutorRecent).toEqual([first.line.say, second.line.say, second.nextLine!.say]);
+  });
+
+  it("a wrong first try (retry) keeps the same problem: no nextLine, exactly one speak call", async () => {
+    const repo = setup();
+    const r = recorder();
+    await playTurn(repo, kid.kidId, 1000, seed, r.speak);
+    const before = r.plans.length;
+    const first = ok(await playAnswer(repo, kid.kidId, 1, pendingAnswer(repo) + 1000, 2000, seed, r.speak));
+    expect(first.feedback.then).toBe("retry");
+    expect(first.line.say).toMatch(/^wrong /);
+    expect("nextLine" in first).toBe(false);
+    expect(r.plans.length - before).toBe(1);
+    expect(stored(repo).tutorRecent).toEqual(["present {name} #1", first.line.say]);
   });
 
   it("a 409 carries the line for its current turn and saves nothing", async () => {

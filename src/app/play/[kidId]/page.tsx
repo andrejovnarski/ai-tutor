@@ -48,8 +48,9 @@ export default function PlayPage({ params }: { params: Promise<{ kidId: string }
         setNote(null);
       } else if (r.ok) {
         const b = (await r.json()) as Reply;
-        setStep({ version: b.version, turn: b.next, line: b.nextLine });
-        setMessage(b.line.say);
+        // A retry has no nextLine (same problem, try 2): the feedback line becomes Nova's line for it.
+        setStep({ version: b.version, turn: b.next, line: b.nextLine ?? b.line });
+        setMessage(b.nextLine ? b.line.say : "");
         setNote(revealNote(b.line.say, b.feedback.reveal, b.revealed));
       } else setFailed(true);
       setTyped("");
