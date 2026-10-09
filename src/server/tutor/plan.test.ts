@@ -49,10 +49,25 @@ it("never puts a nickname in a plan and fills names in code", () => {
   expect(fillName("Hi {name}!", "")).toBe("Hi friend!");
 });
 
-it("collects visible numbers for every visual kind", () => {
-  expect(visualNumbers({ kind: "objects", icon: "apple", groups: [3, 2], crossedOut: 1 }).sort()).toEqual([1, 2, 3, 5].sort());
-  expect(visualNumbers({ kind: "number-line", from: 0, to: 20, marks: [5, 10], jump: { from: 5, by: 3 } })).toEqual(expect.arrayContaining([0, 20, 5, 10, 3, 8]));
-  expect(visualNumbers({ kind: "blocks", groups: [{ tens: 4, ones: 3 }], crossedOut: { tens: 0, ones: 7 } })).toEqual(expect.arrayContaining([4, 3, 43, 7]));
+it("collects visible components for every visual kind", () => {
+  expect(visualNumbers({ kind: "objects", icon: "apple", groups: [3, 2], crossedOut: 1 }).sort()).toEqual([1, 2, 3]);
+  expect(visualNumbers({ kind: "number-line", from: 0, to: 20, marks: [5, 10], jump: { from: 5, by: 3 } })).toEqual(expect.arrayContaining([0, 20, 5, 10, 3]));
+  expect(visualNumbers({ kind: "blocks", groups: [{ tens: 4, ones: 3 }], crossedOut: { tens: 0, ones: 7 } })).toEqual(expect.arrayContaining([4, 3, 7]));
   expect(visualNumbers({ kind: "equation", text: "7 + _ = 10" })).toEqual(expect.arrayContaining([7, 10]));
   expect(visualNumbers({ kind: "story", text: "Ben has five cookies", icon: "cookie", groups: [5] })).toContain(5);
+});
+
+it("keeps the answer out of problemNumbers unless printed", () => {
+  const mk = (show: Problem["prompt"]["show"], answer: number, say = "How many in all?"): ProblemTurn =>
+    ({ ...turn(), problem: { ...problem, answer, prompt: { say, show } } });
+  const cases: [Problem["prompt"]["show"], number][] = [
+    [{ kind: "objects", icon: "apple", groups: [3, 4] }, 7],
+    [{ kind: "ten-frames", first: 3, second: 4 }, 7],
+    [{ kind: "story", text: "Ann has some apples", icon: "apple", groups: [2, 5] }, 7],
+    [{ kind: "number-line", from: 0, to: 10, marks: [3], jump: { from: 3, by: 4 } }, 7],
+    [{ kind: "blocks", groups: [{ tens: 3, ones: 4 }] }, 34],
+  ];
+  for (const [show, ans] of cases)
+    expect(presentPlan(mk(show, ans), "5-7", []).problemNumbers).not.toContain(ans);
+  expect(presentPlan(mk({ kind: "equation", text: "3 + 0 = ?" }, 3, "What is 3 + 0?"), "5-7", []).problemNumbers).toContain(3);
 });
