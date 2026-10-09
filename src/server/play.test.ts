@@ -66,7 +66,8 @@ it("starts a new session after the old one ended", async () => {
   await repo.createSession(kid.kidId, { ...startSession(kid, 1, 0), ended: true });
   const t = ok(await playTurn(repo, kid.kidId, 1000, seed));
   expect(t.turn.kind).toBe("problem");
-  expect(t.version).toBe(1);
+  // The ended session was saved at version 1; the new one continues from there.
+  expect(t.version).toBe(2);
   expect(repo.sessions).toHaveLength(2);
   expect(repo.sessions.filter((s) => s.ended)).toHaveLength(1);
 });
@@ -79,7 +80,24 @@ it("rolls over to a new session when an answer ends the old one", async () => {
   expect(a.next.kind).toBe("problem");
   expect(repo.sessions).toHaveLength(2);
   expect(repo.sessions.filter((s) => !s.ended)).toHaveLength(1);
-  expect(a.version).toBe(1);
+  // Versions are monotonic per kid: the new session continues from the old one's final version (2).
+  expect(a.version).toBe(3);
+});
+
+it("rejects a stale answer from the previous session after a rollover (two tablets)", async () => {
+  const repo = setup();
+  const a = ok(await playTurn(repo, kid.kidId, 1000, seed));
+  const b = ok(await playTurn(repo, kid.kidId, 1000, seed));
+  expect(b.version).toBe(a.version);
+  const right = pendingAnswer(repo);
+  // Tablet B answers and ends the session; play rolls over into a new one.
+  const won = ok(await playAnswer(repo, kid.kidId, b.version, right, 1000 + 12 * 60_000, seed));
+  expect(repo.sessions).toHaveLength(2);
+  // Tablet A still holds the old version.
+  const stale = await playAnswer(repo, kid.kidId, a.version, right, 1000 + 12 * 60_000 + 1, seed);
+  expect(stale.status).toBe(409);
+  if (stale.status === 409) expect(stale.version).toBe(won.version);
+  expect(repo.attempts.filter((x) => x.session_id === "session-2")).toHaveLength(0);
 });
 
 it("returns 404 for an unknown kid", async () => {

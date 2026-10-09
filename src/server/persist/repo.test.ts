@@ -54,3 +54,25 @@ it("returns -1 and writes nothing when the session already ended", async () => {
   expect(await repo.saveStep({ ...s, version: 1 }, s.state, false, writes)).toBe(-1);
   expect(repo.attempts).toHaveLength(0);
 });
+
+it("starts a new session at the kid's previous final version, so versions never repeat", async () => {
+  const repo = setup();
+  const s = (await repo.createSession(kid.kidId, startSession(kid, 1, 0)))!;
+  await repo.saveStep(s, s.state, false, null);
+  await repo.saveStep({ ...s, version: 1 }, s.state, true, null);
+  const next = (await repo.createSession(kid.kidId, startSession(kid, 2, 0)))!;
+  expect(next.version).toBe(2);
+  expect((await repo.openSession(kid.kidId))!.version).toBe(2);
+});
+
+it("writes rows for the session's own kid, not the kid id in the writes", async () => {
+  const repo = setup();
+  const other = { ...kid, kidId: "other-kid" };
+  repo.addKid(other);
+  const s = (await repo.createSession(kid.kidId, startSession(kid, 1, 0)))!;
+  const st = Object.values(kid.skills)[0]!;
+  const writes = { kidId: other.kidId, attempts: [], skillStates: [{ ...st, attempts: 99 }], styleStats: [] };
+  expect(await repo.saveStep(s, s.state, false, writes)).toBe(1);
+  expect((await repo.loadKid(kid.kidId))!.skills[st.skillId]!.attempts).toBe(99);
+  expect((await repo.loadKid(other.kidId))!.skills[st.skillId]!.attempts).toBe(st.attempts);
+});

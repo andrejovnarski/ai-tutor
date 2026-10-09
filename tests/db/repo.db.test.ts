@@ -96,10 +96,26 @@ describe("Play against Supabase", () => {
     await playTurn(repoA(), kid, 1000, seed);
     const a = ok(await playAnswer(repoA(), kid, 1, await pending(kid), 1000 + 12 * 60_000, seed));
     expect(a.next.kind).toBe("problem");
-    expect(a.version).toBe(1);
+    // Versions are monotonic per kid: the new session continues from the old one's final version (2).
+    expect(a.version).toBe(3);
     const all = (await admin().from("sessions").select("id, ended_at").eq("kid_id", kid)).data!;
     expect(all).toHaveLength(2);
     expect(all.filter((s) => s.ended_at === null)).toHaveLength(1);
+  });
+  it("rejects a stale answer from the previous session after a rollover (two tablets)", async () => {
+    const kid = await kidFor(true);
+    const a = ok(await playTurn(repoA(), kid, 1000, seed));
+    const b = ok(await playTurn(repoA(), kid, 1000, seed));
+    expect(b.version).toBe(a.version);
+    const right = await pending(kid);
+    const won = ok(await playAnswer(repoA(), kid, b.version, right, 1000 + 12 * 60_000, seed));
+    const sessions = (await admin().from("sessions").select("id, ended_at").eq("kid_id", kid)).data!;
+    expect(sessions).toHaveLength(2);
+    const fresh = sessions.find((s) => s.ended_at === null)!.id;
+    const stale = await playAnswer(repoA(), kid, a.version, right, 1000 + 12 * 60_000 + 1, seed);
+    expect(stale.status).toBe(409);
+    if (stale.status === 409) expect(stale.version).toBe(won.version);
+    expect((await admin().from("attempts").select("id").eq("session_id", fresh)).data).toHaveLength(0);
   });
   it("lets two racing first turns share one new session", async () => {
     const kid = await kidFor(true);
@@ -118,6 +134,20 @@ describe("SupabaseRepo contract", () => {
     expect(await repoA().createSession(kid, state)).not.toBeNull();
     expect(await repoA().createSession(kid, state)).toBeNull();
     expect(await openSessions(kid)).toHaveLength(1);
+  });
+  it("createSession starts at the kid's previous final version, even if the client sends one", async () => {
+    const kid = await kidFor(true);
+    const state = startSession(placedKid(firstSkills(3)), 1, 0);
+    const s = (await repoA().createSession(kid, state))!;
+    expect(s.version).toBe(0);
+    expect(await repoA().saveStep(s, s.state, false, null)).toBe(1);
+    expect(await repoA().saveStep({ ...s, version: 1 }, s.state, true, null)).toBe(2);
+    expect((await repoA().createSession(kid, state))!.version).toBe(2);
+    const forged = await A.client.from("sessions").update({ ended_at: new Date().toISOString() }).eq("kid_id", kid).is("ended_at", null);
+    expect(forged.error).toBeNull();
+    const { data, error } = await A.client.from("sessions").insert({ kid_id: kid, state, version: 0 }).select("version").single();
+    expect(error).toBeNull();
+    expect(data!.version).toBe(2);
   });
   it("saveStep with a stale version returns -1 and adds no attempts", async () => {
     const kid = await kidFor(true);
