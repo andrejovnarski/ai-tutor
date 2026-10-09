@@ -33,19 +33,21 @@ export async function makeParent(
   return { userId, client };
 }
 
+const MAILPIT = "http://127.0.0.1:54324/api/v1";
+
+/** Mailpit's list endpoint returns only the newest 50, so by-address lookups use the search API (newest first). */
+async function searchTo(email: string): Promise<{ ID: string }[]> {
+  const res = await fetch(`${MAILPIT}/search?query=${encodeURIComponent(`to:"${email}"`)}`);
+  return ((await res.json()) as { messages: { ID: string }[] }).messages;
+}
+
+/** Number of messages Mailpit holds for an address. */
+export async function mailCountTo(email: string): Promise<number> {
+  return (await searchTo(email)).length;
+}
+
 export async function latestEmailLink(email: string): Promise<string> {
-  const base = "http://127.0.0.1:54324/api/v1";
-  type Summary = { ID: string; Created: string; To: { Address: string }[] };
-  let msg: Summary | undefined;
-  for (let i = 0; i < 10 && !msg; i++) {
-    const list = (await (await fetch(`${base}/messages`)).json()) as { messages: Summary[] };
-    msg = list.messages
-      .filter((m) => m.To.some((t) => t.Address === email))
-      .sort((a, b) => Date.parse(b.Created) - Date.parse(a.Created))[0];
-    if (!msg) await new Promise((r) => setTimeout(r, 200));
-  }
-  if (!msg) throw new Error(`no mail for ${email}`);
-  const full = await (await fetch(`${base}/message/${msg.ID}`)).json();
+  const full = await latestEmailTo(email);
   const m = /https?:\/\/[^\s"'<>]*\/auth\/confirm[^\s"'<>]*/.exec(full.HTML + " " + full.Text);
   if (!m) throw new Error("no confirm link in mail");
   return m[0].replace(/&amp;/g, "&");
@@ -53,16 +55,10 @@ export async function latestEmailLink(email: string): Promise<string> {
 
 /** Polls Mailpit for the newest message to an address. */
 export async function latestEmailTo(email: string): Promise<{ Subject: string; Text: string; HTML: string }> {
-  const base = "http://127.0.0.1:54324/api/v1";
-  type Summary = { ID: string; Created: string; To: { Address: string }[] };
-  let msg: Summary | undefined;
-  for (let i = 0; i < 10 && !msg; i++) {
-    const list = (await (await fetch(`${base}/messages`)).json()) as { messages: Summary[] };
-    msg = list.messages
-      .filter((m) => m.To.some((t) => t.Address === email))
-      .sort((a, b) => Date.parse(b.Created) - Date.parse(a.Created))[0];
-    if (!msg) await new Promise((r) => setTimeout(r, 200));
+  for (let i = 0; i < 10; i++) {
+    const [msg] = await searchTo(email);
+    if (msg) return (await fetch(`${MAILPIT}/message/${msg.ID}`)).json();
+    await new Promise((r) => setTimeout(r, 200));
   }
-  if (!msg) throw new Error(`no mail for ${email}`);
-  return (await fetch(`${base}/message/${msg.ID}`)).json();
+  throw new Error(`no mail for ${email}`);
 }

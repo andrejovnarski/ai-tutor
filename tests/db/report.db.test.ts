@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import { mailpitMailer } from "../../src/server/email/mailer";
-import { admin, makeParent, latestEmailTo } from "../helpers/admin";
+import { admin, makeParent, latestEmailTo, mailCountTo } from "../helpers/admin";
 
 vi.mock("server-only", () => ({}));
 const { sendWeeklyReports } = await import("../../src/server/report/send");
@@ -18,9 +18,7 @@ const emailOf = (id: string) => `rep-${id}-${run}@test.dev`;
 let parent: string, noConsent: string;
 const reportRows = async (id: string) =>
   (await admin().from("report_sends").select("*").eq("parent_id", id)).data ?? [];
-const mailCount = async (email: string) =>
-  ((await (await fetch("http://127.0.0.1:54324/api/v1/messages")).json()) as { messages: { To: { Address: string }[] }[] })
-    .messages.filter((m) => m.To.some((t) => t.Address === email)).length;
+const mailCount = mailCountTo;
 
 async function seedKid(parentId: string, nickname: string) {
   const { data, error } = await admin().from("kids")

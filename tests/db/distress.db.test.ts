@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { admin, anon, makeParent, latestEmailTo } from "../helpers/admin";
+import { admin, anon, makeParent, latestEmailTo, mailCountTo } from "../helpers/admin";
 
 const who = vi.hoisted(() => ({ client: null as unknown as SupabaseClient }));
 vi.mock("server-only", () => ({}));
@@ -32,10 +32,7 @@ const emailA = `distress-a-${run}@test.dev`;
 const ctx = (kidId: string) => ({ params: Promise.resolve({ kidId }) });
 const say = (text: unknown) => new Request("http://x/api", { method: "POST", body: JSON.stringify({ text }) });
 const flags = async () => (await admin().from("distress_flags").select("*").eq("kid_id", kidA)).data ?? [];
-const mailCount = async (to: string) => {
-  const r = (await (await fetch("http://127.0.0.1:54324/api/v1/messages")).json()) as { messages: { To: { Address: string }[] }[] };
-  return r.messages.filter((m) => m.To.some((t) => t.Address === to)).length;
-};
+const mailCount = mailCountTo;
 
 beforeAll(async () => {
   A = await makeParent(emailA, { consent: true });

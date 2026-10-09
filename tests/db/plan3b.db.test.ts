@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { admin, makeParent } from "../helpers/admin";
+import { admin, makeParent, latestEmailTo } from "../helpers/admin";
 import { MASTERED_P, MASTERED_ATTEMPTS } from "../../src/domain/kid/bkt";
 
 vi.mock("server-only", () => ({}));
@@ -123,8 +123,7 @@ describe("mailpitMailer against local Mailpit", () => {
   it("delivers a message", async () => {
     const to = `p3b-mail-${run}@test.dev`;
     await mailpitMailer.send({ to, subject: "Hello", text: "plain", html: "<p>html</p>" });
-    const list = (await (await fetch("http://127.0.0.1:54324/api/v1/messages")).json()) as
-      { messages: { Subject: string; To: { Address: string }[] }[] };
-    expect(list.messages.some((m) => m.Subject === "Hello" && m.To.some((t) => t.Address === to))).toBe(true);
+    const msg = await latestEmailTo(to);
+    expect(msg.Subject).toBe("Hello");
   });
 });
