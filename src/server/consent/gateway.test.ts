@@ -54,7 +54,7 @@ describe("stripeGateway", () => {
       expect.objectContaining({
         mode: "setup",
         currency: "usd",
-        customer_creation: "always",
+        customer_creation: "if_required",
         allowed_payment_method_types: ["card"],
         metadata: { parent_id: A },
         success_url: "http://localhost:3000/parent/consent/return?session_id={CHECKOUT_SESSION_ID}",

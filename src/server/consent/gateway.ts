@@ -40,7 +40,7 @@ export function stripeGateway(client: StripeLike): ConsentGateway {
       const session = await client.checkout.sessions.create({
         mode: "setup",
         currency: "usd",
-        customer_creation: "always", // accepted in setup mode (v23 types); guarantees a customer so verify can detach the card
+        customer_creation: "if_required", // accepted in setup mode (v23 types); no Customer kept by us. verify still detaches if Stripe attached one
         allowed_payment_method_types: ["card"],
         metadata: { parent_id: parentId },
         success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
