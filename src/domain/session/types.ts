@@ -57,6 +57,8 @@ export type Session = {
   lastStyle: Record<string, Style>;
   switchStyle: string[];
   lastCorrect: boolean;
+  /** Mode of the last practice or review problem served (low-accuracy valve fires once in a row). */
+  lastMode: "practice" | "review" | null;
   problems: number;
   firstTryCorrect: number;
   mastered: string[];

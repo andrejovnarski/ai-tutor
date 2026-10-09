@@ -2,21 +2,25 @@
 import { check } from "../checker/check";
 import { generate, getSkill } from "../curriculum/index";
 import { guessFor, isMastered } from "../kid/bkt";
-import { frontier, reviewTarget } from "../kid/next";
+import { easyReview, frontier, isStruggling, reviewTarget, weakestPrereq } from "../kid/next";
 import { finishPlacement, placementProbe, recordPlacement, startPlacement } from "../kid/placement";
-import { applyFirstTry } from "../kid/state";
+import { applyFirstTry, resetStruggle } from "../kid/state";
 import { pickStyle, recordStyle } from "../kid/style";
 import type { Attempt, Mode, SkillState, StyleStat } from "../kid/types";
 import { adaptInput } from "../problems/build";
 import { createRng, type Rng } from "../rng";
 import type { Level, Problem } from "../types";
 import {
-  MAX_TIME_MS, SESSION_MINUTES, STALE_MS,
+  MAX_TIME_MS, REVIEW_EVERY, SESSION_MINUTES, STALE_MS,
   type Deps, type Feedback, type LogEntry, type Pending, type Session, type Turn, type Writes,
 } from "./types";
 
 const DEFAULT_DEPS: Deps = { generate };
 const RECENT = 10;
+const LOW_ACCURACY_WRONG = 4;
+const CHECK_SIZE = 2;
+const MAX_STEP_BACKS = 3;
+const WIND_DOWN_MAX = 3;
 
 const mix = (seed: number, n: number) => (seed ^ Math.imul(n + 1, 0x9e3779b1)) >>> 0;
 const stepRng = (s: Session, salt: number): Rng => createRng(mix(s.seed, s.step * 2 + salt));
@@ -25,7 +29,7 @@ export function startSession(kid: Session["kid"], seed: number, now: number): Se
   return {
     seed, step: 0, startedAt: now, lastActivity: now, kid,
     pending: null, current: null, placement: null, check: null, windDown: null, stepBacksInRow: 0,
-    count: 0, recent: [], lastStyle: {}, switchStyle: [], lastCorrect: false,
+    count: 0, recent: [], lastStyle: {}, switchStyle: [], lastCorrect: false, lastMode: null,
     problems: 0, firstTryCorrect: 0, mastered: [], ended: false,
   };
 }
@@ -82,14 +86,37 @@ export function nextTurn(s: Session, now: number, deps: Deps = DEFAULT_DEPS): { 
     return serve({ ...s, placement }, now, deps, probe.skillId, probe.level, "placement");
   }
 
-  const [minMinutes] = SESSION_MINUTES[s.kid.ageBand];
-  if (now - s.startedAt >= minMinutes * 60_000 && s.lastCorrect) return end(s, now);
+  const [minMinutes, maxMinutes] = SESSION_MINUTES[s.kid.ageBand];
+  const elapsed = now - s.startedAt;
+  if (s.windDown === null && elapsed >= maxMinutes * 60_000) s = { ...s, windDown: 0 };
+  if (s.windDown !== null) return windDown(s, now, deps);
+  if (elapsed >= minMinutes * 60_000 && s.lastCorrect) return end(s, now);
+
+  if (s.check) return serve(s, now, deps, s.check.prereqId, 1, "check");
 
   const current = s.current ?? frontier(s.kid);
-  if (current) return serve({ ...s, current, count: s.count + 1 }, now, deps, current, s.kid.skills[current]!.level, "practice");
-  const review = reviewTarget(s.kid, null);
-  if (review) return serve({ ...s, count: s.count + 1 }, now, deps, review, s.kid.skills[review]!.level, "review");
+  const wrong = s.recent.filter((ok) => !ok).length;
+  const easy = easyReview(s.kid);
+  if (wrong >= LOW_ACCURACY_WRONG && easy && s.lastMode !== "review") return review(s, now, deps, easy, 1, current);
+  const due = reviewTarget(s.kid, current);
+  if ((s.count + 1) % REVIEW_EVERY === 0 && due) return review(s, now, deps, due, s.kid.skills[due]!.level, current);
+  if (current) return serve({ ...s, current, count: s.count + 1, lastMode: "practice" }, now, deps, current, s.kid.skills[current]!.level, "practice");
+  const any = reviewTarget(s.kid, null);
+  if (any) return review(s, now, deps, any, s.kid.skills[any]!.level, null);
   return end(s, now);
+}
+
+function review(s: Session, now: number, deps: Deps, skillId: string, level: Level, current: string | null) {
+  return serve({ ...s, current, count: s.count + 1, lastMode: "review" }, now, deps, skillId, level, "review");
+}
+
+/** Easy problems to end on a win: stop after the first correct answer or WIND_DOWN_MAX problems. */
+function windDown(s: Session, now: number, deps: Deps) {
+  const served = s.windDown ?? 0;
+  if (served >= WIND_DOWN_MAX || (served > 0 && s.lastCorrect)) return end(s, now);
+  const skillId = easyReview(s.kid) ?? s.current ?? frontier(s.kid);
+  if (!skillId) return end(s, now);
+  return serve({ ...s, windDown: served + 1 }, now, deps, skillId, 1, "wind-down");
 }
 
 export function answer(s: Session, given: number, now: number): { session: Session; feedback: Feedback; writes: Writes } | null {
@@ -113,6 +140,8 @@ export function answer(s: Session, given: number, now: number): { session: Sessi
 
   if (p.try === 1) {
     next = firstTry(next, p, correct, result.kind === "known-mistake" ? result.tag : null, now, writes, feedback);
+    if (p.mode === "check") return checkAnswer(next, p, correct, attempt.mistakeTag, writes, feedback);
+    if (!correct && p.mode === "practice") next = struggle(next, p.skillId, writes);
     if (!correct) {
       const style = pickStyle(stepRng(next, 1), getSkill(p.skillId).styles, next.kid.styles, {
         tag: attempt.mistakeTag,
@@ -164,4 +193,37 @@ function firstTry(s: Session, p: Pending, correct: boolean, tag: Attempt["mistak
     if (next.current === p.skillId) next = { ...next, current: frontier(kid), stepBacksInRow: 0 };
   }
   return next;
+}
+
+/** A prerequisite check answer: no retry; a wrong answer steps back (or trips the loop guard). */
+function checkAnswer(s: Session, p: Pending, correct: boolean, tag: Attempt["mistakeTag"], writes: Writes, feedback: Feedback) {
+  const c = s.check!;
+  if (correct) {
+    if (c.done + 1 < CHECK_SIZE) return { session: { ...s, check: { ...c, done: c.done + 1 } }, feedback, writes };
+    feedback.logs.push({ type: "check-passed", skillId: c.prereqId, detail: c.returnTo });
+    const session = { ...s, check: null, stepBacksInRow: 0, switchStyle: [...s.switchStyle, c.returnTo] };
+    return { session, feedback, writes };
+  }
+  const style = pickStyle(stepRng(s, 1), getSkill(p.skillId).styles, s.kid.styles, { tag });
+  const shown = { ...feedback, style, reveal: true };
+  if (s.stepBacksInRow + 1 > MAX_STEP_BACKS) {
+    shown.logs.push({ type: "loop-guard", skillId: c.returnTo, detail: `after ${MAX_STEP_BACKS} step-backs` });
+    return { session: { ...s, check: null, windDown: 0 }, feedback: shown, writes };
+  }
+  shown.logs.push({ type: "step-back", skillId: c.prereqId, detail: `from ${c.returnTo}` });
+  const session = { ...s, check: null, current: c.prereqId, stepBacksInRow: s.stepBacksInRow + 1 };
+  return { session, feedback: shown, writes };
+}
+
+/** After a wrong practice first try: a struggling kid gets a prerequisite check, or a new style. */
+function struggle(s: Session, skillId: string, writes: Writes): Session {
+  const st = s.kid.skills[skillId]!;
+  if (!isStruggling(st)) return s;
+  const reset = resetStruggle(st);
+  writes.skillStates = writes.skillStates.map((x) => (x.skillId === skillId ? reset : x));
+  const kid = { ...s.kid, skills: { ...s.kid.skills, [skillId]: reset } };
+  const prereq = weakestPrereq(kid, skillId);
+  return prereq
+    ? { ...s, kid, check: { prereqId: prereq, returnTo: skillId, done: 0 } }
+    : { ...s, kid, switchStyle: [...s.switchStyle, skillId] };
 }
