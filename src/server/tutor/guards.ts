@@ -112,10 +112,10 @@ function hasBlocked(say: string): boolean {
 function nameProblem(say: string): boolean {
   if ((say.match(/\{name\}/g) ?? []).length > 1) return true;
   const text = say.replace(/\{name\}/g, "");
-  const re = /[A-Za-z][A-Za-z]*(?:'[A-Za-z]+)?/g;
+  const re = /\p{L}+(?:'\p{L}+)?/gu; // Unicode-aware: "Émile" and "Zoë" are names too
   for (let m = re.exec(text); m; m = re.exec(text)) {
     const word = m[0];
-    if (!/^[A-Z]/.test(word)) continue;
+    if (!/^\p{Lu}/u.test(word)) continue;
     const base = word.replace(/'.*$/, "");
     if (ALLOWED_CAPS.has(base)) continue;
     const before = text.slice(0, m.index).replace(/["'“”‘’(\s]+$/, "");

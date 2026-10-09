@@ -83,11 +83,11 @@ Nova's lines come from Claude when `TUTOR_VOICE=claude`. Unset (or any other val
 
 ### Run the eval before families
 
-The eval is the only place that spends money on purpose. It runs 46 turn plans through the real voice and the line checks.
+The eval is the only place that spends money on purpose. It runs 51 turn plans through the real voice and the line checks.
 
 ```
 npm run eval:tutor                  # prints the case count and cost estimate; makes no API call
-npm run eval:tutor -- --yes         # runs it for real (about $1 for 46 cases)
+npm run eval:tutor -- --yes         # runs it for real (about $1 for 51 cases)
 npm run eval:tutor -- --yes --limit 8   # a cheap smoke run
 ```
 
@@ -103,7 +103,9 @@ A passing report:
 
 ### Latency
 
-The goal is the first word within about 1.5 s. The hard cap is 2.5 s: after that Nova uses a canned line, so a child never waits longer. If measured latency or cost is too high, consider Sonnet 5.5 or Haiku 4.5 (one constant, `MODEL` in `src/server/tutor/voice.ts`). Only do that if the eval shows it is needed; it is the owner's decision (spec section 7).
+The goal is the first word within about 1.5 s. Each line is capped at 2.5 s: after that Nova uses a canned line for it. A whole request can still take longer, because an answer that ends the session rolls over into a new one (another line) and a request that loses a race with another tablet retries its step.
+
+If measured latency or cost is too high, Sonnet 5.5 or Haiku 4.5 are candidates (`MODEL` in `src/server/tutor/voice.ts`), but switching models is more than changing that constant: re-check that the new model supports every request option the voice sends, in particular `output_config.effort` (Haiku 4.5 rejects `effort` with an error, which would turn every line into `canned:error`) and the server-side `fallbacks` beta. Run the eval after any switch. Only do it if the eval shows it is needed; it is the owner's decision (spec section 7).
 
 ## Vercel
 

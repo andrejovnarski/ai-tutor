@@ -161,7 +161,7 @@ describe("tutor lines", () => {
   };
   const stored = (repo: MemoryRepo) => repo.sessions.find((s) => !s.ended)!.state as { tutorRecent?: string[] };
 
-  it("a problem turn carries a present line; resuming re-speaks it without bumping the version", async () => {
+  it("a problem turn carries a present line; resuming reuses it without a speak call or a write", async () => {
     const repo = setup();
     const r = recorder();
     const t = ok(await playTurn(repo, kid.kidId, 1000, seed, r.speak));
@@ -169,11 +169,41 @@ describe("tutor lines", () => {
     expect(r.plans[0]!.plan.event).toBe("present");
     expect(r.plans[0]!.plan.recentLines).toEqual([]);
     expect(stored(repo).tutorRecent).toEqual(["present {name} #1"]);
+    const before = JSON.stringify(repo.sessions);
     const again = ok(await playTurn(repo, kid.kidId, 2000, seed, r.speak));
+    const third = ok(await playTurn(repo, kid.kidId, 3000, seed, r.speak));
+    expect(r.plans).toHaveLength(1); // two resumes, zero extra speak calls
     expect(again.version).toBe(t.version);
+    expect(again.line).toEqual(t.line);
+    expect(third.line).toEqual(t.line);
+    expect(JSON.stringify(repo.sessions)).toBe(before); // no write on a resume
+  });
+
+  it("resuming or a 409 on a retry's problem (try 2) gives back the stored wrong line", async () => {
+    const repo = setup();
+    const r = recorder();
+    await playTurn(repo, kid.kidId, 1000, seed, r.speak);
+    const answer = pendingAnswer(repo);
+    const first = ok(await playAnswer(repo, kid.kidId, 1, answer + 1000, 2000, seed, r.speak));
+    expect(first.feedback.then).toBe("retry");
+    const calls = r.plans.length;
+    const resumed = ok(await playTurn(repo, kid.kidId, 3000, seed, r.speak));
+    expect(resumed.line).toEqual(first.line);
+    const stale = await playAnswer(repo, kid.kidId, 1, answer, 4000, seed, r.speak);
+    expect(stale.status).toBe(409);
+    if (stale.status === 409) expect(stale.line).toEqual(first.line);
+    expect(r.plans.length).toBe(calls);
+  });
+
+  it("a shown problem with no stored line (an older session) speaks a present line", async () => {
+    const repo = setup();
+    const r = recorder();
+    await playTurn(repo, kid.kidId, 1000, seed, r.speak);
+    const s = repo.sessions.find((x) => !x.ended)!.state as { tutorRecent?: string[]; tutorLine?: unknown };
+    delete s.tutorRecent;
+    delete s.tutorLine;
+    const again = ok(await playTurn(repo, kid.kidId, 2000, seed, r.speak));
     expect(again.line?.say).toBe("present {name} #2");
-    expect(r.plans[1]!.plan.recentLines).toEqual(["present {name} #1"]);
-    expect(stored(repo).tutorRecent).toEqual(["present {name} #1"]); // no write on a resume
   });
 
   it("an answer carries the feedback line and the next present line, both saved in the same step", async () => {

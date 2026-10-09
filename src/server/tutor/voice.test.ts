@@ -107,6 +107,12 @@ describe("speak", () => {
     expect(r.outcome).toBe("canned:parse");
   });
 
+  it("a non-SDK error (missing credentials) is canned:error, not canned:parse", async () => {
+    const err = () => new Error("Could not resolve authentication method. Expected one of apiKey...");
+    const r = await run([{ error: err() }, { error: err() }]).result;
+    expect(r.outcome).toBe("canned:error");
+  });
+
   it("uses canned on API errors", async () => {
     const err = new InternalServerError(500, undefined, "boom", new Headers());
     const r = await run([{ error: err }, { error: new APIConnectionError({ message: "down" }) }]).result;

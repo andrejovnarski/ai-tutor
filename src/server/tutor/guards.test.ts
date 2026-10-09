@@ -129,5 +129,10 @@ describe("checkLine", () => {
     expect(reason("Go, {name}! Try again. Look at 3.", plan())).toBe("ok");
     expect(reason("Wow! Let's go? Yes. I can do it. I'm sure.", plan())).toBe("ok");
     expect(reason("Four. Then 3. Ask Nova and Sam", plan())).toBe("name");
+    expect(reason("Great job, Émile!", plan())).toBe("name");
+    expect(reason("Look at this, Zoë.", plan())).toBe("name");
+    expect(reason("Well done, Łukasz and Ólafur", plan())).toBe("name");
+    expect(reason("Émile is great.", plan())).toBe("ok"); // sentence start, like any capital
+    expect(reason("Let's go, café time!", plan())).toBe("ok");
   });
 });

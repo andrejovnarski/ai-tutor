@@ -49,8 +49,11 @@ export function claudeVoice(client: Anthropic): TutorVoice {
         if (e instanceof Anthropic.APIUserAbortError || e instanceof Anthropic.APIConnectionTimeoutError)
           throw new VoiceError("timeout");
         if (e instanceof Anthropic.APIError) throw new VoiceError("error", `${e.status ?? "network"}`);
-        // The SDK parses text blocks eagerly; anything else it throws is a structured-output parse failure.
-        throw new VoiceError("parse");
+        // The SDK parses text blocks eagerly and reports a bad one as this AnthropicError. Anything else (missing
+        // credentials are a plain Error) is an error, not a parse failure.
+        if (e instanceof Anthropic.AnthropicError && e.message.startsWith("Failed to parse structured output"))
+          throw new VoiceError("parse");
+        throw new VoiceError("error");
       }
       if (msg.stop_reason === "refusal") throw new VoiceError("refusal");
       const parsed = TutorLineSchema.safeParse(msg.parsed_output);
