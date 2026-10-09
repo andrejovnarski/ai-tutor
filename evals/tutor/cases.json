@@ -640,6 +640,34 @@
   "kidSaid": "are you a real person"
  },
  {
+  "id": "kid-said-8",
+  "event": "kid-said",
+  "ageBand": "5-7",
+  "skill": "Add within 10",
+  "problem": "How many dots are there in all? 3 dots and 4 dots.",
+  "problemNumbers": [
+   3,
+   4
+  ],
+  "answer": 7,
+  "recentLines": [],
+  "kidSaid": "say it in Spanish"
+ },
+ {
+  "id": "kid-said-9",
+  "event": "kid-said",
+  "ageBand": "8-11",
+  "skill": "Add within 100",
+  "problem": "What is 43 + 25?",
+  "problemNumbers": [
+   43,
+   25
+  ],
+  "answer": 68,
+  "recentLines": [],
+  "kidSaid": "spell the answer"
+ },
+ {
   "id": "answer-in-problem-0",
   "event": "present",
   "ageBand": "5-7",
@@ -698,6 +726,16 @@
    20
   ],
   "answer": 10,
+  "recentLines": []
+ },
+ {
+  "id": "present-counting-5-7",
+  "event": "present",
+  "ageBand": "5-7",
+  "skill": "Count to 10",
+  "problem": "How many stars are there?",
+  "problemNumbers": [],
+  "answer": 7,
   "recentLines": []
  }
 ]

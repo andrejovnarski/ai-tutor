@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkLine, numbersIn } from "./guards";
+import { checkLine, numbersIn, ordinalsIn } from "./guards";
 import type { TurnPlan, TutorLine } from "./types";
 
 const plan = (o: Partial<TurnPlan> = {}): TurnPlan => ({
@@ -67,6 +67,38 @@ describe("checkLine", () => {
     expect(reason("It is twenty_one.", plan({ problemNumbers: [20, 1], answer: 21 }))).toBe("early-answer");
     expect(reason("\uff53\uff54\uff55\uff50\uff49\uff44", plan())).toBe("word");
     expect(reason("so _stupid_", plan())).toBe("word");
+  });
+  it("plural and ordinal number words, irregular ordinals and ordinal compounds", () => {
+    expect(numbersIn("sevens and twos, sixths")).toEqual([7, 2]); // ordinals are not quantities
+    expect(numbersIn("the ones and the tens, hundreds")).toEqual([]); // place-value nouns
+    expect(ordinalsIn("first, second, third, fifth, eighth, ninth, twelfth, twentieth, thirtieth, hundredth"))
+      .toEqual([1, 2, 3, 5, 8, 9, 12, 20, 30, 100]);
+    expect(ordinalsIn("seventh, sevenths, seventeenth, twenty-first, forty seventh, seconds")).toEqual([7, 7, 17, 21, 47, 2]);
+    expect(numbersIn("twenty-sevens")).toEqual([27]);
+  });
+  it("other forms of the answer are caught (problem 3 + 4, answer 7)", () => {
+    expect(reason("It's the seventh!", plan())).toBe("early-answer");
+    expect(reason("Sevens are fun", plan())).toBe("early-answer");
+    expect(reason("Think of the twenty-seventh dot", plan({ answer: 27 }))).toBe("early-answer");
+    expect(reason("Is it s-e-v-e-n?", plan())).toBe("number-form");
+    expect(reason("Is it s e v e n?", plan())).toBe("number-form");
+    expect(reason("Is it s.e.v.e.n?", plan())).toBe("number-form");
+    expect(reason("It is VII!", plan())).toBe("number-form");
+    expect(reason("It is vii!", plan())).toBe("number-form");
+    expect(reason("Try xc.", plan())).toBe("number-form");
+    expect(reason("It is \u0667!", plan())).toBe("number-form"); // Arabic-Indic seven
+    expect(reason("It is \u096d!", plan())).toBe("number-form"); // Devanagari seven
+  });
+  it("ordinals are sequencing words: only the answer is held back", () => {
+    expect(reason("Try the tens first, then the ones.", plan())).toBe("ok");
+    expect(reason("Count the second group of dots.", plan())).toBe("ok");
+    expect(reason("Look at the first dot.", plan({ answer: 1, problemNumbers: [3, 2] }))).toBe("early-answer");
+  });
+  it("normal words are not number forms", () => {
+    expect(reason("I can mix the dots, I think. A big did it.", plan())).toBe("ok");
+    expect(reason("I will civil lid dim ill vivid mild Nova.", plan())).toBe("ok");
+    expect(reason("Add 3 and 4, e.g. with a picture.", plan())).toBe("ok");
+    expect(reason("Add 3 and 4, then check.", plan({ event: "correct" }))).toBe("ok");
   });
   it("kid's answer is allowed", () => {
     expect(reason("You said 6, let's check.", plan({ event: "wrong", kidAnswer: 6 }))).toBe("ok");
