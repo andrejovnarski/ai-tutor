@@ -1,17 +1,29 @@
 import type { CheckResult, TutorLine, TurnPlan } from "./types";
 
-const NUMBER_WORDS = [
+const UNITS = [
   "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
-  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
-  "nineteen", "twenty",
+  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
 ];
-const NUMBER_RE = new RegExp(`\\b(?:\\d+|${NUMBER_WORDS.join("|")})\\b`, "gi");
+const TENS = ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+const WORD_VALUES = new Map<string, number>([
+  ...UNITS.map((w, i) => [w, i] as [string, number]),
+  ...TENS.map((w, i) => [w, (i + 2) * 10] as [string, number]),
+  ["hundred", 100], ["dozen", 12],
+]);
+const ONES = UNITS.slice(1, 10).join("|");
+const NUMBER_RE = new RegExp(
+  `\\b(?:${TENS.join("|")})[-\\s]+(?:${ONES})\\b|\\b(?:(?:a|one)\\s+)?(?:hundred|dozen)\\b|\\b(?:${[...UNITS, ...TENS].join("|")})\\b|(?<!\\d)\\d+(?!\\d)`,
+  "g");
 
-/** Digit runs and the number words "zero" to "twenty", whole words only. */
+/** Digit runs and number words (zero to ninety, compounds, hundred, dozen) as their value; whole words only. */
 export function numbersIn(text: string): number[] {
-  return (text.match(NUMBER_RE) ?? []).map((t) => {
-    const w = NUMBER_WORDS.indexOf(t.toLowerCase());
-    return w >= 0 ? w : Number(t);
+  const s = text.normalize("NFKC").toLowerCase();
+  return (s.match(NUMBER_RE) ?? []).map((t) => {
+    if (/^\d+$/.test(t)) return Number(t);
+    const parts = t.split(/[-\s]+/);
+    if (parts.length === 2 && TENS.includes(parts[0]!) && UNITS.includes(parts[1]!))
+      return WORD_VALUES.get(parts[0]!)! + WORD_VALUES.get(parts[1]!)!;
+    return WORD_VALUES.get(parts[parts.length - 1]!)!;
   });
 }
 
@@ -60,6 +72,7 @@ export function checkLine(line: TutorLine, plan: TurnPlan): CheckResult {
   const max = plan.ageBand === "5-7" ? 25 : 40;
   if (wordCount(say) > max) return { ok: false, reason: "length" };
   if (hasBlocked(say)) return { ok: false, reason: "word" };
+  if (/[{}]/.test(say.replace(/\{name\}/g, ""))) return { ok: false, reason: "placeholder" };
   if (nameProblem(say)) return { ok: false, reason: "name" };
   return { ok: true };
 }

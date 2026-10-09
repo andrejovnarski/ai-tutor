@@ -31,4 +31,4 @@ export type TutorLine = z.infer<typeof TutorLineSchema>;
 
 export type CheckResult =
   | { ok: true }
-  | { ok: false; reason: "numbers" | "early-answer" | "length" | "word" | "name" };
+  | { ok: false; reason: "numbers" | "early-answer" | "length" | "word" | "name" | "placeholder" };

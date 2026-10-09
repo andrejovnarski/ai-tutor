@@ -18,6 +18,13 @@ describe("numbersIn", () => {
     expect(numbersIn("someone is gone, none left")).toEqual([]);
     expect(numbersIn("zero")).toEqual([0]);
   });
+  it("reads big words and compounds as their value", () => {
+    expect(numbersIn("forty seven")).toEqual([47]);
+    expect(numbersIn("twenty-one and thirty")).toEqual([21, 30]);
+    expect(numbersIn("a dozen eggs")).toEqual([12]);
+    expect(numbersIn("a hundred, one hundred, ninety")).toEqual([100, 100, 90]);
+    expect(numbersIn("It is _7_, 7ish, 7th, \uff17")).toEqual([7, 7, 7, 7]);
+  });
 });
 
 describe("checkLine", () => {
@@ -39,6 +46,15 @@ describe("checkLine", () => {
   });
   it("answer in the problem is fine", () => {
     expect(reason("5 plus nothing stays 5", plan({ problem: "What is 5 + 0?", problemNumbers: [5, 0], answer: 5 }))).toBe("ok");
+  });
+  it("digits glued to letters, big number words, placeholders", () => {
+    for (const s of ["It is _7_.", "It is 7ish.", "It is 7th.", "It is \uff17."]) expect(reason(s, plan())).toBe("early-answer");
+    expect(reason("That makes thirty!", plan({ problem: "15 + 15", problemNumbers: [15, 15], answer: 30 }))).toBe("early-answer");
+    expect(reason("Twenty-one is the total.", plan({ problem: "20 + 1", problemNumbers: [20, 1], answer: 21 }))).toBe("early-answer");
+    expect(reason("Those blocks make thirty-four!", plan({ problemNumbers: [3, 4], answer: 34 }))).toBe("early-answer");
+    expect(reason("It is {answer}!", plan())).toBe("placeholder");
+    expect(reason("Hi { name }!", plan())).toBe("placeholder");
+    expect(reason("Hi {name}!", plan())).toBe("ok");
   });
   it("kid's answer is allowed", () => {
     expect(reason("You said 6, let's check.", plan({ event: "wrong", kidAnswer: 6 }))).toBe("ok");
