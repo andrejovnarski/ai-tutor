@@ -3,6 +3,7 @@ import { addSubtractWithin20Cluster } from "./add-subtract-within-20";
 import { addWithin10Cluster } from "./add-within-10";
 import { compareNumbersCluster } from "./compare-numbers";
 import { countTo20Cluster } from "./count-to-20";
+import { placeValueCluster } from "./place-value";
 import { subtractWithin10Cluster } from "./subtract-within-10";
 
 export const CLUSTERS: Cluster[] = [
@@ -11,6 +12,7 @@ export const CLUSTERS: Cluster[] = [
   addWithin10Cluster,
   subtractWithin10Cluster,
   addSubtractWithin20Cluster,
+  placeValueCluster,
 ];
 
 export const SKILLS: Skill[] = CLUSTERS.flatMap((c) => c.skills);
