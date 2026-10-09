@@ -48,7 +48,7 @@ const countSequence = template("count-sequence", (rng, lv) => {
   };
 });
 
-export const countTo20: Cluster = {
+export const countTo20Cluster: Cluster = {
   id: "count-to-20",
   name: "Count to 20",
   skills: [
