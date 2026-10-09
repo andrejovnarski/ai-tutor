@@ -10,4 +10,5 @@ export const env = {
   supabaseUrl: () => need("NEXT_PUBLIC_SUPABASE_URL"),
   supabasePublishableKey: () => need("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
   supabaseSecretKey: () => need("SUPABASE_SECRET_KEY"),
+  parentCookieSecret: () => need("PARENT_COOKIE_SECRET"),
 };
