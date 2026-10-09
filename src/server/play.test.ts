@@ -113,3 +113,12 @@ it("never leaks answers, mistakes or template data to the browser", async () => 
   results.push(await playAnswer(repo, kid.kidId, 1, 0, 4000, seed)); // 409
   for (const r of results) expect(JSON.stringify(r)).not.toMatch(LEAK);
 });
+
+it("lets two racing first turns share one new session", async () => {
+  const repo = setup();
+  const [a, b] = await Promise.all([playTurn(repo, kid.kidId, 1000, seed), playTurn(repo, kid.kidId, 1000, seed)]);
+  expect(a.status).toBe(200);
+  expect(b.status).toBe(200);
+  expect(ok(a).turn).toEqual(ok(b).turn);
+  expect(repo.sessions.filter((s) => !s.ended)).toHaveLength(1);
+});

@@ -8,7 +8,8 @@ export interface Repo {
   /** null = not found or not yours. */
   loadKid(kidId: string): Promise<KidState | null>;
   openSession(kidId: string): Promise<OpenSession | null>;
-  createSession(kidId: string, state: Session): Promise<OpenSession>;
+  /** null if the kid already has an open session (a lost create race). */
+  createSession(kidId: string, state: Session): Promise<OpenSession | null>;
   /** The new version, or -1 if `s.version` is stale (nothing is written then). */
   saveStep(s: OpenSession, next: Session, ended: boolean, writes: Writes | null): Promise<number>;
 }
@@ -43,9 +44,9 @@ export class MemoryRepo implements Repo {
     return s ? { id: s.id, version: s.version, state: copy(s.state) } : null;
   }
 
-  async createSession(kidId: string, state: Session): Promise<OpenSession> {
+  async createSession(kidId: string, state: Session): Promise<OpenSession | null> {
     if (!this.kids.has(kidId)) throw new Error("unknown kid");
-    if (this.open(kidId)) throw new Error("kid already has an open session");
+    if (this.open(kidId)) return null;
     const s: StoredSession = { id: `session-${this.sessions.length + 1}`, kidId, version: 0, state: copy(state), ended: false };
     this.sessions.push(s);
     return { id: s.id, version: 0, state: copy(state) };

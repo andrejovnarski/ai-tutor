@@ -13,13 +13,14 @@ export type AnswerResult =
   | { status: 404 };
 
 type Step = { version: number; turn: Turn };
-const MAX_ATTEMPTS = 3;
+const MAX_ATTEMPTS = 5;
 
-/** Starts a new session for the kid and takes its first turn. Null if the kid is gone or a race was lost. */
+/** Starts a new session for the kid and takes its first turn. Null if the kid is gone or another request created a session first. */
 async function startFresh(repo: Repo, kidId: string, now: number, seed: () => number): Promise<Step | null> {
   const kid = await repo.loadKid(kidId);
   if (!kid) return null;
   const created = await repo.createSession(kidId, startSession(kid, seed(), now));
+  if (!created) return null;
   const { session, turn } = nextTurn(created.state, now);
   const version = await repo.saveStep(created, session, turn.kind === "end", null);
   return version < 0 ? null : { version, turn };
@@ -31,7 +32,7 @@ async function commit(repo: Repo, kidId: string, open: OpenSession, session: Ses
   const version = await repo.saveStep(open, session, turn.kind === "end", writes);
   if (version < 0) return null;
   if (turn.kind !== "end") return { version, turn };
-  return startFresh(repo, kidId, now, seed);
+  return (await startFresh(repo, kidId, now, seed)) ?? current(repo, kidId, now, seed);
 }
 
 async function current(repo: Repo, kidId: string, now: number, seed: () => number): Promise<Step | null> {
@@ -48,7 +49,7 @@ async function current(repo: Repo, kidId: string, now: number, seed: () => numbe
     const step = await commit(repo, kidId, open, session, turn, null, now, seed);
     if (step) return step;
   }
-  throw new Error("could not settle a session");
+  return null;
 }
 
 export async function playTurn(repo: Repo, kidId: string, now: number, seed: () => number): Promise<TurnResult> {
