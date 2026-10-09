@@ -47,6 +47,7 @@ describe.each(all.map((t) => [t.id, t] as const))("%s", (_id, t) => {
       expect(p.mistakes.every((m) => m.answer !== p.answer && MISTAKE_TAGS.includes(m.tag))).toBe(true);
       expect(new Set(p.mistakes.map((m) => m.answer)).size).toBe(p.mistakes.length);
       expect(p.prompt.say.split(/\s+/).length).toBeLessThanOrEqual(30);
+      expect(p.prompt.say).not.toMatch(/\b1 (apples|stars|balls|shells|blocks|cookies|dots|ones|tens|are|go)\b/); // grammar read aloud
       expect(validVisual(p.prompt.show)).toBe(true);
       if (lv === 3 && p.prompt.show.kind === "equation" && p.prompt.show.text.includes("="))
         expect(solveEquation(p.prompt.show.text)).toBe(p.answer);

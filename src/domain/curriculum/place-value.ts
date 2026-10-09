@@ -2,6 +2,7 @@ import type { Rng } from "../rng";
 import type { Cluster, Level } from "../types";
 import { compareNumbers, distinctPair } from "./compare-numbers";
 import { between, fade, plusMinus, template, type ByLevel, type Span } from "./kit";
+import { plural } from "./words";
 
 const TEENS: ByLevel<Span> = { 1: [11, 14], 2: [11, 17], 3: [11, 19] };
 const TWO_DIGIT: ByLevel<Span> = { 1: [20, 49], 2: [20, 79], 3: [20, 99] };
@@ -11,7 +12,7 @@ const digits = (n: number) => ({ tens: Math.floor(n / 10), ones: n % 10 });
 const teenBlocks = template("teen-blocks", (rng, lv) => {
   const o = between(rng, TEENS[lv]) - 10;
   return {
-    say: `One ten and ${o} ones. What number is it?`,
+    say: `One ten and ${plural(o, "one", "ones")}. What number is it?`,
     show: { kind: "blocks", groups: [{ tens: 1, ones: o }] },
     answer: 10 + o,
     mistakes: [
@@ -39,7 +40,7 @@ const blocksToNumber = template("blocks-to-number", (rng, lv) => {
   const n = between(rng, TWO_DIGIT[lv]);
   const { tens: t, ones: o } = digits(n);
   return {
-    say: `${t} tens and ${o} ones. What number is it?`,
+    say: `${t} tens and ${plural(o, "one", "ones")}. What number is it?`,
     show: { kind: "blocks", groups: [{ tens: t, ones: o }] },
     answer: n,
     mistakes: [

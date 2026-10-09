@@ -1,7 +1,7 @@
 import type { Rng } from "../rng";
 import type { Cluster, Level, Mistake } from "../types";
 import { between, fade, plusMinus, template, type ByLevel, type Span } from "./kit";
-import { ITEMS } from "./words";
+import { ITEMS, plural } from "./words";
 
 /** a + b = sum with sum in `span`, each part ≥ `minPart`. */
 export const splitSum = (rng: Rng, span: Span, minPart: number): [number, number] => {
@@ -21,7 +21,7 @@ const addObjects = template("add-objects-10", (rng, lv) => {
   const [a, b] = splitSum(rng, PICTURE_SUMS[lv], 1);
   const item = rng.pick(ITEMS);
   return {
-    say: `${a} ${item.word} and ${b} more. How many in all?`,
+    say: `${plural(a, item.one, item.word)} and ${b} more. How many in all?`,
     show: { kind: "objects", icon: item.icon, groups: [a, b] },
     answer: a + b,
     mistakes: addMistakes(a, b),
@@ -97,7 +97,7 @@ const makeTenMistakes = (a: number): Mistake[] => [
 const makeTenFrame = template("make-ten-frame", (rng, lv) => {
   const a = between(rng, MAKE_TEN_START[lv]);
   return {
-    say: `${a} dots. How many more make 10?`,
+    say: `${plural(a, "dot", "dots")}. How many more make 10?`,
     show: { kind: "ten-frames", first: a, second: 0 },
     answer: 10 - a,
     mistakes: makeTenMistakes(a),

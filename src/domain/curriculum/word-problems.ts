@@ -1,14 +1,14 @@
 import type { Rng } from "../rng";
 import type { Cluster, Level, Mistake } from "../types";
 import { between, plusMinus, template, type ByLevel, type Span } from "./kit";
-import { ANIMALS, ITEMS } from "./words";
+import { ANIMALS, ITEMS, plural } from "./words";
 
-type Cast = { A: string; B: string; C: string; items: string; icon: (typeof ITEMS)[number]["icon"] };
+type Cast = { A: string; B: string; C: string; items: string; icon: (typeof ITEMS)[number]["icon"]; has: (n: number) => string };
 
 const cast = (rng: Rng): Cast => {
   const [A, B, C] = rng.shuffle(ANIMALS) as [string, string, string];
   const item = rng.pick(ITEMS);
-  return { A, B, C, items: item.word, icon: item.icon };
+  return { A, B, C, items: item.word, icon: item.icon, has: (n) => plural(n, item.one, item.word) };
 };
 
 /** `groups` (and `crossedOut`, the last N objects) are drawn at level 1 when every group is ≤ 20. */
@@ -49,7 +49,7 @@ const addTo = (id: string, sums: (lv: Level) => Span, regroup: boolean) =>
     const s = between(rng, sums(lv));
     const [a, b] = split(rng, s);
     return {
-      say: `${c.A} has ${a} ${c.items}. ${c.A} gets ${b} more. How many ${c.items} now?`,
+      say: `${c.A} has ${c.has(a)}. ${c.A} gets ${b} more. How many ${c.items} now?`,
       answer: s,
       groups: [a, b],
       mistakes: [
@@ -64,7 +64,7 @@ const putTogether = story("story-put-together", (rng, lv, c) => {
   const s = rng.int(2, MAX_20[lv]);
   const [a, b] = split(rng, s);
   return {
-    say: `${c.A} has ${a} ${c.items}. ${c.B} has ${b}. How many ${c.items} in all?`,
+    say: `${c.A} has ${c.has(a)}. ${c.B} has ${b}. How many ${c.items} in all?`,
     answer: s,
     groups: [a, b],
     mistakes: [{ answer: Math.abs(a - b), tag: "wrong-operation" }, ...plusMinus(s, 1, "off-by-one-counting")],
@@ -76,7 +76,7 @@ const takeAway = (id: string, starts: (lv: Level) => Span, regroup: boolean) =>
     const [a, b] = takeFrom(rng, starts(lv));
     const d = a - b;
     return {
-      say: `${c.A} has ${a} ${c.items}. ${c.A} gives ${b} away. How many are left?`,
+      say: `${c.A} has ${c.has(a)}. ${c.A} gives ${b} away. How many are left?`,
       answer: d,
       groups: [a],
       crossedOut: b,
@@ -95,7 +95,7 @@ const takeAway = (id: string, starts: (lv: Level) => Span, regroup: boolean) =>
 const takeApart = story("story-take-apart", (rng, lv, c) => {
   const [total, red] = takeFrom(rng, [2, MAX_20[lv]]);
   return {
-    say: `${c.A} has ${total} ${c.items}. ${red} are red. The rest are blue. How many are blue?`,
+    say: `${c.A} has ${c.has(total)}. ${red} ${red === 1 ? "is" : "are"} red. The rest are blue. How many are blue?`,
     answer: total - red,
     groups: [total],
     mistakes: [
@@ -111,7 +111,7 @@ const howMany = (id: string, ask: "more" | "fewer") =>
     const [x, y] = takeFrom(rng, [2, MAX_20[lv]]);
     const question = ask === "more" ? `How many more does ${c.A} have?` : `How many fewer does ${c.B} have?`;
     return {
-      say: `${c.A} has ${x} ${c.items}. ${c.B} has ${y}. ${question}`,
+      say: `${c.A} has ${c.has(x)}. ${c.B} has ${y}. ${question}`,
       answer: x - y,
       groups: [x, y],
       mistakes: [
@@ -129,7 +129,7 @@ const twoStepAddSub = story("story-two-step-add-sub", (rng, lv, c) => {
   const g = rng.int(1, a + b - 1);
   const answer = a + b - g;
   return {
-    say: `${c.A} has ${a} ${c.items}. ${c.A} gets ${b} more, then gives ${g} away. How many now?`,
+    say: `${c.A} has ${c.has(a)}. ${c.A} gets ${b} more, then gives ${g} away. How many now?`,
     answer,
     groups: [a, b],
     crossedOut: g,
@@ -146,7 +146,7 @@ const twoStepAddAdd = story("story-two-step-add-add", (rng, lv, c) => {
   const a = rng.int(1, total - 2);
   const [b, g] = split(rng, total - a);
   return {
-    say: `${c.A} has ${a} ${c.items}. ${c.B} gives ${c.A} ${b}. ${c.C} gives ${c.A} ${g}. How many now?`,
+    say: `${c.A} has ${c.has(a)}. ${c.B} gives ${c.A} ${b}. ${c.C} gives ${c.A} ${g}. How many now?`,
     answer: total,
     groups: [a, b, g],
     mistakes: [{ answer: a + b, tag: "stopped-after-one-step" }, ...plusMinus(total, 1, "off-by-one-counting")],

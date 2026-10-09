@@ -15,7 +15,7 @@ it.each([
 it("teen-blocks: one ten and o ones, blocks at every level", () =>
   each("teen-blocks", (p, _lv, [o]) => {
     expect(p.answer).toBe(10 + o!);
-    expect(p.prompt.say).toBe(`One ten and ${o} ones. What number is it?`);
+    expect(p.prompt.say).toBe(`One ten and ${o} ${o === 1 ? "one" : "ones"}. What number is it?`);
     expect(p.prompt.show).toEqual({ kind: "blocks", groups: [{ tens: 1, ones: o }] });
     expect(p.mistakes).toContainEqual({ answer: o, tag: "counted-ones-only" });
   }));

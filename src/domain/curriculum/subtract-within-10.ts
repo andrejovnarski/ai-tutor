@@ -22,7 +22,7 @@ const subObjects = template("sub-objects-10", (rng, lv) => {
   const [a, b] = takeAway(rng, lv, PICTURE_START[lv]);
   const item = rng.pick(ITEMS);
   return {
-    say: `${a} ${item.word}. ${b} go away. How many are left?`,
+    say: `${a} ${item.word}. ${b} ${b === 1 ? "goes" : "go"} away. How many are left?`,
     show: { kind: "objects", icon: item.icon, groups: [a], crossedOut: b },
     answer: a - b,
     mistakes: subMistakes(a, b),
