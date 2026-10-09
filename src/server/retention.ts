@@ -44,7 +44,7 @@ async function eachPage(
  * Spec §8: 12 months inactive, then a warning, then deletion 30 days later unless the parent became active again.
  * The warning is claimed (retention_warned_at set where still null) before the email, so repeated or overlapping
  * runs warn once; a failed send releases the claim for the next run. Unsent distress emails get a last attempt
- * before flags older than 30 days are purged.
+ * before flags older than 30 days are purged. Each phase runs even if an earlier one failed; failures are logged.
  */
 export async function runRetention(
   now: Date,
@@ -59,7 +59,7 @@ export async function runRetention(
   const warnedBefore = new Date(now.getTime() - 30 * DAY).toISOString();
 
   let warned = 0;
-  await eachPage(
+  await phase("warn", () => eachPage(
     (after, size) => {
       let q = db.from("parents").select("id").lte("last_active_at", inactiveBefore).or(unwarned).order("id").limit(size);
       if (after) q = q.gt("id", after);
@@ -96,10 +96,10 @@ export async function runRetention(
         }
       }
     },
-  );
+  ));
 
   let deleted = 0;
-  await eachPage(
+  await phase("delete", () => eachPage(
     (after, size) => {
       let q = db.from("parents").select("id").lte("retention_warned_at", warnedBefore).eq("retention_warn_unsent", false).lte("last_active_at", inactiveBefore).order("id").limit(size);
       if (after) q = q.gt("id", after);
@@ -118,11 +118,27 @@ export async function runRetention(
         }
       }
     },
-  );
+  ));
 
-  const { sent: distressSent } = await sendPendingDistressEmails();
-  const purge = await db.from("distress_flags").delete().lt("at", warnedBefore).select("id");
-  if (purge.error) throw purge.error;
+  let distressSent = 0;
+  await phase("distress retry", async () => {
+    distressSent = (await sendPendingDistressEmails()).sent;
+  });
+  let purgedFlags = 0;
+  await phase("distress purge", async () => {
+    const purge = await db.from("distress_flags").delete().lt("at", warnedBefore).select("id");
+    if (purge.error) throw purge.error;
+    purgedFlags = purge.data.length;
+  });
 
-  return { warned, deleted, purgedFlags: purge.data.length, distressSent };
+  return { warned, deleted, purgedFlags, distressSent };
+}
+
+/** Runs one retention phase; a failure is logged and does not stop the later phases (the next run retries). */
+async function phase(name: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
+  } catch (e) {
+    console.error(`retention ${name} phase failed`, e instanceof Error ? e.message : e);
+  }
 }

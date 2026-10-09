@@ -37,6 +37,8 @@ export const mailpitMailer: Mailer = {
 
 export function getMailer(): Mailer {
   if (env.mailer() === "resend") return resendMailer;
-  if (process.env.VERCEL_ENV === "production") throw new Error("MAILER=mailpit is not allowed in production");
+  // Local dev and tests only: never on a Vercel production or preview deployment.
+  const vercel = process.env.VERCEL_ENV;
+  if (vercel && vercel !== "development") throw new Error(`MAILER=mailpit is not allowed on Vercel ${vercel}`);
   return mailpitMailer;
 }

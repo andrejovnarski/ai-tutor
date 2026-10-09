@@ -37,9 +37,16 @@ describe("getMailer", () => {
     vi.stubEnv("VERCEL_ENV", "production");
     expect(() => getMailer()).toThrow();
   });
-  it("returns mailpit elsewhere", () => {
+  it("refuses mailpit on a Vercel preview", () => {
+    vi.stubEnv("MAILER", "mailpit");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    expect(() => getMailer()).toThrow();
+  });
+  it("returns mailpit in Vercel development or off Vercel", () => {
     vi.stubEnv("MAILER", "mailpit");
     vi.stubEnv("VERCEL_ENV", "development");
+    expect(getMailer()).toBe(mailpitMailer);
+    vi.stubEnv("VERCEL_ENV", undefined);
     expect(getMailer()).toBe(mailpitMailer);
   });
 });

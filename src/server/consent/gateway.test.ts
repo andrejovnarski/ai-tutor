@@ -1,10 +1,10 @@
-import { vi } from "vitest";
+import { vi, afterEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 process.env.PARENT_COOKIE_SECRET = "test-secret-test-secret-test-secret";
 process.env.APP_ORIGIN = "http://localhost:3000";
 
-const { fakeGateway, stripeGateway } = await import("./gateway");
+const { fakeGateway, stripeGateway, getConsentGateway } = await import("./gateway");
 
 const A = "11111111-1111-1111-1111-111111111111";
 const B = "22222222-2222-2222-2222-222222222222";
@@ -86,5 +86,23 @@ describe("stripeGateway", () => {
     const c = stubClient({});
     c.checkout.sessions.retrieve.mockRejectedValue(new Error("no such session"));
     expect(await stripeGateway(c as never).verify("cs_x")).toEqual({ ok: false });
+  });
+});
+
+describe("getConsentGateway", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  it("refuses the fake gateway in production and on Vercel previews", () => {
+    vi.stubEnv("CONSENT_GATEWAY", "fake");
+    for (const v of ["production", "preview"]) {
+      vi.stubEnv("VERCEL_ENV", v);
+      expect(() => getConsentGateway()).toThrow();
+    }
+  });
+  it("allows the fake gateway in Vercel development or off Vercel", () => {
+    vi.stubEnv("CONSENT_GATEWAY", "fake");
+    vi.stubEnv("VERCEL_ENV", "development");
+    expect(getConsentGateway()).toBe(fakeGateway);
+    vi.stubEnv("VERCEL_ENV", undefined);
+    expect(getConsentGateway()).toBe(fakeGateway);
   });
 });

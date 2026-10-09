@@ -60,7 +60,7 @@ Parental consent is a card check with no charge: Stripe Checkout in setup mode. 
 4. Switch to the **live** keys.
 5. Sign Stripe's data processing agreement.
 
-Caution: the app has no Stripe webhook yet. If a parent completes Checkout but never returns to the app, the payment method is not detached. Add a `checkout.session.completed` webhook before live use.
+Note: the app has no Stripe webhook yet. Consent is recorded only when the parent returns to the app after Checkout. Nothing stays attached if they never return: Checkout uses `customer_creation: "if_required"`, so no Stripe Customer is created and the card is not attached to one. A `checkout.session.completed` webhook is still on the to-do list, so that consent completes even if the parent never returns.
 
 ## Resend (app email)
 
@@ -98,5 +98,6 @@ Crons come from `vercel.json`: the weekly report (hourly on Sundays, it sends fr
 Do not invite real families until all of these are done:
 
 1. A lawyer reviews the privacy notice, the distress phrase list and the consent method (spec sections 8 and 11, `docs/superpowers/specs/2026-10-08-adaptive-tutor-design.md`).
+   Also ask the lawyer: the privacy notice is currently reachable only after sign-in and the parent PIN. Does it need a public link before sign-up?
 2. Remove the "Draft" banner by changing `PRIVACY_NOTICE_VERSION` (in `src/server/consent/notice.ts`) to a non-draft version.
 3. The Stripe, Resend and Vercel steps above are done, including the hosted retention check.

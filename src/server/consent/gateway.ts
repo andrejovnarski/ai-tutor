@@ -18,7 +18,7 @@ function fakeMac(parentId: string): string {
   return createHmac("sha256", env.parentCookieSecret()).update(`consent.${parentId}`).digest("hex");
 }
 
-/** Local dev and tests: a signed id that stands in for the card check. Never allowed in production. */
+/** Local dev and tests: a signed id that stands in for the card check. Never allowed on Vercel production or previews. */
 export const fakeGateway: ConsentGateway = {
   async start(parentId) {
     return { redirectUrl: `/parent/consent/return?session_id=fake_${parentId}_${fakeMac(parentId)}` };
@@ -67,7 +67,9 @@ export function stripeGateway(client: StripeLike): ConsentGateway {
 
 export function getConsentGateway(): ConsentGateway {
   if (env.consentGateway() === "fake") {
-    if (process.env.VERCEL_ENV === "production") throw new Error("The fake consent gateway cannot run in production");
+    // Local dev and tests only: never on a Vercel production or preview deployment.
+    const vercel = process.env.VERCEL_ENV;
+    if (vercel && vercel !== "development") throw new Error(`The fake consent gateway cannot run on Vercel ${vercel}`);
     return fakeGateway;
   }
   return stripeGateway(new Stripe(env.stripeSecretKey()));

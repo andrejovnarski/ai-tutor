@@ -16,6 +16,17 @@ vi.mock("../../src/server/email/mailer", async (orig) => {
     }),
   };
 });
+const distress = vi.hoisted(() => ({ fail: false }));
+vi.mock("../../src/server/distress/report", async (orig) => {
+  const real = await orig<typeof import("../../src/server/distress/report")>();
+  return {
+    ...real,
+    sendPendingDistressEmails: async () => {
+      if (distress.fail) throw new Error("distress retry down");
+      return real.sendPendingDistressEmails();
+    },
+  };
+});
 const { runRetention, deleteIfStillInactive } = await import("../../src/server/retention");
 const { GET } = await import("../../src/app/api/cron/retention/route");
 
@@ -194,6 +205,24 @@ describe("retention", () => {
     expect(r.purgedFlags).toBeGreaterThanOrEqual(1);
     const left = (await admin().from("distress_flags").select("line").eq("kid_id", kid)).data!.map((f) => f.line);
     expect(left).toEqual(["x29"]);
+  });
+
+  it("a failing phase does not stop the others; the counts are still returned", async () => {
+    const p = await makeParent(emailOf("ph"), { consent: true });
+    const kid = await seedKid(p.userId);
+    const { error } = await admin().from("distress_flags").insert({ kid_id: kid, line: "old", at: ago(40), emailed_at: ago(40) });
+    expect(error).toBeNull();
+    await setRow(p.userId, { last_active_at: ago(400) });
+    distress.fail = true;
+    try {
+      const r = await runRetention(NOW);
+      expect(r).toMatchObject({ distressSent: 0 });
+      expect(r.warned).toBeGreaterThanOrEqual(1);
+      expect(r.purgedFlags).toBeGreaterThanOrEqual(1);
+    } finally {
+      distress.fail = false;
+    }
+    expect((await admin().from("distress_flags").select("id").eq("kid_id", kid)).data).toHaveLength(0);
   });
 
   it("emails an unsent distress flag before purging, and pages parents", async () => {

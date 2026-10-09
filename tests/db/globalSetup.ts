@@ -1,10 +1,31 @@
 import { createClient } from "@supabase/supabase-js";
 import { loadEnv } from "vite";
 
-/** Deletes every leftover test user (email ending @test.dev) so crons that scan all parents stay fast. Other users are untouched. */
+const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost"]);
+
+/**
+ * Deletes every leftover test user (email ending @test.dev) so crons that scan all parents stay fast. Other users are
+ * untouched. Refuses to run against anything but the local Supabase stack.
+ */
 export default async function setup() {
   const env = loadEnv("test", process.cwd(), "");
-  const a = createClient(env.NEXT_PUBLIC_SUPABASE_URL!, env.SUPABASE_SECRET_KEY!, { auth: { persistSession: false, autoRefreshToken: false } });
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  let host = "";
+  try {
+    host = new URL(url ?? "").hostname;
+  } catch {
+    // not a URL: refused below
+  }
+  if (!LOCAL_HOSTS.has(host)) {
+    throw new Error(`db tests run only against the local Supabase stack (127.0.0.1 or localhost), not ${JSON.stringify(url)}`);
+  }
+  const a = createClient(url!, env.SUPABASE_SECRET_KEY!, { auth: { persistSession: false, autoRefreshToken: false } });
+  const remove = async (ids: string[]) => {
+    for (const id of ids) {
+      const { error } = await a.auth.admin.deleteUser(id);
+      if (error) throw error; // never loop on a user that cannot be deleted
+    }
+  };
   for (;;) {
     // Always page 1: deleting shifts later users forward; stop when a page holds no test users.
     const { data, error } = await a.auth.admin.listUsers({ page: 1, perPage: 200 });
@@ -17,15 +38,12 @@ export default async function setup() {
         const r = await a.auth.admin.listUsers({ page, perPage: 200 });
         if (r.error) throw r.error;
         const found = r.data.users.filter((u) => u.email?.endsWith("@test.dev"));
-        for (const u of found) await a.auth.admin.deleteUser(u.id);
+        await remove(found.map((u) => u.id));
         if (found.length) break; // restart from page 1
         if (r.data.users.length < 200) return;
       }
       continue;
     }
-    for (const u of mine) {
-      const { error: de } = await a.auth.admin.deleteUser(u.id);
-      if (de) throw de;
-    }
+    await remove(mine.map((u) => u.id));
   }
 }
