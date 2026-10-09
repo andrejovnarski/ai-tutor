@@ -14,7 +14,8 @@ create table public.distress_flags (
   id bigint generated always as identity primary key,
   kid_id uuid not null references public.kids on delete cascade,
   line text not null check (char_length(line) <= 500),
-  at timestamptz not null default now()
+  at timestamptz not null default now(),
+  emailed_at timestamptz
 );
 create index distress_flags_kid_idx on public.distress_flags (kid_id, at);
 

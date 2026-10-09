@@ -19,12 +19,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ kidId: 
 
   const repo = await parentRepo();
   if (!repo) return notFound();
+  let hit = false;
   try {
     if (!(await repo.loadKid(kidId))) return notFound();
-    if (!detectDistress(text).hit) return NextResponse.json({ reply: null });
+    hit = detectDistress(text).hit;
+    if (!hit) return NextResponse.json({ reply: null });
     await reportDistress(kidId, text, Date.now());
   } catch (err) {
-    return tryAgain("say", err);
+    // Even if storing failed, a child who said something worrying still hears the line.
+    const res = tryAgain("say", err);
+    return hit ? NextResponse.json({ error: "try again", reply: DISTRESS_REPLY }, { status: res.status }) : res;
   }
   return NextResponse.json({ reply: DISTRESS_REPLY });
 }
