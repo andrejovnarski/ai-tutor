@@ -43,10 +43,12 @@ export default function PlayPage({ params }: { params: Promise<{ kidId: string }
       } else if (r.ok) {
         const b = (await r.json()) as Reply;
         setStep({ version: b.version, turn: b.next });
+        const f = b.feedback;
         setMessage(
-          b.feedback.result.kind === "correct" ? "Correct!"
-            : b.feedback.then === "retry" ? "Try again"
-            : `The answer is ${b.revealed}`,
+          f.result.kind === "correct" ? "Correct!"
+            : f.then === "retry" ? "Try again"
+            : f.reveal && b.revealed !== undefined ? `The answer is ${b.revealed}`
+            : "Let's try the next one",
         );
       } else setFailed(true);
       setTyped("");

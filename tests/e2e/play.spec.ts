@@ -51,9 +51,9 @@ const attempts = async (parentId: string) => {
 const choiceButtons = (page: Page) => page.getByTestId("choices").getByRole("button");
 
 /** Answers by tapping the first choice (or the first pad digit then Go) and waits for the next prompt. */
-async function answerOnce(page: Page) {
+async function answerOnce(page: Page, pick = 0) {
   const before = await page.locator("main").getAttribute("data-version");
-  if (await page.getByTestId("choices").count()) await choiceButtons(page).first().click();
+  if (await page.getByTestId("choices").count()) await choiceButtons(page).nth(pick).click();
   else {
     await page.getByRole("button", { name: "1", exact: true }).click();
     await page.getByRole("button", { name: "Go" }).click();
@@ -61,21 +61,30 @@ async function answerOnce(page: Page) {
   await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
 }
 
-test("tap Mia and answer 3 problems; attempts are saved and responses never carry answer or mistakes", async ({ page }) => {
-  const responses: string[] = [];
-  page.on("response", async (r) => {
-    if (r.url().includes("/api/kids/") || /\/play\//.test(r.url())) responses.push(await r.text().catch(() => ""));
+test("tap Mia and answer problems; attempts are saved and responses never carry answer or mistakes", async ({ page }) => {
+  const bodies: Promise<string>[] = [];
+  page.on("response", (r) => {
+    if (r.url().includes("/api/kids/") || /\/play\//.test(r.url())) bodies.push(r.text().catch(() => ""));
   });
   const parentId = await setUpMia(page);
   await page.getByRole("link", { name: /Mia/ }).click();
   await expect(page).toHaveURL(/\/play\/[0-9a-f-]{36}$/);
   await expect(page.getByTestId("say")).toBeVisible();
-  const target = (await attempts(parentId)) + 3;
-  for (let i = 0; i < 3; i++) await answerOnce(page);
+  const target = (await attempts(parentId)) + 6;
+  const feedback: string[] = [];
+  for (let i = 0; i < 6; i++) {
+    await answerOnce(page, i % 3);
+    feedback.push(await page.getByTestId("feedback").innerText().catch(() => ""));
+  }
+  for (const f of feedback) expect(f).not.toMatch(/undefined|NaN/);
   await expect.poll(() => attempts(parentId)).toBeGreaterThanOrEqual(target);
-  expect(responses.length).toBeGreaterThan(3);
+  const responses = await Promise.all(bodies);
+  expect(responses.length).toBeGreaterThan(6);
   for (const body of responses) expect(body).not.toMatch(/"answer"|"mistakes"/);
-  expect(await page.content()).not.toMatch(/"answer"|"mistakes"/);
+  // the HTML the server sends (not the live DOM)
+  const html = await (await page.request.get(page.url())).text();
+  expect(html).toContain("<main");
+  expect(html).not.toMatch(/"answer"|"mistakes"|\\"answer\\"|\\"mistakes\\"/);
 });
 
 test("reloading mid-problem brings back the same prompt and choices", async ({ page }) => {
