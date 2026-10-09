@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "test:db": "vitest run -c vitest.db.config.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "env:local": "npx supabase status -o env | node scripts/env-local.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",
@@ -18,10 +19,12 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "fast-check": "^4.10.2",
+    "supabase": "^2.120.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
     "next": "^16.4.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
