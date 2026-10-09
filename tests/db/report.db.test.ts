@@ -1,0 +1,106 @@
+import { describe, it, expect, beforeAll, vi } from "vitest";
+import { admin, makeParent, latestEmailTo } from "../helpers/admin";
+
+vi.mock("server-only", () => ({}));
+const { sendWeeklyReports } = await import("../../src/server/report/send");
+const { GET } = await import("../../src/app/api/cron/weekly-report/route");
+
+const run = Date.now();
+const SUNDAY_5PM = new Date("2026-10-11T21:00:00Z"); // Sunday 17:00 EDT
+const SUNDAY_4PM = new Date("2026-10-11T20:00:00Z");
+const WEEK_START = "2026-10-04";
+const day = (d: number, minute = 0) => new Date(Date.UTC(2026, 9, d, 15, minute)).toISOString();
+
+const emailOf = (id: string) => `rep-${id}-${run}@test.dev`;
+let parent: string, noConsent: string;
+const reportRows = async (id: string) =>
+  (await admin().from("report_sends").select("*").eq("parent_id", id)).data ?? [];
+const mailCount = async (email: string) =>
+  ((await (await fetch("http://127.0.0.1:54324/api/v1/messages")).json()) as { messages: { To: { Address: string }[] }[] })
+    .messages.filter((m) => m.To.some((t) => t.Address === email)).length;
+
+async function seedKid(parentId: string, nickname: string) {
+  const { data, error } = await admin().from("kids")
+    .insert({ parent_id: parentId, nickname, grade: "K", age_band: "5-7", avatar: "fox" }).select().single();
+  expect(error).toBeNull();
+  return data.id as string;
+}
+
+beforeAll(async () => {
+  parent = (await makeParent(emailOf("a"), { consent: true })).userId;
+  noConsent = (await makeParent(emailOf("b"))).userId;
+  const kid = await seedKid(parent, "Zoe");
+  await seedKid(noConsent, "Nope");
+  const a = admin();
+  const sessions: string[] = [];
+  for (const startedDay of [6, 8]) {
+    const { data, error } = await a.from("sessions").insert({ kid_id: kid, state: {}, started_at: day(startedDay), ended_at: day(startedDay, 20) }).select().single();
+    expect(error).toBeNull();
+    sessions.push(data.id as string);
+  }
+  const attempt = (s: string, d: number, m: number, tag: string | null) => ({
+    kid_id: kid, session_id: s, skill_id: "add-within-10.count-on", template_id: "t", seed: 1, level: 1, answer: 3,
+    result: tag ? "wrong" : "correct", mistake_tag: tag, style: null, time_ms: 60_000, at: day(d, m), try: 1, mode: "practice",
+  });
+  const { error } = await a.from("attempts").insert([
+    attempt(sessions[0]!, 6, 0, "off-by-ten"), attempt(sessions[0]!, 6, 9, null), // 10 min
+    attempt(sessions[1]!, 8, 0, "off-by-ten"), attempt(sessions[1]!, 8, 19, null), // 20 min
+    attempt(sessions[1]!, 1, 0, "added-instead"), // outside the window
+  ]);
+  expect(error).toBeNull();
+  const { error: se } = await a.from("skill_state").insert({
+    kid_id: kid, skill_id: "add-within-10.count-on", p_known: 0.5, attempts: 3, level: 1, correct_streak: 0, wrong_streak: 0,
+    placed: false, recent_tags: [], mastered_at: day(9),
+  });
+  expect(se).toBeNull();
+});
+
+describe("weekly report", () => {
+  it("emails a consented parent a summary once, and only on Sunday 17:00 Eastern", async () => {
+    const email = emailOf("a");
+    expect((await sendWeeklyReports(SUNDAY_4PM)).sent).toBe(0);
+    expect(await reportRows(parent)).toHaveLength(0);
+
+    expect((await sendWeeklyReports(SUNDAY_5PM)).sent).toBeGreaterThanOrEqual(1);
+    const rows = await reportRows(parent);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].week_start).toBe(WEEK_START);
+
+    const mail = await latestEmailTo(email);
+    expect(mail.Subject).toBe("Your week with Math Friend");
+    expect(mail.Text).toContain("Zoe");
+    expect(mail.Text).toContain("2 sessions");
+    expect(mail.Text).toContain("30 minutes");
+    expect(mail.Text).toContain("Count on"); // skill name mastered this week
+    expect(mail.Text.toLowerCase()).toContain("tens");
+    expect(mail.Text).not.toMatch(/undefined|NaN|null/);
+    expect(mail.Text).not.toContain("Adding when"); // the out-of-window tag appears only once, so is not stuck
+
+    expect(await mailCount(email)).toBe(1);
+    await sendWeeklyReports(SUNDAY_5PM);
+    expect(await reportRows(parent)).toHaveLength(1);
+    expect(await mailCount(email)).toBe(1);
+  });
+
+  it("sends nothing to a parent without consent", async () => {
+    await sendWeeklyReports(SUNDAY_5PM);
+    expect(await reportRows(noConsent)).toHaveLength(0);
+    expect(await mailCount(emailOf("b"))).toBe(0);
+  });
+
+  it("the route needs the bearer secret and sends nothing without it", async () => {
+    const c = await makeParent(emailOf("c"), { consent: true });
+    await seedKid(c.userId, "Cal");
+    const url = `http://x/api/cron/weekly-report?now=${SUNDAY_5PM.getTime()}`;
+    const res = await GET(new Request(url));
+    expect(res.status).toBe(401);
+    expect(await reportRows(c.userId)).toHaveLength(0);
+    expect(await mailCount(emailOf("c"))).toBe(0);
+
+    const ok = await GET(new Request(`http://x/api/cron/weekly-report?now=${SUNDAY_4PM.getTime()}`, {
+      headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
+    }));
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toEqual({ sent: 0 });
+  });
+});
