@@ -6,6 +6,7 @@ import { compareNumbersCluster } from "./compare-numbers";
 import { countTo20Cluster } from "./count-to-20";
 import { placeValueCluster } from "./place-value";
 import { subtractWithin10Cluster } from "./subtract-within-10";
+import { wordProblemsCluster } from "./word-problems";
 
 export const CLUSTERS: Cluster[] = [
   countTo20Cluster,
@@ -15,6 +16,7 @@ export const CLUSTERS: Cluster[] = [
   addSubtractWithin20Cluster,
   placeValueCluster,
   addSubtractWithin100Cluster,
+  wordProblemsCluster,
 ];
 
 export const SKILLS: Skill[] = CLUSTERS.flatMap((c) => c.skills);
