@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { admin } from "../helpers/admin";
 import { parentId, setPin, signIn, unique } from "./helpers";
@@ -83,4 +84,17 @@ test("another parent cannot use A's return link; replay leaves one row; garbage 
   await b.goto("/parent/consent/return");
   await expect(b).toHaveURL(/\/parent\/consent\?error=1$/);
   await ctx.close();
+});
+
+test("a signed-in parent without the PIN cookie still gets consent from their own return link", async ({ page, context }) => {
+  const email = unique();
+  await signIn(page, email);
+  await setPin(page);
+  const id = await parentId(email);
+  const mac = createHmac("sha256", process.env.PARENT_COOKIE_SECRET!).update(`consent.${id}`).digest("hex");
+  await context.clearCookies({ name: "parent_ok" });
+  await page.goto(`/parent/consent/return?session_id=fake_${id}_${mac}`);
+  expect(await consentRows(id)).toHaveLength(1);
+  expect(await consentAt(id)).not.toBeNull();
+  await expect(page).toHaveURL(/\/parent\/pin$/);
 });

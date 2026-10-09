@@ -1,13 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-import { requireParent } from "@/server/parentGate";
+import { requireUser } from "@/server/parentGate";
 import { getConsentGateway } from "@/server/consent/gateway";
 import { PRIVACY_NOTICE_VERSION } from "@/server/consent/notice";
 import { env } from "@/server/env";
 
-// Stripe sends the parent back in the same browser, so the PIN cookie is still there: requireParent is fine.
+// Only the signed-in user is needed: the session is bound to user.id, and the 15-minute PIN cookie may have expired during Checkout (verify must still run so the card is detached).
 export async function GET(req: NextRequest) {
-  const { user } = await requireParent();
+  const { user } = await requireUser();
   const to = (path: string) => NextResponse.redirect(new URL(path, env.appOrigin()));
   const sessionId = req.nextUrl.searchParams.get("session_id") ?? "";
   const fail = () => to("/parent/consent?error=1");
