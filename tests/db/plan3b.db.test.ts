@@ -80,12 +80,37 @@ describe("skill_state.mastered_at", () => {
     expect(await get("m2")).toBeNull();
   });
 
+  it("a placed skill later practiced to attempts 5 stays null", async () => {
+    const a = admin();
+    await a.from("skill_state").insert(row("pl1", 0.99, 0, true));
+    await a.from("skill_state").update({ attempts: 5 }).eq("kid_id", kidA).eq("skill_id", "pl1");
+    expect(await get("pl1")).toBeNull();
+  });
+
+  it("a placed insert with attempts 5 stays null", async () => {
+    await admin().from("skill_state").insert(row("pl2", 0.99, 5, true));
+    expect(await get("pl2")).toBeNull();
+  });
+
+  it("a non-placed insert already mastered gets it set", async () => {
+    await admin().from("skill_state").insert(row("np1", 0.99, 5));
+    expect(await get("np1")).not.toBeNull();
+  });
+
+  it("a placed row crossing 0.95 by update gets it set", async () => {
+    const a = admin();
+    await a.from("skill_state").insert(row("pl3", 0.9, 0, true));
+    expect(await get("pl3")).toBeNull();
+    await a.from("skill_state").update({ p_known: 0.96 }).eq("kid_id", kidA).eq("skill_id", "pl3");
+    expect(await get("pl3")).not.toBeNull();
+  });
+
   it("thresholds equal MASTERED_P and MASTERED_ATTEMPTS", async () => {
     const cases: [string, number, number, boolean][] = [
       ["b1", MASTERED_P - 0.0001, MASTERED_ATTEMPTS, false],
       ["b2", MASTERED_P, MASTERED_ATTEMPTS, true],
       ["b3", MASTERED_P, MASTERED_ATTEMPTS - 1, false],
-      ["b4", MASTERED_P, MASTERED_ATTEMPTS, true],
+      ["b4", MASTERED_P, MASTERED_ATTEMPTS - 1, false],
     ];
     for (const [s, p, n, want] of cases) {
       expect((await admin().from("skill_state").insert(row(s, p, n))).error).toBeNull();

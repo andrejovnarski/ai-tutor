@@ -40,14 +40,21 @@ create policy distress_flags_select on public.distress_flags for select to authe
 alter table public.parents add column retention_warned_at timestamptz;
 alter table public.skill_state add column mastered_at timestamptz;
 
--- Mastery mirrors src/domain/kid/bkt.ts: MASTERED_P = 0.95 and MASTERED_ATTEMPTS = 5. Placement alone does not count.
--- The first time a row crosses the line mastered_at is set, and it is never changed afterwards.
+-- Mastery mirrors isMastered in src/domain/kid/bkt.ts: p_known >= MASTERED_P (0.95) and
+-- (attempts >= MASTERED_ATTEMPTS (5) or placed). mastered_at is set once, when a row crosses into mastered
+-- by practice: an UPDATE whose old row was not mastered, or an INSERT that is mastered and not placed
+-- (a placement-known skill was never "learned").
 create function public.set_mastered_at()
 returns trigger language plpgsql set search_path = '' as $$
 begin
-  if tg_op = 'UPDATE' and old.mastered_at is not null then
-    new.mastered_at := old.mastered_at;
-  elsif new.p_known >= 0.95 and new.attempts >= 5 then
+  if tg_op = 'UPDATE' then
+    if old.mastered_at is not null then
+      new.mastered_at := old.mastered_at;
+    elsif new.p_known >= 0.95 and (new.attempts >= 5 or new.placed)
+      and not (old.p_known >= 0.95 and (old.attempts >= 5 or old.placed)) then
+      new.mastered_at := now();
+    end if;
+  elsif new.p_known >= 0.95 and new.attempts >= 5 and not new.placed then
     new.mastered_at := coalesce(new.mastered_at, now());
   end if;
   return new;
