@@ -11,8 +11,8 @@ gantt
   title Adaptive AI Tutor — draft
   dateFormat YYYY-MM-DD
   section Design
-  Brainstorm + spec         :active, d1, 2026-10-08, 7d
-  Implementation plan       :d2, after d1, 3d
+  Brainstorm + spec         :done, d1, 2026-10-08, 2d
+  Implementation plan       :active, d2, after d1, 3d
   section v1 build
   Skill map + problem maker :b1, after d2, 10d
   Session engine + kid model:b2, after b1, 10d

@@ -1,7 +1,7 @@
 # Adaptive AI Tutor — v1 Design Spec
 
 - **Date:** 2026-10-08
-- **Status:** Design approved section by section; spec awaiting review
+- **Status:** Approved (2026-10-09)
 - **Companion:** Obsidian vault at `vault/` (same content, linked notes and graphs)
 
 ## 1. Intent

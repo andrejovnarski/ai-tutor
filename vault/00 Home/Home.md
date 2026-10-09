@@ -5,7 +5,7 @@ tags: [home]
 
 > An AI tutor that adapts to each child in real time. Private-school quality help for any family.
 
-Status: **Design approved — spec in review** (2026-10-08). Spec: `docs/superpowers/specs/2026-10-08-adaptive-tutor-design.md`
+Status: **Spec approved** (2026-10-09) — implementation plan in progress. Spec: `docs/superpowers/specs/2026-10-08-adaptive-tutor-design.md`
 
 ## Map
 - Vision → [[Product Vision]], [[Users]], [[Success Metrics]]
