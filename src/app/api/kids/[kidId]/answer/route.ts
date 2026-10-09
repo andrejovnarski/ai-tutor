@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { playAnswer } from "@/server/play";
-import { badRequest, forKid, MAX_INT, notFound, novaSpeak, parentRepo, seed, tryAgain } from "@/server/playApi";
+import { badRequest, forKid, MAX_INT, nicknameOrNull, notFound, novaSpeak, parentRepo, seed, tryAgain } from "@/server/playApi";
 
 export async function POST(req: Request, { params }: { params: Promise<{ kidId: string }> }) {
   const { kidId } = await params;
@@ -20,7 +20,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ kidId: 
   let r, nickname;
   try {
     [r, nickname] = await Promise.all([
-      playAnswer(repo, kidId, version, given, Date.now(), seed, novaSpeak()), repo.nickname(kidId),
+      playAnswer(repo, kidId, version, given, Date.now(), seed, novaSpeak()), nicknameOrNull(repo, kidId),
     ]);
   } catch (err) {
     return tryAgain("answer", err);

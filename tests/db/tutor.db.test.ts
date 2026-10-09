@@ -28,6 +28,7 @@ import { POST as answerPost } from "../../src/app/api/kids/[kidId]/answer/route"
 import { POST as sayPost } from "../../src/app/api/kids/[kidId]/say/route";
 import { numbersIn } from "../../src/server/tutor/guards";
 import { userMessage } from "../../src/server/tutor/prompt";
+import { SupabaseRepo } from "../../src/server/persist/supabaseRepo";
 
 const NAME = "Zephyrina";
 const DISTRESS = "That sounds hard. Please tell a grown-up you trust.";
@@ -138,6 +139,51 @@ describe("Nova in play", () => {
       tutor.voice = null;
     }
   }, 120_000);
+
+  it("after two wrong tries the answer line says the answer even when the voice leaves it out", async () => {
+    const kid = await newKid("8-11", "2");
+    // Placed, so practice problems give a retry and then the reveal (placement probes move on instead).
+    expect((await admin().from("kids").update({ placed: true }).eq("id", kid)).error).toBeNull();
+    // A Claude-like voice whose explain never states the answer: guards must reject it and fall back to canned.
+    tutor.voice = { line: async () => ({ say: "Let's walk through it together!", tone: "calm", cacheRead: 0 }) };
+    let { version } = await (await turnPost(post({}), ctx(kid))).json();
+    let revealed = 0;
+    for (let n = 0; n < 6 && revealed < 2; n++) {
+      const { state } = await openState(kid);
+      const ans: number = state.pending.problem.answer;
+      let r = await (await answerPost(post({ version, given: ans + 1000 }), ctx(kid))).json();
+      if (r.feedback.then === "retry") r = await (await answerPost(post({ version: r.version, given: ans + 1000 }), ctx(kid))).json();
+      if (r.feedback.reveal) {
+        revealed++;
+        expect(r.revealed).toBe(ans);
+        expect(numbersIn(r.line.say), r.line.say).toContain(ans);
+      }
+      version = r.version;
+    }
+    expect(revealed).toBeGreaterThan(0);
+  });
+
+  it("a failing nickname lookup falls back to 'friend' instead of failing the request", async () => {
+    const kid = await newKid("5-7", "K");
+    tutor.voice = { line: async () => ({ say: "Ready, {name}? Take a look.", tone: "curious", cacheRead: 0 }) };
+    const spy = vi.spyOn(SupabaseRepo.prototype, "nickname").mockRejectedValue(new Error("db blip"));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const t = await turnPost(post({}), ctx(kid));
+      expect(t.status).toBe(200);
+      const { version, line } = await t.json();
+      expect(line.say).toBe("Ready, friend? Take a look.");
+      const { state } = await openState(kid);
+      const a = await answerPost(post({ version, given: state.pending.problem.answer }), ctx(kid));
+      expect(a.status).toBe(200);
+      expect((await a.json()).line.say).not.toContain("{name}");
+      const s = await sayPost(post({ text: "tell me a joke" }), ctx(kid));
+      expect(s.status).toBe(200);
+    } finally {
+      spy.mockRestore();
+      warn.mockRestore();
+    }
+  });
 
   it("say: off-topic text gets a steer-back line and nothing is stored or logged", async () => {
     const kid = await newKid("5-7", "K");

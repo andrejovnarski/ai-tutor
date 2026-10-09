@@ -70,6 +70,9 @@ export function checkLine(line: TutorLine, plan: TurnPlan): CheckResult {
   const mayReveal = !HIDES_ANSWER.has(plan.event) && (plan.event !== "explain" || plan.revealed === true);
   if (!mayReveal && spoken.includes(plan.answer) && !plan.problemNumbers.includes(plan.answer))
     return { ok: false, reason: "early-answer" };
+  // After two wrong tries the kid is told the answer (spec §7): a revealed explain that leaves it out fails.
+  if (plan.event === "explain" && plan.revealed === true && !spoken.includes(plan.answer))
+    return { ok: false, reason: "missing-answer" };
 
   const max = plan.ageBand === "5-7" ? 25 : 40;
   if (wordCount(say) > max) return { ok: false, reason: "length" };

@@ -40,6 +40,12 @@ describe("checkLine", () => {
     expect(reason("4 more than 3 is 7.", plan({ event: "explain", revealed: true }))).toBe("ok");
     expect(reason("4 more than 3 is 7.", plan({ event: "explain" }))).toBe("early-answer");
   });
+  it("a revealed explain must say the answer (the kid is told after two wrong tries)", () => {
+    expect(reason("Let's walk through it together!", plan({ event: "explain", revealed: true }))).toBe("missing-answer");
+    expect(reason("Count on from 3 with me.", plan({ event: "explain", revealed: true }))).toBe("missing-answer");
+    expect(reason("It makes seven, {name}.", plan({ event: "explain", revealed: true }))).toBe("ok");
+    expect(reason("Let's walk through it together!", plan({ event: "explain" }))).toBe("ok");
+  });
   it("hint, wrong and kid-said keep the answer hidden", () => {
     for (const event of ["hint", "wrong", "kid-said"] as const)
       expect(reason("It is 7", plan({ event }))).toBe("early-answer");

@@ -38,3 +38,13 @@ export function novaSpeak(): Speak {
 export function forKid(line: TutorLine, nickname: string | null): TutorLine {
   return { ...line, say: fillName(line.say, nickname ?? "") };
 }
+
+/** The nickname for `{name}`, or null ("friend") if the lookup fails: a name must never fail a step that was saved. */
+export async function nicknameOrNull(repo: SupabaseRepo, kidId: string): Promise<string | null> {
+  try {
+    return await repo.nickname(kidId);
+  } catch {
+    console.warn("nickname lookup failed; using the default name");
+    return null;
+  }
+}
