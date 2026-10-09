@@ -137,7 +137,8 @@ export function answer(s: Session, given: number, now: number): { session: Sessi
 
   if (p.mode === "placement") {
     next = placementAnswer(next, correct, writes);
-    return { session: { ...next, problems: next.problems + 1 }, feedback, writes };
+    const counted = { ...next, problems: next.problems + 1, firstTryCorrect: next.firstTryCorrect + (correct ? 1 : 0) };
+    return { session: counted, feedback, writes };
   }
 
   if (p.try === 1) {

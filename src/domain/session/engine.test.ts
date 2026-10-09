@@ -176,3 +176,10 @@ it("double tap on a wrong first answer does not use up the retry (Review Focus 1
   expect(b.feedback.result.kind).toBe("correct");
   expect(b.writes.attempts[0]!.timeMs).toBe(3 * SEC); // timed from when the retry was shown
 });
+
+it("the first-session summary counts correct placement answers", () => {
+  const { steps } = play(startSession(newKidState("k", "5-7", "K"), 1, 0), 0, rightFor);
+  const end = steps.at(-1)!.turn;
+  if (end.kind !== "end") throw new Error("no end");
+  expect(end.summary.firstTryCorrect).toBe(end.summary.problems);
+});
