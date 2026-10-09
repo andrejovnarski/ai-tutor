@@ -50,6 +50,28 @@ Supabase's built-in mailer is for testing only. Use Resend:
    - Sender: an address on the verified domain
 5. Send yourself a magic link to confirm delivery.
 
+## Stripe (consent)
+
+Parental consent is a card check with no charge: Stripe Checkout in setup mode. Locally the app uses a fake gateway.
+
+1. Create a Stripe account.
+2. Set the **test** keys: `STRIPE_SECRET_KEY` (starts `sk_test_`) and `CONSENT_GATEWAY=stripe`.
+3. Run one real check in test mode with card `4242 4242 4242 4242` (any future expiry, any CVC). Confirm the consent row appears and no charge is made.
+4. Switch to the **live** keys.
+5. Sign Stripe's data processing agreement.
+
+Caution: the app has no Stripe webhook yet. If a parent completes Checkout but never returns to the app, the payment method is not detached. Add a `checkout.session.completed` webhook before live use.
+
+## Resend (app email)
+
+The weekly report and distress emails go through Resend too (Auth email is set up above).
+
+| Variable | Value |
+|---|---|
+| `RESEND_API_KEY` | The Resend API key |
+| `EMAIL_FROM` | An address on the verified domain |
+| `MAILER` | `resend` |
+
 ## Vercel
 
 Set these environment variables for the project:
@@ -60,7 +82,21 @@ Set these environment variables for the project:
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Hosted publishable key |
 | `SUPABASE_SECRET_KEY` | Hosted secret key (server only, never expose) |
 | `PARENT_COOKIE_SECRET` | Output of `openssl rand -hex 32` |
+| `CRON_SECRET` | Output of `openssl rand -hex 32`; Vercel sends it as a bearer token to the cron routes |
+| `APP_ORIGIN` | The production origin, for example `https://your-app.vercel.app` |
+| `STRIPE_SECRET_KEY`, `CONSENT_GATEWAY`, `RESEND_API_KEY`, `EMAIL_FROM`, `MAILER` | As in the Stripe and Resend sections |
+
+Crons come from `vercel.json`: the weekly report (hourly on Sundays, it sends from 17:00 New York time) and daily retention. Hourly crons need a Vercel plan that allows them; the free Hobby plan does not.
+
+### Production cautions
+
+- **Retention deletes `auth.users` through a SQL definer function.** Verify on the hosted project that it works: delete one test account through retention and check the user is gone.
+- **`tests/db/globalSetup.ts` deletes `@test.dev` users.** Only ever run the db test suite against the local stack.
 
 ## Before the first family signs up
 
-The COPPA lawyer review (spec section 8, `docs/superpowers/specs/2026-10-08-adaptive-tutor-design.md`) must happen first. Consent and the report come in plan 3b; do not invite real families until both are done.
+Do not invite real families until all of these are done:
+
+1. A lawyer reviews the privacy notice, the distress phrase list and the consent method (spec sections 8 and 11, `docs/superpowers/specs/2026-10-08-adaptive-tutor-design.md`).
+2. Remove the "Draft" banner by changing `PRIVACY_NOTICE_VERSION` (in `src/server/consent/notice.ts`) to a non-draft version.
+3. The Stripe, Resend and Vercel steps above are done, including the hosted retention check.
