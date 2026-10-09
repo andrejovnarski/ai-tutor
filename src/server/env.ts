@@ -11,4 +11,11 @@ export const env = {
   supabasePublishableKey: () => need("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
   supabaseSecretKey: () => need("SUPABASE_SECRET_KEY"),
   parentCookieSecret: () => need("PARENT_COOKIE_SECRET"),
+  stripeSecretKey: () => need("STRIPE_SECRET_KEY"),
+  consentGateway: () => need("CONSENT_GATEWAY"),
+  mailer: () => need("MAILER"),
+  resendApiKey: () => need("RESEND_API_KEY"),
+  emailFrom: () => need("EMAIL_FROM"),
+  cronSecret: () => need("CRON_SECRET"),
+  appOrigin: () => need("APP_ORIGIN"),
 };
