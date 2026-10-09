@@ -126,8 +126,8 @@ it("past the max time, at most 3 wind-down problems, then the end", () => {
 });
 
 it("a check that leaves the prerequisite mastered does not step back to it (number pad)", () => {
-  // 8–11 on the number pad: guess 0.05, so one wrong check answer after a right one keeps pKnown ≥ 0.95.
-  const kid = placedKid(firstSkills(idx("add-within-10.missing")), "8-11", "2");
+  // A prerequisite known well (pKnown 0.99): one wrong check answer after a right one keeps it ≥ 0.95.
+  const kid = setSkill(placedKid(firstSkills(idx("add-within-10.missing")), "8-11", "2"), "add-within-10.make-ten", { pKnown: 0.99, attempts: 10 });
   let checks = 0;
   const { steps } = play(fresh(kid), 0, (t) => {
     if (t.mode === "check") return checks++ % 2 === 0 ? rightFor(t) : wrongFor(t);

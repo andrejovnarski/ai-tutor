@@ -12,7 +12,7 @@
 
 ## Decisions this plan makes
 
-- **Mastery-model starting numbers** (spec §11): every skill starts with `prior 0.2, learn 0.15, slip 0.1`. The spec asks for per-skill values, so `BKT_OVERRIDES` exists but stays empty until real data arrives. **Guess** is not a per-skill number. It comes from how the problem was answered: number pad 0.05, two choices 0.5, otherwise 1 ÷ number of choices. A per-skill guess would be wrong for half the kids, because ages 5–7 tap and ages 8–11 type the same skill.
+- **Mastery-model starting numbers** (spec §11): every skill starts with `prior 0.2, learn 0.15, slip 0.1`. The spec asks for per-skill values, so `BKT_OVERRIDES` exists but stays empty until real data arrives. **Guess** is not a per-skill number. It comes from how the problem was answered: number pad 0.15 (raised from 0.05 after review, owner's choice), two choices 0.5, otherwise 1 ÷ number of choices. A per-skill guess would be wrong for half the kids, because ages 5–7 tap and ages 8–11 type the same skill.
 - **Storage:** the plan-series table said "storage behind an interface". This plan replaces that with a `Writes` record returned after each answer, which keeps the engine pure and easy to simulate. Plan 3 saves each `Writes` to Supabase.
 - **Retries:** a wrong first try gets an explanation in a chosen style and one retry. A wrong retry gets a final explanation that reveals the answer, then the next problem. This matches the spec §7 rule that the answer is spoken only after 2 failed tries. BKT, level and streaks use the **first try only**. The retry only updates style stats.
 
@@ -97,7 +97,7 @@ export const BKT_OVERRIDES: Record<string, Partial<BktParams>> = {};
 export const MASTERED_P = 0.95;
 export const MASTERED_ATTEMPTS = 5;
 export function bktParams(skillId: string): BktParams;
-export function guessFor(p: Problem): number;     // number-pad 0.05; else 1 / choices.length
+export function guessFor(p: Problem): number;     // number-pad 0.15; else 1 / choices.length
 export function bktUpdate(pKnown: number, correct: boolean, params: BktParams, guess: number): number;
 export function isMastered(s: SkillState): boolean;
 ```

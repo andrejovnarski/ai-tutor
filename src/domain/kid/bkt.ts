@@ -14,9 +14,12 @@ export function bktParams(skillId: string): BktParams {
   return { ...BKT_DEFAULTS, ...BKT_OVERRIDES[skillId] };
 }
 
+/** Lucky-or-near-miss chance on the number pad: kept above a pure guess so 2 right answers can't master a skill. */
+export const NUMBER_PAD_GUESS = 0.15;
+
 /** Chance of a lucky right answer, from how the kid answered. */
 export function guessFor(p: Problem): number {
-  if (p.input === "number-pad" || !p.choices?.length) return 0.05;
+  if (p.input === "number-pad" || !p.choices?.length) return NUMBER_PAD_GUESS;
   return 1 / p.choices.length;
 }
 

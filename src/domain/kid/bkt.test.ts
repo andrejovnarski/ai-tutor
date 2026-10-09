@@ -23,10 +23,10 @@ it("stays in (0, 1)", () => {
 
 it("guessFor by input", () => {
   const base: Problem = { prompt: { say: "", show: { kind: "equation", text: "" } }, answer: 1, mistakes: [], input: "tap-choice" };
-  expect(guessFor({ ...base, input: "number-pad", choices: [1, 2, 3, 4] })).toBe(0.05);
+  expect(guessFor({ ...base, input: "number-pad", choices: [1, 2, 3, 4] })).toBe(0.15);
   expect(guessFor({ ...base, choices: [1, 2] })).toBe(0.5);
   expect(guessFor({ ...base, choices: [1, 2, 3, 4] })).toBe(0.25);
-  expect(guessFor(base)).toBe(0.05);
+  expect(guessFor(base)).toBe(0.15);
 });
 
 it("mastered needs 0.95 and 5 attempts, or placement", () => {
@@ -38,3 +38,11 @@ it("mastered needs 0.95 and 5 attempts, or placement", () => {
 });
 
 it("bktParams merges overrides over defaults", () => expect(bktParams("count-to-20.objects-to-10")).toEqual(BKT_DEFAULTS));
+
+it("number pad: 3 wrong then 2 right is not yet mastered; a 3rd right is", () => {
+  const pad = guessFor({ prompt: { say: "", show: { kind: "equation", text: "" } }, answer: 1, mistakes: [], input: "number-pad", choices: [1, 2, 3, 4] });
+  let p = P.prior;
+  for (const c of [false, false, false, true, true]) p = bktUpdate(p, c, P, pad);
+  expect(p).toBeLessThan(0.95);
+  expect(bktUpdate(p, true, P, pad)).toBeGreaterThanOrEqual(0.95);
+});

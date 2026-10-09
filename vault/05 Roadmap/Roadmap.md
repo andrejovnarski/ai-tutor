@@ -23,7 +23,7 @@ gantt
   Pilot with ~10 families   :p1, after b4, 21d
 ```
 
-BKT defaults: prior 0.2, learn 0.15, slip 0.1; guess from input (Plan 2).
+BKT defaults: prior 0.2, learn 0.15, slip 0.1; guess from input: 1 ÷ choices, number pad 0.15 (Plan 2).
 
 ## Later (not v1)
 - More strands: multiply/divide, fractions, geometry, time, money
