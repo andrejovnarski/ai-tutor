@@ -1,8 +1,9 @@
 import type { Cluster, Level, Problem, Skill, Template } from "../types";
+import { addWithin10Cluster } from "./add-within-10";
 import { compareNumbersCluster } from "./compare-numbers";
 import { countTo20Cluster } from "./count-to-20";
 
-export const CLUSTERS: Cluster[] = [countTo20Cluster, compareNumbersCluster];
+export const CLUSTERS: Cluster[] = [countTo20Cluster, compareNumbersCluster, addWithin10Cluster];
 
 export const SKILLS: Skill[] = CLUSTERS.flatMap((c) => c.skills);
 
