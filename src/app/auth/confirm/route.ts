@@ -1,5 +1,6 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { touchActivity } from "@/server/retention";
 import { createServerSupabase } from "@/server/supabase";
 
 export async function GET(request: NextRequest) {
@@ -10,5 +11,7 @@ export async function GET(request: NextRequest) {
   if (!token_hash || !type) return to("/sign-in?error=link");
   const supabase = await createServerSupabase();
   const { error } = await supabase.auth.verifyOtp({ type, token_hash });
-  return to(error ? "/sign-in?error=link" : "/");
+  if (error) return to("/sign-in?error=link");
+  await touchActivity(supabase);
+  return to("/");
 }
