@@ -3,8 +3,6 @@ import { createHmac, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { env } from "./env";
 
 const MIN = 60_000;
-export const MAX_PIN_FAILURES = 5;
-export const LOCK_MS = 10 * MIN;
 export const COOKIE_MS = 15 * MIN;
 export const RESET_WINDOW_MS = 10 * MIN;
 
@@ -29,12 +27,6 @@ export async function verifyPin(pin: string, hash: string, salt: string): Promis
 
 export function isValidPin(pin: string): boolean {
   return /^\d{4}$/.test(pin);
-}
-
-/** State after one more wrong PIN. The 5th failure locks for 10 minutes. */
-export function nextLockState(failed: number, now: number): { failed: number; lockedUntil: number | null } {
-  const next = failed + 1;
-  return { failed: next, lockedUntil: next >= MAX_PIN_FAILURES ? now + LOCK_MS : null };
 }
 
 function mac(parentId: string, exp: number): string {

@@ -3,7 +3,7 @@ import { vi } from "vitest";
 vi.mock("server-only", () => ({}));
 process.env.PARENT_COOKIE_SECRET = "test-secret-test-secret-test-secret";
 
-const { canResetPin, hashPin, isValidPin, nextLockState, signParentCookie, verifyParentCookie, verifyPin } =
+const { canResetPin, hashPin, isValidPin, signParentCookie, verifyParentCookie, verifyPin } =
   await import("./pin");
 
 const MIN = 60_000;
@@ -30,17 +30,6 @@ describe("hashPin / verifyPin", () => {
 describe("isValidPin", () => {
   it.each(["1234", "0000"])("accepts %s", (p) => expect(isValidPin(p)).toBe(true));
   it.each(["123", "12a4", "12345", "", " 123"])("rejects %j", (p) => expect(isValidPin(p)).toBe(false));
-});
-
-describe("nextLockState", () => {
-  it("counts failures without locking before the 5th", () => {
-    expect(nextLockState(0, 1000)).toEqual({ failed: 1, lockedUntil: null });
-    expect(nextLockState(3, 1000)).toEqual({ failed: 4, lockedUntil: null });
-  });
-
-  it("locks for 10 minutes on the 5th failure", () => {
-    expect(nextLockState(4, 1000)).toEqual({ failed: 5, lockedUntil: 1000 + 10 * MIN });
-  });
 });
 
 describe("parent cookie", () => {

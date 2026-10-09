@@ -38,10 +38,16 @@ export const storePin = (parentId: string, hash: string, salt: string) =>
 export const clearPin = (parentId: string) =>
   write(parentId, { pin_hash: null, pin_salt: null, pin_failed: 0, pin_locked_until: null });
 
-export const recordPinFailure = (parentId: string, failed: number, lockedUntilMs: number | null) =>
-  write(parentId, {
-    pin_failed: failed,
-    pin_locked_until: lockedUntilMs === null ? null : new Date(lockedUntilMs).toISOString(),
-  });
+/** Atomic in the database: counts this failure and locks on the 5th. Returns the resulting lock, if any. */
+export async function recordPinFailure(parentId: string): Promise<{ lockedUntil: number | null }> {
+  const { data, error } = await db().rpc("record_pin_failure", { p_parent: parentId });
+  if (error) throw error;
+  const r = (Array.isArray(data) ? data[0] : data) as { locked_until: string | null } | undefined;
+  return { lockedUntil: r?.locked_until ? Date.parse(r.locked_until) : null };
+}
 
-export const resetPinFailures = (parentId: string) => write(parentId, { pin_failed: 0, pin_locked_until: null });
+/** Clears the failure count after a correct PIN, unless a lock is active. */
+export async function resetPinFailures(parentId: string): Promise<void> {
+  const { error } = await db().rpc("reset_pin_failures", { p_parent: parentId });
+  if (error) throw error;
+}
