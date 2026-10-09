@@ -7,8 +7,11 @@ export type Icon = "apple" | "star" | "fish" | "ball" | "duck" | "shell" | "bloc
 
 export type Visual =
   | { kind: "objects"; icon: Icon; groups: number[]; crossedOut?: number } // crossedOut = last N of groups[0]
-  | { kind: "ten-frames"; first: number; second: number; crossedOut?: number } // first+second ≤ 20; crossedOut = last N dots
+  // Two frames filled in order: `first` dots in one color, then `second` in another (first + second ≤ 20,
+  // so first may spill into the second frame). crossedOut = last N dots.
+  | { kind: "ten-frames"; first: number; second: number; crossedOut?: number }
   | { kind: "number-line"; from: number; to: number; marks: number[]; jump?: { from: number; by: number } }
+  // crossedOut.ones may exceed groups[0].ones (43 − 7): the renderer breaks a ten into ones first.
   | { kind: "blocks"; groups: { tens: number; ones: number }[]; crossedOut?: { tens: number; ones: number } }
   | { kind: "equation"; text: string }
   | { kind: "story"; text: string; icon: Icon; groups?: number[]; crossedOut?: number }; // crossedOut = last N objects across groups
