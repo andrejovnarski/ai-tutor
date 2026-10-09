@@ -11,8 +11,10 @@ const WORD_VALUES = new Map<string, number>([
   ["hundred", 100], ["dozen", 12],
 ]);
 const ONES = UNITS.slice(1, 10).join("|");
+const L = "(?<![a-z])"; // letter-only boundaries: "_seven_" and "7ish" still count
+const R = "(?![a-z])";
 const NUMBER_RE = new RegExp(
-  `\\b(?:${TENS.join("|")})[-\\s]+(?:${ONES})\\b|\\b(?:(?:a|one)\\s+)?(?:hundred|dozen)\\b|\\b(?:${[...UNITS, ...TENS].join("|")})\\b|(?<!\\d)\\d+(?!\\d)`,
+  `${L}(?:${TENS.join("|")})[-\\s_]+(?:${ONES})${R}|${L}(?:(?:a|one)[\\s_]+)?(?:hundred|dozen)${R}|${L}(?:${[...UNITS, ...TENS].join("|")})${R}|(?<!\\d)\\d+(?!\\d)`,
   "g");
 
 /** Digit runs and number words (zero to ninety, compounds, hundred, dozen) as their value; whole words only. */
@@ -20,7 +22,7 @@ export function numbersIn(text: string): number[] {
   const s = text.normalize("NFKC").toLowerCase();
   return (s.match(NUMBER_RE) ?? []).map((t) => {
     if (/^\d+$/.test(t)) return Number(t);
-    const parts = t.split(/[-\s]+/);
+    const parts = t.split(/[-\s_]+/);
     if (parts.length === 2 && TENS.includes(parts[0]!) && UNITS.includes(parts[1]!))
       return WORD_VALUES.get(parts[0]!)! + WORD_VALUES.get(parts[1]!)!;
     return WORD_VALUES.get(parts[parts.length - 1]!)!;
@@ -28,7 +30,7 @@ export function numbersIn(text: string): number[] {
 }
 
 const BLOCKED = new RegExp(
-  `\\b(?:wrong|stupid|dumb|easy|simple|obviously|fail|failed|bad|silly|idiot|hate|kill|die)\\b`, "i");
+  `(?<![a-z])(?:wrong|stupid|dumb|easy|simple|obviously|fail|failed|bad|silly|idiot|hate|kill|die)(?![a-z])`, "i");
 const URL_RE = /https?:|www\.|\b[\w-]+\.(?:com|org|net|io|co|edu|gov|app|dev|me|ly)\b|\w\/\w/i;
 const EMOJI_RE = /\p{Extended_Pictographic}|\p{Regional_Indicator}|‍|️/u;
 const ALLOWED_CAPS = new Set(["Nova", "I"]);
@@ -59,7 +61,7 @@ function nameProblem(say: string): boolean {
 }
 
 export function checkLine(line: TutorLine, plan: TurnPlan): CheckResult {
-  const say = line.say;
+  const say = line.say.normalize("NFKC");
   const allowed = new Set<number>([...plan.problemNumbers, plan.answer]);
   if (plan.kidAnswer !== undefined) allowed.add(plan.kidAnswer);
   const spoken = numbersIn(say);

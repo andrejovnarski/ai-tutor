@@ -56,6 +56,12 @@ describe("checkLine", () => {
     expect(reason("Hi { name }!", plan())).toBe("placeholder");
     expect(reason("Hi {name}!", plan())).toBe("ok");
   });
+  it("underscore-glued words and fullwidth blocked words", () => {
+    expect(reason("It is _seven_.", plan())).toBe("early-answer");
+    expect(reason("It is twenty_one.", plan({ problemNumbers: [20, 1], answer: 21 }))).toBe("early-answer");
+    expect(reason("\uff53\uff54\uff55\uff50\uff49\uff44", plan())).toBe("word");
+    expect(reason("so _stupid_", plan())).toBe("word");
+  });
   it("kid's answer is allowed", () => {
     expect(reason("You said 6, let's check.", plan({ event: "wrong", kidAnswer: 6 }))).toBe("ok");
   });
