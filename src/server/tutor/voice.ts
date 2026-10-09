@@ -118,7 +118,7 @@ export async function speak(
     if (!line) outcome = `canned:${reason}`;
   }
 
-  if (!line) line = cannedLine(plan, ctx.seed); // cannedLine fills {answer} for correct and explain
+  if (!line) line = cannedLine(plan, Number.isFinite(ctx.seed) ? ctx.seed : 0); // cannedLine fills {answer} for correct and explain
   try {
     console.log(JSON.stringify({ evt: "tutor", event: plan.event, outcome, ms: Math.round(now() - start), cacheRead }));
   } catch {

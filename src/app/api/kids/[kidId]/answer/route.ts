@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { playAnswer } from "@/server/play";
-import { badRequest, MAX_INT, notFound, parentRepo, seed, tryAgain } from "@/server/playApi";
+import { badRequest, forKid, MAX_INT, notFound, novaSpeak, parentRepo, seed, tryAgain } from "@/server/playApi";
 
 export async function POST(req: Request, { params }: { params: Promise<{ kidId: string }> }) {
   const { kidId } = await params;
@@ -17,18 +17,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ kidId: 
 
   const repo = await parentRepo();
   if (!repo) return notFound();
-  let r;
+  let r, nickname;
   try {
-    r = await playAnswer(repo, kidId, version, given, Date.now(), seed);
+    [r, nickname] = await Promise.all([
+      playAnswer(repo, kidId, version, given, Date.now(), seed, novaSpeak()), repo.nickname(kidId),
+    ]);
   } catch (err) {
     return tryAgain("answer", err);
   }
   if (r.status === 404) return notFound();
-  if (r.status === 409) return NextResponse.json({ version: r.version, turn: r.turn }, { status: 409 });
+  if (r.status === 409) {
+    return NextResponse.json(
+      { version: r.version, turn: r.turn, ...(r.line ? { line: forKid(r.line, nickname) } : {}) }, { status: 409 });
+  }
   // Only what the screen needs: no engine logs.
   const { result, then, style, reveal, mastered } = r.feedback;
   return NextResponse.json({
     version: r.version, feedback: { result, then, style, reveal, mastered }, next: r.next,
+    line: forKid(r.line, nickname), ...(r.nextLine ? { nextLine: forKid(r.nextLine, nickname) } : {}),
     ...(r.revealed !== undefined ? { revealed: r.revealed } : {}),
   });
 }

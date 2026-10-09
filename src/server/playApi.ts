@@ -1,8 +1,12 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { SupabaseRepo } from "./persist/supabaseRepo";
+import type { Speak } from "./play";
 import { touchActivity } from "./retention";
 import { createServerSupabase } from "./supabase";
+import { fillName } from "./tutor/plan";
+import type { TutorLine } from "./tutor/types";
+import { getTutorVoice, speak } from "./tutor/voice";
 
 export const seed = () => crypto.getRandomValues(new Uint32Array(1))[0]!;
 export const notFound = () => NextResponse.json({ error: "not found" }, { status: 404 });
@@ -22,4 +26,15 @@ export async function parentRepo(): Promise<SupabaseRepo | null> {
   if (!data.user) return null;
   await touchActivity(supabase);
   return new SupabaseRepo(supabase);
+}
+
+/** Nova's guarded voice (Claude or canned, per TUTOR_VOICE). Never throws: a failure is a canned line. */
+export function novaSpeak(): Speak {
+  const voice = getTutorVoice();
+  return async (plan, s) => (await speak(plan, { voice, seed: s })).line;
+}
+
+/** The line as the browser gets it: `{name}` filled with the nickname here, after every plan has been built. */
+export function forKid(line: TutorLine, nickname: string | null): TutorLine {
+  return { ...line, say: fillName(line.say, nickname ?? "") };
 }

@@ -123,8 +123,9 @@ const EXPLAIN_HIDDEN: Record<AgeBand, Entry[]> = {
 };
 
 export function cannedLine(plan: TurnPlan, seed: number): TutorLine {
+  const n = Number.isFinite(seed) ? Math.trunc(seed) : 0;
   const hide = plan.event === "explain" && plan.revealed !== true;
   const list = hide ? EXPLAIN_HIDDEN[plan.ageBand] : TABLE[plan.event][plan.ageBand];
-  const entry = list[((Math.trunc(seed) % list.length) + list.length) % list.length]!;
+  const entry = list[((n % list.length) + list.length) % list.length]!;
   return { ...entry, say: entry.say.replaceAll("{answer}", String(plan.answer)) };
 }

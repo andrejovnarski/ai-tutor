@@ -58,6 +58,23 @@ test("tap Mia and answer problems; attempts are saved and responses never carry 
   expect(html).not.toMatch(/"answer"|"mistakes"|\\"answer\\"|\\"mistakes\\"/);
 });
 
+test("Nova speaks above the problem and after each answer, with Mia's name filled in", async ({ page }) => {
+  await setUpMia(page);
+  await page.getByRole("link", { name: /Mia/ }).click();
+  await expect(page.getByTestId("nova")).toBeVisible();
+  const lines = [await page.getByTestId("nova").innerText()];
+  for (let i = 0; i < 6; i++) {
+    await answerOnce(page, i % 3);
+    lines.push(await page.getByTestId("feedback").innerText(), await page.getByTestId("nova").innerText());
+  }
+  for (const l of lines) {
+    expect(l.length).toBeGreaterThan(0);
+    expect(l).not.toMatch(/\{name\}|\{answer\}|undefined/);
+  }
+  // Canned lines rotate and most use {name}: across 13 lines Mia's name shows up.
+  expect(lines.some((l) => l.includes("Mia"))).toBe(true);
+});
+
 test("reloading mid-problem brings back the same prompt and choices", async ({ page }) => {
   await setUpMia(page);
   await page.getByRole("link", { name: /Mia/ }).click();

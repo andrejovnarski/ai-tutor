@@ -6,6 +6,8 @@ function need(name: string): string {
   return v;
 }
 
+let warnedTutorVoice = false;
+
 export const env = {
   supabaseUrl: () => need("NEXT_PUBLIC_SUPABASE_URL"),
   supabasePublishableKey: () => need("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
@@ -18,10 +20,15 @@ export const env = {
   emailFrom: () => need("EMAIL_FROM"),
   cronSecret: () => need("CRON_SECRET"),
   appOrigin: () => need("APP_ORIGIN"),
-  /** "claude" or "canned"; unset means "canned" so nothing calls Claude by accident. */
+  /** "claude" or "canned"; unset means "canned" so nothing calls Claude by accident. A bad value is
+   * "canned" too (warned once): a typo must never cost a child a line or a request a 500. */
   tutorVoice: (): "claude" | "canned" => {
     const v = process.env.TUTOR_VOICE || "canned";
-    if (v !== "claude" && v !== "canned") throw new Error(`TUTOR_VOICE must be "claude" or "canned", got "${v}"`);
-    return v;
+    if (v === "claude" || v === "canned") return v;
+    if (!warnedTutorVoice) {
+      warnedTutorVoice = true;
+      console.warn(`TUTOR_VOICE must be "claude" or "canned", got "${v}"; using "canned"`);
+    }
+    return "canned";
   },
 };

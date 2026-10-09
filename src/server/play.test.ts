@@ -1,7 +1,7 @@
 import { firstSkills, placedKid } from "../domain/session/testkit";
 import { startSession } from "../domain/session/engine";
 import { MemoryRepo } from "./persist/repo";
-import { playAnswer, playTurn, type AnswerResult, type TurnResult } from "./play";
+import { playAnswer, playSay, playTurn, type AnswerResult, type TurnResult } from "./play";
 
 const kid = placedKid(firstSkills(3));
 const seed = () => 42;
@@ -147,4 +147,116 @@ it("throws a clear error when no current turn can be had, instead of crashing on
   repo.openSession = async () => null;
   repo.createSession = async () => null;
   await expect(playTurn(repo, kid.kidId, 1000, seed)).rejects.toThrow(/no current turn/);
+});
+
+describe("tutor lines", () => {
+  type Plan = import("./tutor/types").TurnPlan;
+  const recorder = () => {
+    const plans: { plan: Plan; seed: number }[] = [];
+    const speak = async (plan: Plan, seed: number) => {
+      plans.push({ plan, seed });
+      return { say: `${plan.event} {name} #${plans.length}`, tone: "calm" as const };
+    };
+    return { plans, speak };
+  };
+  const stored = (repo: MemoryRepo) => repo.sessions.find((s) => !s.ended)!.state as { tutorRecent?: string[] };
+
+  it("a problem turn carries a present line; resuming re-speaks it without bumping the version", async () => {
+    const repo = setup();
+    const r = recorder();
+    const t = ok(await playTurn(repo, kid.kidId, 1000, seed, r.speak));
+    expect(t.line?.say).toBe("present {name} #1");
+    expect(r.plans[0]!.plan.event).toBe("present");
+    expect(r.plans[0]!.plan.recentLines).toEqual([]);
+    expect(stored(repo).tutorRecent).toEqual(["present {name} #1"]);
+    const again = ok(await playTurn(repo, kid.kidId, 2000, seed, r.speak));
+    expect(again.version).toBe(t.version);
+    expect(again.line?.say).toBe("present {name} #2");
+    expect(r.plans[1]!.plan.recentLines).toEqual(["present {name} #1"]);
+    expect(stored(repo).tutorRecent).toEqual(["present {name} #1"]); // no write on a resume
+  });
+
+  it("an answer carries the feedback line and the next present line, both saved in the same step", async () => {
+    const repo = setup();
+    const r = recorder();
+    await playTurn(repo, kid.kidId, 1000, seed, r.speak);
+    const a = ok(await playAnswer(repo, kid.kidId, 1, pendingAnswer(repo), 5000, seed, r.speak));
+    expect(a.version).toBe(2);
+    expect(a.line.say).toMatch(/^(correct|celebrate) /);
+    expect(a.nextLine?.say).toMatch(/^present /);
+    expect(stored(repo).tutorRecent).toEqual(["present {name} #1", a.line.say, a.nextLine!.say]);
+    // both lines were asked for with the recent lines from before the answer
+    expect(r.plans.slice(1).map((p) => p.plan.recentLines)).toEqual([["present {name} #1"], ["present {name} #1"]]);
+  });
+
+  it("keeps only the last 3 raw lines, and a wrong answer gives wrong then explain", async () => {
+    const repo = setup();
+    const r = recorder();
+    await playTurn(repo, kid.kidId, 1000, seed, r.speak);
+    const answer = pendingAnswer(repo);
+    const first = ok(await playAnswer(repo, kid.kidId, 1, answer + 1000, 2000, seed, r.speak));
+    expect(first.line.say).toMatch(/^(wrong|hint) /);
+    const second = ok(await playAnswer(repo, kid.kidId, first.version, answer + 1000, 3000, seed, r.speak));
+    expect(second.line.say).toMatch(/^explain /);
+    expect(stored(repo).tutorRecent).toHaveLength(3);
+    expect(stored(repo).tutorRecent).toEqual([first.nextLine!.say, second.line.say, second.nextLine!.say]);
+  });
+
+  it("a 409 carries the line for its current turn and saves nothing", async () => {
+    const repo = setup();
+    const r = recorder();
+    await playTurn(repo, kid.kidId, 1000, seed, r.speak);
+    const right = pendingAnswer(repo);
+    await playAnswer(repo, kid.kidId, 1, right, 5000, seed, r.speak);
+    const before = JSON.stringify(stored(repo));
+    const again = await playAnswer(repo, kid.kidId, 1, right, 6000, seed, r.speak);
+    expect(again.status).toBe(409);
+    if (again.status === 409) expect(again.line?.say).toMatch(/^present /);
+    expect(JSON.stringify(stored(repo))).toBe(before);
+  });
+
+  it("seeds vary per line so canned lines rotate", async () => {
+    const repo = setup();
+    const r = recorder();
+    await playTurn(repo, kid.kidId, 1000, seed, r.speak);
+    let v = 1;
+    for (let i = 0; i < 3; i++) v = ok(await playAnswer(repo, kid.kidId, v, pendingAnswer(repo), 2000 + i, seed, r.speak)).version;
+    const seeds = r.plans.filter((p) => p.plan.event === "present").map((p) => p.seed);
+    expect(new Set(seeds).size).toBe(seeds.length);
+    for (const s of r.plans.map((p) => p.seed)) expect(Number.isFinite(s)).toBe(true);
+  });
+
+  it("defaults to canned lines when no speaker is given", async () => {
+    const repo = setup();
+    const t = ok(await playTurn(repo, kid.kidId, 1000, seed));
+    expect(t.line?.say.length).toBeGreaterThan(0);
+  });
+});
+
+describe("kid said", () => {
+  it("steers back with a kid-said line about the current problem and writes nothing", async () => {
+    const repo = setup();
+    await playTurn(repo, kid.kidId, 1000, seed);
+    const before = JSON.stringify(repo.sessions);
+    const plans: import("./tutor/types").TurnPlan[] = [];
+    const line = await playSay(repo, kid.kidId, "tell me a joke", 5, async (p) => {
+      plans.push(p);
+      return { say: "Back to it, {name}!", tone: "calm" };
+    });
+    expect(line?.say).toBe("Back to it, {name}!");
+    expect(plans[0]!.event).toBe("kid-said");
+    expect(plans[0]!.problem).toBe(repo.sessions[0]!.state.pending!.problem.prompt.say);
+    expect(JSON.stringify(repo.sessions)).toBe(before);
+  });
+
+  it("with no open problem still steers back with a canned line", async () => {
+    const repo = setup();
+    const line = await playSay(repo, kid.kidId, "hi", 0);
+    expect(line?.say.length).toBeGreaterThan(0);
+    expect(repo.sessions).toHaveLength(0);
+  });
+
+  it("is null for an unknown kid", async () => {
+    expect(await playSay(setup(), "nope", "hi", 0)).toBeNull();
+  });
 });

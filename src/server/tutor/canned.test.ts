@@ -30,6 +30,10 @@ describe("cannedLine", () => {
     expect(hasAnswer("correct", {})).toBe(true);
     expect(hasAnswer("explain", { revealed: true })).toBe(true);
   });
+  it("non-finite seeds fall back to seed 0 instead of throwing", () => {
+    for (const s of [NaN, Infinity, -Infinity])
+      expect(cannedLine(plan("present", "5-7"), s)).toEqual(cannedLine(plan("present", "5-7"), 0));
+  });
   it("negative seeds work", () => {
     expect(cannedLine(plan("present", "5-7"), -5).say.length).toBeGreaterThan(0);
   });

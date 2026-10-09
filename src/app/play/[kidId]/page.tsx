@@ -3,8 +3,12 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import type { PublicTurn } from "@/server/publicTurn";
 
-type Step = { version: number; turn: PublicTurn };
-type Reply = { version: number; next: PublicTurn; feedback: { then: "retry" | "next"; reveal: boolean; result: { kind: string } }; revealed?: number };
+type Line = { say: string; show?: string; tone: "cheer" | "calm" | "curious" };
+type Step = { version: number; turn: PublicTurn; line?: Line };
+type Reply = {
+  version: number; next: PublicTurn; line?: Line; nextLine?: Line; revealed?: number;
+  feedback: { then: "retry" | "next"; reveal: boolean; result: { kind: string } };
+};
 
 const big = { fontSize: 32, minWidth: 96, minHeight: 72, margin: 8, borderRadius: 16 } as const;
 
@@ -42,10 +46,12 @@ export default function PlayPage({ params }: { params: Promise<{ kidId: string }
         setMessage("");
       } else if (r.ok) {
         const b = (await r.json()) as Reply;
-        setStep({ version: b.version, turn: b.next });
+        setStep({ version: b.version, turn: b.next, line: b.nextLine });
         const f = b.feedback;
+        // Nova's feedback line; the plain fallbacks only if the server sent none.
         setMessage(
-          f.result.kind === "correct" ? "Correct!"
+          b.line ? b.line.say
+            : f.result.kind === "correct" ? "Correct!"
             : f.then === "retry" ? "Try again"
             : f.reveal && b.revealed !== undefined ? `The answer is ${b.revealed}`
             : "Let's try the next one",
@@ -66,6 +72,9 @@ export default function PlayPage({ params }: { params: Promise<{ kidId: string }
   return (
     <main style={{ padding: 24 }} data-version={step.version}>
       {message && <p role="status" data-testid="feedback" style={{ fontSize: 24 }}>{message}</p>}
+      {step.line && (
+        <p data-testid="nova" data-tone={step.line.tone} style={{ fontSize: 26, fontStyle: "italic" }}>{step.line.say}</p>
+      )}
       <h1 data-testid="say" style={{ fontSize: 36 }}>{t.prompt.say}</h1>
       {t.input === "number-pad" || !t.choices ? (
         <div>

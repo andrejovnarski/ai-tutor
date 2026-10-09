@@ -60,6 +60,15 @@ beforeEach(() => { log = vi.spyOn(console, "log").mockImplementation(() => {}); 
 afterEach(() => { log.mockRestore(); vi.useRealTimers(); });
 
 describe("speak", () => {
+  it("a non-finite seed still gives a canned line (fallback path)", async () => {
+    for (const seed of [NaN, Infinity]) {
+      const { line } = await speak(plan, { voice: cannedVoice, seed });
+      expect(line.say.length).toBeGreaterThan(0);
+      const failed = await speak(plan, { voice: claudeVoice(fakeClient([{ text: EARLY }, { text: EARLY }]).client), seed });
+      expect(failed.line.say.length).toBeGreaterThan(0);
+    }
+  });
+
   it("uses a good line from Claude", async () => {
     const { result } = run([{ text: GOOD, cacheRead: 900 }]);
     const r = await result;
@@ -221,7 +230,17 @@ describe("getTutorVoice", () => {
     expect(getTutorVoice()).toBe(cannedVoice);
     process.env.TUTOR_VOICE = "claude";
     expect(getTutorVoice()).not.toBe(cannedVoice);
-    process.env.TUTOR_VOICE = "loud";
-    expect(() => getTutorVoice()).toThrow(/TUTOR_VOICE/);
+  });
+  it("falls back to canned with one warning when TUTOR_VOICE is bad, instead of throwing", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      process.env.TUTOR_VOICE = "loud";
+      expect(getTutorVoice()).toBe(cannedVoice);
+      expect(getTutorVoice()).toBe(cannedVoice);
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]![0])).toMatch(/TUTOR_VOICE/);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
