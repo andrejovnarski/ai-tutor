@@ -23,7 +23,8 @@ function validVisual(v: Visual): boolean {
     case "equation":
       return v.text.trim().length > 0;
     case "story":
-      return v.text.trim().length > 0 && (v.groups === undefined || v.groups.every((g) => int(g, 0, 20)));
+      return v.text.trim().length > 0 && (v.groups === undefined || v.groups.every((g) => int(g, 0, 20))) &&
+        (v.crossedOut === undefined || (v.groups !== undefined && int(v.crossedOut, 0, v.groups.reduce((a, b) => a + b, 0))));
   }
 }
 

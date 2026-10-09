@@ -11,7 +11,7 @@ export type Visual =
   | { kind: "number-line"; from: number; to: number; marks: number[]; jump?: { from: number; by: number } }
   | { kind: "blocks"; groups: { tens: number; ones: number }[]; crossedOut?: { tens: number; ones: number } }
   | { kind: "equation"; text: string }
-  | { kind: "story"; text: string; icon: Icon; groups?: number[] };
+  | { kind: "story"; text: string; icon: Icon; groups?: number[]; crossedOut?: number }; // crossedOut = last N objects across groups
 
 export const MISTAKE_TAGS = [
   "off-by-one-counting", "off-by-ten", "added-instead", "subtracted-instead", "wrong-operation",

@@ -11,17 +11,19 @@ const cast = (rng: Rng): Cast => {
   return { A, B, C, items: item.word, icon: item.icon };
 };
 
-type StoryDraft = { say: string; answer: number; numbers: number[]; mistakes: Mistake[] };
+/** `groups` (and `crossedOut`, the last N objects) are drawn at level 1 when every group is ≤ 20. */
+type StoryDraft = { say: string; answer: number; groups: number[]; crossedOut?: number; mistakes: Mistake[] };
 
 /** A story template: the story is both said and shown; pictures only at level 1 and only up to 20. */
 const story = (id: string, write: (rng: Rng, lv: Level, c: Cast) => StoryDraft) =>
   template(id, (rng, lv) => {
     const c = cast(rng);
     const d = write(rng, lv, c);
-    const picture = lv === 1 && d.numbers.every((n) => n <= 20);
+    const picture = lv === 1 && d.groups.every((n) => n <= 20);
+    const drawn = picture ? { groups: d.groups, ...(d.crossedOut === undefined ? {} : { crossedOut: d.crossedOut }) } : {};
     return {
       say: d.say,
-      show: { kind: "story", text: d.say, icon: c.icon, ...(picture ? { groups: d.numbers } : {}) },
+      show: { kind: "story", text: d.say, icon: c.icon, ...drawn },
       answer: d.answer,
       mistakes: d.mistakes,
     };
@@ -49,7 +51,7 @@ const addTo = (id: string, sums: (lv: Level) => Span, regroup: boolean) =>
     return {
       say: `${c.A} has ${a} ${c.items}. ${c.A} gets ${b} more. How many ${c.items} now?`,
       answer: s,
-      numbers: [a, b],
+      groups: [a, b],
       mistakes: [
         { answer: Math.abs(a - b), tag: "wrong-operation" },
         ...(regroup && ones(a) + ones(b) >= 10 ? [{ answer: s - 10, tag: "forgot-to-regroup" as const }] : []),
@@ -64,7 +66,7 @@ const putTogether = story("story-put-together", (rng, lv, c) => {
   return {
     say: `${c.A} has ${a} ${c.items}. ${c.B} has ${b}. How many ${c.items} in all?`,
     answer: s,
-    numbers: [a, b],
+    groups: [a, b],
     mistakes: [{ answer: Math.abs(a - b), tag: "wrong-operation" }, ...plusMinus(s, 1, "off-by-one-counting")],
   };
 });
@@ -76,7 +78,8 @@ const takeAway = (id: string, starts: (lv: Level) => Span, regroup: boolean) =>
     return {
       say: `${c.A} has ${a} ${c.items}. ${c.A} gives ${b} away. How many are left?`,
       answer: d,
-      numbers: [a, b],
+      groups: [a],
+      crossedOut: b,
       mistakes: [
         { answer: a + b, tag: "wrong-operation" },
         ...(regroup
@@ -94,7 +97,7 @@ const takeApart = story("story-take-apart", (rng, lv, c) => {
   return {
     say: `${c.A} has ${total} ${c.items}. ${red} are red. The rest are blue. How many are blue?`,
     answer: total - red,
-    numbers: [total, red],
+    groups: [total],
     mistakes: [
       { answer: total + red, tag: "wrong-operation" },
       { answer: total, tag: "gave-total" },
@@ -110,7 +113,7 @@ const howMany = (id: string, ask: "more" | "fewer") =>
     return {
       say: `${c.A} has ${x} ${c.items}. ${c.B} has ${y}. ${question}`,
       answer: x - y,
-      numbers: [x, y],
+      groups: [x, y],
       mistakes: [
         { answer: x + y, tag: "wrong-operation" },
         { answer: x, tag: "gave-part" },
@@ -128,7 +131,8 @@ const twoStepAddSub = story("story-two-step-add-sub", (rng, lv, c) => {
   return {
     say: `${c.A} has ${a} ${c.items}. ${c.A} gets ${b} more, then gives ${g} away. How many now?`,
     answer,
-    numbers: [a, b, g],
+    groups: [a, b],
+    crossedOut: g,
     mistakes: [
       { answer: a + b, tag: "stopped-after-one-step" },
       { answer: a + b + g, tag: "wrong-operation" },
@@ -144,7 +148,7 @@ const twoStepAddAdd = story("story-two-step-add-add", (rng, lv, c) => {
   return {
     say: `${c.A} has ${a} ${c.items}. ${c.B} gives ${c.A} ${b}. ${c.C} gives ${c.A} ${g}. How many now?`,
     answer: total,
-    numbers: [a, b, g],
+    groups: [a, b, g],
     mistakes: [{ answer: a + b, tag: "stopped-after-one-step" }, ...plusMinus(total, 1, "off-by-one-counting")],
   };
 });

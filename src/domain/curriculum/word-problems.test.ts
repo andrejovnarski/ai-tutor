@@ -74,3 +74,16 @@ it("forgot-to-regroup offered only when the story regroups", () => {
     expect(p.mistakes.some((m) => m.tag === "forgot-to-regroup")).toBe(regroups && Math.abs(a - b) !== p.answer - 10);
   }
 });
+
+it.each([
+  ["story-take-from", ([a, b]: number[]) => ({ groups: [a], crossedOut: b })],
+  ["story-take-apart", ([c]: number[]) => ({ groups: [c] })],
+  ["story-two-step-add-sub", ([a, b, g]: number[]) => ({ groups: [a, b], crossedOut: g })],
+  ["story-add-to", ([a, b]: number[]) => ({ groups: [a, b] })],
+] as const)("%s: level-1 picture shows the operation, not just piles", (id, want) => {
+  for (const p of samples(tpl(id), 1)) {
+    const n = sayNumbers(p.prompt.say);
+    const { kind: _k, text: _t, icon: _i, ...picture } = p.prompt.show as Story;
+    expect(picture).toEqual(want(n));
+  }
+});
