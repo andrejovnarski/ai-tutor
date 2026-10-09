@@ -1,23 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { latestEmailLink as mailedLink } from "../helpers/admin";
-
-// The mail links to Supabase's site_url (:3000); point it at the server under test.
-async function latestEmailLink(email: string): Promise<string> {
-  const u = new URL(await mailedLink(email));
-  const base = new URL(process.env.E2E_BASE_URL ?? `http://localhost:${process.env.E2E_PORT ?? 3000}`);
-  u.protocol = base.protocol;
-  u.host = base.host;
-  return u.toString();
-}
-
-const unique = () => `parent-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
-
-async function requestLink(page: import("@playwright/test").Page, email: string) {
-  await page.goto("/sign-in");
-  await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Send link" }).click();
-  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
-}
+import { latestEmailLink } from "../helpers/admin";
+import { requestLink, unique } from "./helpers";
 
 test("signed-out visitor is sent to sign-in", async ({ page }) => {
   await page.goto("/");

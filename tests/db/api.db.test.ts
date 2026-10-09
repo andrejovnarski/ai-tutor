@@ -3,8 +3,10 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { admin, anon, makeParent } from "../helpers/admin";
+import { SupabaseRepo } from "../../src/server/persist/supabaseRepo";
 
 const who = vi.hoisted(() => ({ client: null as unknown as SupabaseClient }));
+vi.mock("server-only", () => ({}));
 vi.mock("../../src/server/supabase", () => ({ createServerSupabase: async () => who.client }));
 
 import { POST as turnPost } from "../../src/app/api/kids/[kidId]/turn/route";
@@ -55,6 +57,7 @@ describe("play API", () => {
     const bodies: unknown[] = [
       { version: 1, given: "7" }, { given: 7 }, { version: 1 }, { version: 1.5, given: 7 }, { version: -1, given: 7 },
       { version: "1", given: 7 }, { version: 1, given: null }, '{"version":1,"given":1e999}', null, [], "not json{",
+      { version: 1, given: 2.5 }, { version: 1, given: 1e12 }, { version: 1, given: -(2 ** 31) - 1 },
     ];
     for (const b of bodies) {
       const res = await answerPost(post(typeof b === "string" ? b : JSON.stringify(b)), ctx(kidA));
@@ -88,5 +91,21 @@ describe("play API", () => {
     expect(text).not.toMatch(/"answer"|"mistakes"/);
     expect(JSON.parse(text).version).toBeGreaterThan(version);
     expect((await counts(kidA)).attempts).toBe(1);
+  });
+
+  it("an unexpected repo error is a 503 'try again' on both routes, not a 500", async () => {
+    who.client = A.client;
+    const spy = vi.spyOn(SupabaseRepo.prototype, "loadKid").mockRejectedValue(new Error("db down"));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      for (const res of [await turnPost(post({}), ctx(kidA)), await answerPost(post({ version: 1, given: 3 }), ctx(kidA))]) {
+        expect(res.status).toBe(503);
+        expect(await res.json()).toEqual({ error: "try again" });
+      }
+      expect(log).toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+      log.mockRestore();
+    }
   });
 });

@@ -35,7 +35,8 @@ async function commit(repo: Repo, kidId: string, open: OpenSession, session: Ses
   return (await startFresh(repo, kidId, now, seed)) ?? current(repo, kidId, now, seed);
 }
 
-async function current(repo: Repo, kidId: string, now: number, seed: () => number): Promise<Step | null> {
+/** The kid's current step. Throws if none can be had after a few tries (racing writers or a failing repo). */
+async function current(repo: Repo, kidId: string, now: number, seed: () => number): Promise<Step> {
   for (let i = 0; i < MAX_ATTEMPTS; i++) {
     const open = await repo.openSession(kidId);
     if (!open) {
@@ -49,12 +50,12 @@ async function current(repo: Repo, kidId: string, now: number, seed: () => numbe
     const step = await commit(repo, kidId, open, session, turn, null, now, seed);
     if (step) return step;
   }
-  return null;
+  throw new Error(`play: no current turn for kid ${kidId} after ${MAX_ATTEMPTS} tries`);
 }
 
 export async function playTurn(repo: Repo, kidId: string, now: number, seed: () => number): Promise<TurnResult> {
   if (!(await repo.loadKid(kidId))) return { status: 404 };
-  const { version, turn } = (await current(repo, kidId, now, seed))!;
+  const { version, turn } = await current(repo, kidId, now, seed);
   return { status: 200, version, turn: publicTurn(turn) };
 }
 
@@ -62,7 +63,7 @@ export async function playAnswer(repo: Repo, kidId: string, version: number, giv
   seed: () => number): Promise<AnswerResult> {
   if (!(await repo.loadKid(kidId))) return { status: 404 };
   const conflict = async (): Promise<AnswerResult> => {
-    const step = (await current(repo, kidId, now, seed))!;
+    const step = await current(repo, kidId, now, seed);
     return { status: 409, version: step.version, turn: publicTurn(step.turn) };
   };
 

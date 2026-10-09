@@ -1,43 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
-import { admin, latestEmailLink as mailedLink } from "../helpers/admin";
-
-const unique = () => `play-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
-
-async function confirmLink(email: string): Promise<string> {
-  const u = new URL(await mailedLink(email));
-  const base = new URL(process.env.E2E_BASE_URL ?? "http://localhost:3000");
-  u.protocol = base.protocol;
-  u.host = base.host;
-  return u.toString();
-}
+import { admin } from "../helpers/admin";
+import { addKid, consent, setPin, signIn, unique } from "./helpers";
 
 /** Signs in, consents via admin, sets a PIN, adds Mia, and lands on the picker. Returns Mia's parent id. */
 async function setUpMia(page: Page): Promise<string> {
-  const email = unique();
-  await page.goto("/sign-in");
-  await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Send link" }).click();
-  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
-  await page.goto(await confirmLink(email));
-  await expect(page).toHaveURL(/\/$/);
-
-  const a = admin();
-  const { data } = await a.auth.admin.listUsers({ perPage: 1000 });
-  const parentId = data.users.find((u) => u.email === email)!.id;
-  const { error } = await a.from("parents").update({ consent_at: new Date().toISOString() }).eq("id", parentId);
-  if (error) throw error;
-
-  await page.goto("/parent");
-  await page.getByLabel("New PIN", { exact: true }).fill("1234");
-  await page.getByLabel("Repeat PIN").fill("1234");
-  await page.getByRole("button", { name: "Save PIN" }).click();
-  await expect(page).toHaveURL(/\/parent$/);
-  await page.getByRole("link", { name: "Add kid" }).click();
-  await page.getByLabel("First name only").fill("Mia");
-  await page.getByLabel("Grade").selectOption("K");
-  await page.getByLabel("fox").check();
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page).toHaveURL(/\/parent$/);
+  const email = unique("play");
+  await signIn(page, email);
+  const parentId = await consent(email);
+  await setPin(page);
+  await addKid(page, "Mia");
   await page.goto("/");
   return parentId;
 }
@@ -114,4 +85,9 @@ test("another family's kid id shows nothing and the API says 404", async ({ page
   await setUpMia(page);
   const res = await page.request.post("/api/kids/00000000-0000-4000-8000-000000000000/turn");
   expect(res.status()).toBe(404);
+});
+
+test("a signed-out visitor to a play page is sent to sign-in", async ({ page }) => {
+  await page.goto("/play/00000000-0000-4000-8000-000000000000");
+  await expect(page).toHaveURL(/\/sign-in$/);
 });

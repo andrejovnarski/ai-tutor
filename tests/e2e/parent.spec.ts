@@ -1,43 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
-import { admin, latestEmailLink as mailedLink } from "../helpers/admin";
-
-async function latestEmailLink(email: string): Promise<string> {
-  const u = new URL(await mailedLink(email));
-  const base = new URL(process.env.E2E_BASE_URL ?? "http://localhost:3000");
-  u.protocol = base.protocol;
-  u.host = base.host;
-  return u.toString();
-}
-
-const unique = () => `parent-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
-
-async function signIn(page: Page, email: string) {
-  await page.goto("/sign-in");
-  await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Send link" }).click();
-  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
-  await page.goto(await latestEmailLink(email));
-  await expect(page).toHaveURL(/\/$/);
-}
-
-async function setPin(page: Page, pin = "1234") {
-  await page.goto("/parent");
-  await expect(page).toHaveURL(/\/parent\/pin$/);
-  await expect(page.getByRole("heading", { name: "Set a PIN" })).toBeVisible();
-  await page.getByLabel("New PIN", { exact: true }).fill(pin);
-  await page.getByLabel("Repeat PIN").fill(pin);
-  await page.getByRole("button", { name: "Save PIN" }).click();
-  await expect(page).toHaveURL(/\/parent$/);
-}
-
-async function consent(email: string) {
-  const a = admin();
-  const { data } = await a.auth.admin.listUsers({ perPage: 1000 });
-  const id = data.users.find((u) => u.email === email)!.id;
-  const { error } = await a.from("parents").update({ consent_at: new Date().toISOString() }).eq("id", id);
-  if (error) throw error;
-  return id;
-}
+import { expect, test } from "@playwright/test";
+import { admin } from "../helpers/admin";
+import { addKid, consent, parentId, setPin, signIn, unique } from "./helpers";
 
 test("without consent: set a PIN, see the consent notice and no Add kid", async ({ page }) => {
   await signIn(page, unique());
@@ -51,14 +14,7 @@ test("with consent: add Mia, she shows in the parent list and on the home page",
   await signIn(page, email);
   await setPin(page);
   await consent(email);
-  await page.goto("/parent");
-  await page.getByRole("link", { name: "Add kid" }).click();
-  await expect(page).toHaveURL(/\/parent\/kids\/new$/);
-  await page.getByLabel("First name only").fill("Mia");
-  await page.getByLabel("Grade").selectOption("K");
-  await page.getByLabel("fox").check();
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page).toHaveURL(/\/parent$/);
+  await addKid(page, "Mia");
   await expect(page.getByRole("list").getByText("Mia")).toBeVisible();
   await page.goto("/");
   await expect(page.getByRole("list").getByText("Mia")).toBeVisible();
@@ -110,8 +66,7 @@ test("the right PIN unlocks and clears the failure count, and without the cookie
   await page.getByLabel("PIN", { exact: true }).fill("1234");
   await page.getByRole("button", { name: "Unlock" }).click();
   await expect(page).toHaveURL(/\/parent$/);
-  const id = await consent(email);
-  const { data } = await admin().from("parents").select("pin_failed, pin_locked_until").eq("id", id).single();
+  const { data } = await admin().from("parents").select("pin_failed, pin_locked_until").eq("id", await parentId(email)).single();
   expect(data).toEqual({ pin_failed: 0, pin_locked_until: null });
 });
 

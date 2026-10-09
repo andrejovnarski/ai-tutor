@@ -140,3 +140,11 @@ it("lets two racing first turns share one new session", async () => {
   expect(ok(a).turn).toEqual(ok(b).turn);
   expect(repo.sessions.filter((s) => !s.ended)).toHaveLength(1);
 });
+
+it("throws a clear error when no current turn can be had, instead of crashing on null", async () => {
+  const repo = setup();
+  // A repo that never sees an open session and always loses the create race.
+  repo.openSession = async () => null;
+  repo.createSession = async () => null;
+  await expect(playTurn(repo, kid.kidId, 1000, seed)).rejects.toThrow(/no current turn/);
+});

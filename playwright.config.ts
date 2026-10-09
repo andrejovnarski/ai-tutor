@@ -6,17 +6,15 @@ try {
   // no .env.local: tests that need Supabase will fail loudly
 }
 
-const port = Number(process.env.E2E_PORT ?? 3000);
-
 export default defineConfig({
   testDir: "tests/e2e",
   webServer: {
-    command: `npm run build && npm run start -- -p ${port}`,
-    port,
+    command: "npm run build && npm run start",
+    port: 3000,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },
-  use: { baseURL: `http://localhost:${port}` },
+  use: { baseURL: "http://localhost:3000" },
   projects: [
     {
       name: "tablet",
