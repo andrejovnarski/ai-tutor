@@ -12,6 +12,12 @@ Grade 1 · Common Core 1.NBT.B
 - [[Count to 20]]
 - [[Compare numbers]]
 
-Small skills: defined in Section 3.
+## Small skills
+- Teen numbers — `place-value.teens`
+- Tens and ones — `place-value.tens-ones`
+- Compare two-digit numbers — `place-value.compare`
+- 10 more, 10 less — `place-value.ten-more-less`
+
+Source: `src/domain/curriculum/place-value.ts`
 
 Part of [[Skill Map]]

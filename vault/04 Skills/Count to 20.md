@@ -11,6 +11,11 @@ Grade K · Common Core K.CC
 ## Needs first
 - (none — entry point)
 
-Small skills: defined in Section 3.
+## Small skills
+- Count to 10 — `count-to-20.objects-to-10`
+- Count to 20 — `count-to-20.objects-to-20`
+- What comes next — `count-to-20.number-after`
+
+Source: `src/domain/curriculum/count-to-20.ts`
 
 Part of [[Skill Map]]

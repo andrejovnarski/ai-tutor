@@ -12,6 +12,13 @@ Grade 2 · Common Core 2.NBT
 - [[Add and subtract within 20]]
 - [[Place value - tens and ones]]
 
-Small skills: defined in Section 3.
+## Small skills
+- Add and subtract tens — `add-subtract-within-100.tens`
+- Add without regrouping — `add-subtract-within-100.add`
+- Add with regrouping — `add-subtract-within-100.add-regroup`
+- Subtract without regrouping — `add-subtract-within-100.subtract`
+- Subtract with regrouping — `add-subtract-within-100.subtract-regroup`
+
+Source: `src/domain/curriculum/add-subtract-within-100.ts`
 
 Part of [[Skill Map]]
