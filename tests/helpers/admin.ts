@@ -35,8 +35,15 @@ export async function makeParent(
 
 export async function latestEmailLink(email: string): Promise<string> {
   const base = "http://127.0.0.1:54324/api/v1";
-  const list = await (await fetch(`${base}/messages`)).json();
-  const msg = list.messages.find((m: { To: { Address: string }[] }) => m.To.some((t) => t.Address === email));
+  type Summary = { ID: string; Created: string; To: { Address: string }[] };
+  let msg: Summary | undefined;
+  for (let i = 0; i < 10 && !msg; i++) {
+    const list = (await (await fetch(`${base}/messages`)).json()) as { messages: Summary[] };
+    msg = list.messages
+      .filter((m) => m.To.some((t) => t.Address === email))
+      .sort((a, b) => Date.parse(b.Created) - Date.parse(a.Created))[0];
+    if (!msg) await new Promise((r) => setTimeout(r, 200));
+  }
   if (!msg) throw new Error(`no mail for ${email}`);
   const full = await (await fetch(`${base}/message/${msg.ID}`)).json();
   const m = /https?:\/\/[^\s"'<>]*\/auth\/confirm[^\s"'<>]*/.exec(full.HTML + " " + full.Text);
