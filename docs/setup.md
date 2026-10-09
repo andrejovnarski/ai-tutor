@@ -72,6 +72,41 @@ The weekly report and distress emails go through Resend too (Auth email is set u
 | `EMAIL_FROM` | An address on the verified domain |
 | `MAILER` | `resend` |
 
+## Tutor voice (Claude)
+
+Nova's lines come from Claude when `TUTOR_VOICE=claude`. Unset (or any other value) means canned lines only, so nothing calls Claude by accident. Every AI line is checked before it is spoken; a failed check, an error or a timeout falls back to a canned line.
+
+| Variable | Value |
+|---|---|
+| `TUTOR_VOICE` | `claude` to turn it on; `canned` (the default) to keep it off |
+| `ANTHROPIC_API_KEY` | On Vercel: an Anthropic API key (server only, never expose). Locally you can instead run `ant auth login` and leave the key unset; the SDK finds the credentials itself |
+
+### Run the eval before families
+
+The eval is the only place that spends money on purpose. It runs 51 turn plans through the real voice and the line checks.
+
+```
+npm run eval:tutor                  # prints the case count and cost estimate; makes no API call
+npm run eval:tutor -- --yes         # runs it for real (about $1 for 51 cases)
+npm run eval:tutor -- --yes --limit 8   # a cheap smoke run
+```
+
+The estimate is cases x (about 1,500 cached input + 300 uncached input + 1,000 output tokens) at the Opus 5.5 rates: $4/MTok input, $0.20/MTok cache read, $20/MTok output. It needs credentials as above and writes `evals/tutor/report-<date>.md`.
+
+A passing report:
+
+- the script exits 0: no more than 10% of cases ended on a canned line;
+- most outcomes are `ai`; a few `ai-retry` are fine, but many `canned:guard` entries mean the prompt or a guard needs work (the guard reasons show which);
+- p50 latency near the 1.5 s goal and p95 under the 2.5 s cap;
+- mean `cacheRead` above zero after the first case (the prompt cache is working);
+- you spot-read the listed lines for tone: warm, short, never saying the answer early, never naming the child's mistake as a fault.
+
+### Latency
+
+The goal is the first word within about 1.5 s. Each line is capped at 2.5 s: after that Nova uses a canned line for it. A whole request can still take longer, because an answer that ends the session rolls over into a new one (another line) and a request that loses a race with another tablet retries its step.
+
+If measured latency or cost is too high, Sonnet 5.5 or Haiku 4.5 are candidates (`MODEL` in `src/server/tutor/voice.ts`), but switching models is more than changing that constant: re-check that the new model supports every request option the voice sends, in particular `output_config.effort` (Haiku 4.5 rejects `effort` with an error, which would turn every line into `canned:error`) and the server-side `fallbacks` beta. Run the eval after any switch. Only do it if the eval shows it is needed; it is the owner's decision (spec section 7).
+
 ## Vercel
 
 Set these environment variables for the project:
@@ -85,6 +120,7 @@ Set these environment variables for the project:
 | `CRON_SECRET` | Output of `openssl rand -hex 32`; Vercel sends it as a bearer token to the cron routes |
 | `APP_ORIGIN` | The production origin, for example `https://your-app.vercel.app` |
 | `STRIPE_SECRET_KEY`, `CONSENT_GATEWAY`, `RESEND_API_KEY`, `EMAIL_FROM`, `MAILER` | As in the Stripe and Resend sections |
+| `TUTOR_VOICE`, `ANTHROPIC_API_KEY` | As in the Tutor voice section |
 
 Crons come from `vercel.json`: the weekly report (hourly on Sundays, it sends from 17:00 New York time) and daily retention. Hourly crons need a Vercel plan that allows them; the free Hobby plan does not.
 
@@ -101,3 +137,4 @@ Do not invite real families until all of these are done:
    Also ask the lawyer: the privacy notice is currently reachable only after sign-in and the parent PIN. Does it need a public link before sign-up?
 2. Remove the "Draft" banner by changing `PRIVACY_NOTICE_VERSION` (in `src/server/consent/notice.ts`) to a non-draft version.
 3. The Stripe, Resend and Vercel steps above are done, including the hosted retention check.
+4. `npm run eval:tutor -- --yes` passes (Tutor voice section).

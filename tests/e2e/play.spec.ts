@@ -45,7 +45,8 @@ test("tap Mia and answer problems; attempts are saved and responses never carry 
   const feedback: string[] = [];
   for (let i = 0; i < 6; i++) {
     await answerOnce(page, i % 3);
-    feedback.push(await page.getByTestId("feedback").innerText().catch(() => ""));
+    // A retry (same problem, try 2) shows its line as Nova's line, so the feedback slot may be empty.
+    if (await page.getByTestId("feedback").count()) feedback.push(await page.getByTestId("feedback").innerText());
   }
   for (const f of feedback) expect(f).not.toMatch(/undefined|NaN/);
   await expect.poll(() => attempts(parentId)).toBeGreaterThanOrEqual(target);
@@ -56,6 +57,25 @@ test("tap Mia and answer problems; attempts are saved and responses never carry 
   const html = await (await page.request.get(page.url())).text();
   expect(html).toContain("<main");
   expect(html).not.toMatch(/"answer"|"mistakes"|\\"answer\\"|\\"mistakes\\"/);
+});
+
+test("Nova speaks above the problem and after each answer, with Mia's name filled in", async ({ page }) => {
+  await setUpMia(page);
+  await page.getByRole("link", { name: /Mia/ }).click();
+  await expect(page.getByTestId("nova")).toBeVisible();
+  const lines = [await page.getByTestId("nova").innerText()];
+  for (let i = 0; i < 6; i++) {
+    await answerOnce(page, i % 3);
+    // After a retry the wrong line is Nova's line and there is no separate feedback line.
+    if (await page.getByTestId("feedback").count()) lines.push(await page.getByTestId("feedback").innerText());
+    lines.push(await page.getByTestId("nova").innerText());
+  }
+  for (const l of lines) {
+    expect(l.length).toBeGreaterThan(0);
+    expect(l).not.toMatch(/\{name\}|\{answer\}|undefined/);
+  }
+  // Canned lines rotate and most use {name}: across 13 lines Mia's name shows up.
+  expect(lines.some((l) => l.includes("Mia"))).toBe(true);
 });
 
 test("reloading mid-problem brings back the same prompt and choices", async ({ page }) => {

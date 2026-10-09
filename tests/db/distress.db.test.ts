@@ -50,7 +50,11 @@ describe("say route", () => {
     const before = await mailCount(emailA);
     const res = await sayPost(say("I killed it at math"), ctx(kidA));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ reply: null });
+    // Plan 4: a non-hit gets Nova's steer-back line (name filled), never the distress line.
+    const { reply } = await res.json();
+    expect(typeof reply).toBe("string");
+    expect(reply).not.toContain("{name}");
+    expect(reply).not.toBe("That sounds hard. Please tell a grown-up you trust.");
     expect(await flags()).toHaveLength(0);
     expect(await mailCount(emailA)).toBe(before);
   });

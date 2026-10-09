@@ -29,6 +29,14 @@ export class SupabaseRepo implements Repo {
     return kidStateFromRows(kid.data as KidRow, skills.data as SkillRow[], styles.data as StyleRow[]);
   }
 
+  /** The kid's nickname for filling `{name}` in Nova's lines; never put in a plan. Null if not found or not yours. */
+  async nickname(kidId: string): Promise<string | null> {
+    const { data, error } = await this.db.from("kids").select("nickname").eq("id", kidId).maybeSingle();
+    if (error?.code === INVALID_TEXT_REPRESENTATION) return null;
+    if (error) throw error;
+    return (data as { nickname: string } | null)?.nickname ?? null;
+  }
+
   async openSession(kidId: string): Promise<OpenSession | null> {
     const { data, error } = await this.db.from("sessions").select("id, version, state")
       .eq("kid_id", kidId).is("ended_at", null).maybeSingle();
