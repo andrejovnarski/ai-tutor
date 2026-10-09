@@ -68,7 +68,7 @@ function serve(s: Session, now: number, deps: Deps, skillId: string, level: Leve
     }
     const pending: Pending = {
       skillId, templateId, seed, level, mode, try: 1, presentedAt: now, style: null,
-      problem: adaptInput(problem, s.kid.ageBand),
+      problem: adaptInput(problem, s.kid.ageBand), shown: true,
     };
     return { session: { ...next, pending, lastActivity: now }, turn: problemTurn(pending, logs) };
   }
@@ -78,7 +78,10 @@ function serve(s: Session, now: number, deps: Deps, skillId: string, level: Leve
 export function nextTurn(s: Session, now: number, deps: Deps = DEFAULT_DEPS): { session: Session; turn: Turn } {
   if (s.ended) return end(s, now);
   if (now - s.lastActivity > STALE_MS) return end(s, now);
-  if (s.pending) return { session: s, turn: problemTurn(s.pending, []) };
+  if (s.pending) {
+    const pending = s.pending.shown ? s.pending : { ...s.pending, shown: true, presentedAt: now };
+    return { session: { ...s, pending }, turn: problemTurn(pending, []) };
+  }
 
   if (!s.kid.placed) {
     const placement = s.placement ?? startPlacement(s.kid.grade);
@@ -121,7 +124,7 @@ function windDown(s: Session, now: number, deps: Deps) {
 
 export function answer(s: Session, given: number, now: number): { session: Session; feedback: Feedback; writes: Writes } | null {
   const p = s.pending;
-  if (!p || s.ended) return null;
+  if (!p || !p.shown || s.ended) return null;
   const result = check(p.problem, given);
   const correct = result.kind === "correct";
   const attempt: Attempt = {
@@ -149,7 +152,7 @@ export function answer(s: Session, given: number, now: number): { session: Sessi
       });
       next = {
         ...next,
-        pending: { ...p, try: 2, style, presentedAt: now },
+        pending: { ...p, try: 2, style, presentedAt: now, shown: false },
         lastStyle: { ...next.lastStyle, [p.skillId]: style },
         switchStyle: next.switchStyle.filter((id) => id !== p.skillId),
       };

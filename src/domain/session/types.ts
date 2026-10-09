@@ -33,6 +33,8 @@ export type Deps = { generate: (templateId: string, seed: number, level: Level) 
 export type Pending = {
   skillId: string; templateId: string; seed: number; level: Level; mode: Mode;
   try: 1 | 2; presentedAt: number; style: Style | null; problem: Problem;
+  /** False between a wrong first try and nextTurn showing the retry: blocks double taps. */
+  shown: boolean;
 };
 
 export type Check = { prereqId: string; returnTo: string; done: number };

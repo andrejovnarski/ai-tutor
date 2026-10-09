@@ -165,3 +165,14 @@ it("8–11 get the number pad, except for two-way picks", () => {
     expect(x.turn.problem.input).toBe(x.turn.problem.choices!.length === 2 ? "tap-choice" : "number-pad");
   }
 });
+
+it("double tap on a wrong first answer does not use up the retry (Review Focus 1)", () => {
+  const { s, t } = turnOf(fresh(placedKid(firstSkills(3))), 0);
+  const a = answer(s, wrongFor(t), 5 * SEC)!;
+  expect(a.feedback.then).toBe("retry");
+  expect(answer(a.session, wrongFor(t), 5 * SEC + 50)).toBeNull(); // before the retry was shown
+  const again = turnOf(a.session, 12 * SEC);
+  const b = answer(again.s, rightFor(again.t), 15 * SEC)!;
+  expect(b.feedback.result.kind).toBe("correct");
+  expect(b.writes.attempts[0]!.timeMs).toBe(3 * SEC); // timed from when the retry was shown
+});
