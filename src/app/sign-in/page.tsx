@@ -3,9 +3,9 @@ import { requestLink } from "./actions";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sent?: string; error?: string }>;
+  searchParams: Promise<{ sent?: string; error?: string; deleted?: string }>;
 }) {
-  const { sent, error } = await searchParams;
+  const { sent, error, deleted } = await searchParams;
   if (sent) {
     return (
       <main>
@@ -17,6 +17,7 @@ export default async function SignInPage({
   return (
     <main>
       <h1>Sign in</h1>
+      {deleted && <p role="status">Your account and all data were deleted.</p>}
       {error === "link" && <p role="alert">That link expired. Send a new one.</p>}
       <form action={requestLink}>
         <label>

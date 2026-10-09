@@ -32,7 +32,8 @@ const emailA = `distress-a-${run}@test.dev`;
 const ctx = (kidId: string) => ({ params: Promise.resolve({ kidId }) });
 const say = (text: unknown) => new Request("http://x/api", { method: "POST", body: JSON.stringify({ text }) });
 const flags = async () => (await admin().from("distress_flags").select("*").eq("kid_id", kidA)).data ?? [];
-const mailCount = mailCountTo;
+// Only distress mail: the weekly-report test emails every consented parent, this one included.
+const mailCount = (to: string) => mailCountTo(to, 'subject:"said something that worried us"');
 
 beforeAll(async () => {
   A = await makeParent(emailA, { consent: true });

@@ -36,14 +36,14 @@ export async function makeParent(
 const MAILPIT = "http://127.0.0.1:54324/api/v1";
 
 /** Mailpit's list endpoint returns only the newest 50, so by-address lookups use the search API (newest first). */
-async function searchTo(email: string): Promise<{ ID: string }[]> {
-  const res = await fetch(`${MAILPIT}/search?query=${encodeURIComponent(`to:"${email}"`)}`);
+async function searchTo(email: string, extra = ""): Promise<{ ID: string }[]> {
+  const res = await fetch(`${MAILPIT}/search?query=${encodeURIComponent(`to:"${email}" ${extra}`.trim())}`);
   return ((await res.json()) as { messages: { ID: string }[] }).messages;
 }
 
-/** Number of messages Mailpit holds for an address. */
-export async function mailCountTo(email: string): Promise<number> {
-  return (await searchTo(email)).length;
+/** Number of messages Mailpit holds for an address; `extra` is more Mailpit search terms, e.g. `subject:"x"`. */
+export async function mailCountTo(email: string, extra = ""): Promise<number> {
+  return (await searchTo(email, extra)).length;
 }
 
 export async function latestEmailLink(email: string): Promise<string> {
