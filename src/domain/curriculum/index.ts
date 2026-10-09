@@ -1,4 +1,5 @@
 import type { Cluster, Level, Problem, Skill, Template } from "../types";
+import { addSubtractWithin100Cluster } from "./add-subtract-within-100";
 import { addSubtractWithin20Cluster } from "./add-subtract-within-20";
 import { addWithin10Cluster } from "./add-within-10";
 import { compareNumbersCluster } from "./compare-numbers";
@@ -13,6 +14,7 @@ export const CLUSTERS: Cluster[] = [
   subtractWithin10Cluster,
   addSubtractWithin20Cluster,
   placeValueCluster,
+  addSubtractWithin100Cluster,
 ];
 
 export const SKILLS: Skill[] = CLUSTERS.flatMap((c) => c.skills);
