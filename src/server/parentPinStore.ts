@@ -38,15 +38,18 @@ export const storePin = (parentId: string, hash: string, salt: string) =>
 export const clearPin = (parentId: string) =>
   write(parentId, { pin_hash: null, pin_salt: null, pin_failed: 0, pin_locked_until: null });
 
-/** Atomic in the database: counts this failure and locks on the 5th. Returns the resulting lock, if any. */
-export async function recordPinFailure(parentId: string): Promise<{ lockedUntil: number | null }> {
-  const { data, error } = await db().rpc("record_pin_failure", { p_parent: parentId });
+/**
+ * Atomic in the database: reserves one PIN attempt before the PIN is checked, so parallel guesses each
+ * count. Allowed only while not locked; the 5th reservation sets the 10-minute lock.
+ */
+export async function reservePinAttempt(parentId: string): Promise<{ allowed: boolean; lockedUntil: number | null }> {
+  const { data, error } = await db().rpc("reserve_pin_attempt", { p_parent: parentId });
   if (error) throw error;
-  const r = (Array.isArray(data) ? data[0] : data) as { locked_until: string | null } | undefined;
-  return { lockedUntil: r?.locked_until ? Date.parse(r.locked_until) : null };
+  const r = (Array.isArray(data) ? data[0] : data) as { allowed: boolean; locked_until: string | null } | undefined;
+  return { allowed: r?.allowed === true, lockedUntil: r?.locked_until ? Date.parse(r.locked_until) : null };
 }
 
-/** Clears the failure count after a correct PIN, unless a lock is active. */
+/** After a correct PIN on an allowed attempt: clears the count and any lock (including one that attempt set). */
 export async function resetPinFailures(parentId: string): Promise<void> {
   const { error } = await db().rpc("reset_pin_failures", { p_parent: parentId });
   if (error) throw error;

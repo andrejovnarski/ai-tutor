@@ -97,8 +97,9 @@ test("five wrong PINs lock it for 10 minutes", async ({ page, context }) => {
   await expect(page.getByText("Locked for 10 minutes")).toBeVisible();
 });
 
-test("the right PIN unlocks, and without the cookie /parent redirects to the PIN page", async ({ page, context }) => {
-  await signIn(page, unique());
+test("the right PIN unlocks and clears the failure count, and without the cookie /parent redirects to the PIN page", async ({ page, context }) => {
+  const email = unique();
+  await signIn(page, email);
   await setPin(page);
   await context.clearCookies({ name: "parent_ok" });
   await page.goto("/parent");
@@ -109,6 +110,9 @@ test("the right PIN unlocks, and without the cookie /parent redirects to the PIN
   await page.getByLabel("PIN", { exact: true }).fill("1234");
   await page.getByRole("button", { name: "Unlock" }).click();
   await expect(page).toHaveURL(/\/parent$/);
+  const id = await consent(email);
+  const { data } = await admin().from("parents").select("pin_failed, pin_locked_until").eq("id", id).single();
+  expect(data).toEqual({ pin_failed: 0, pin_locked_until: null });
 });
 
 test("Forgot PIN right after email sign-in lets the parent set a new PIN", async ({ page, context }) => {

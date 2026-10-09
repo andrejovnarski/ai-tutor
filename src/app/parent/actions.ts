@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { PARENT_COOKIE, requireParent, requireUser } from "@/server/parentGate";
 import { canResetPin, hashPin, isValidPin, signParentCookie, verifyPin } from "@/server/pin";
-import { clearPin, readPinRow, recordPinFailure, resetPinFailures, storePin } from "@/server/parentPinStore";
+import { clearPin, readPinRow, reservePinAttempt, resetPinFailures, storePin } from "@/server/parentPinStore";
 import { parseKidProfile, ageBandFor } from "@/server/kidProfile";
 
 async function grantParentCookie(parentId: string) {
@@ -35,17 +35,16 @@ export async function unlock(formData: FormData): Promise<void> {
   const { user } = await requireUser();
   const row = await readPinRow(user.id);
   if (!row.pin_hash || !row.pin_salt) redirect("/parent/pin");
-  const now = Date.now();
-  const lockedUntil = row.pin_locked_until ? Date.parse(row.pin_locked_until) : 0;
-  if (lockedUntil > now) redirect("/parent/pin?error=locked");
+  // Count the attempt before checking the PIN, so a burst of parallel guesses cannot outrun the lock.
+  const { allowed, lockedUntil } = await reservePinAttempt(user.id);
+  if (!allowed) redirect("/parent/pin?error=locked");
   const pin = String(formData.get("pin") ?? "");
   if (isValidPin(pin) && (await verifyPin(pin, row.pin_hash, row.pin_salt))) {
-    if (row.pin_failed || lockedUntil) await resetPinFailures(user.id);
+    await resetPinFailures(user.id);
     await grantParentCookie(user.id);
     redirect("/parent");
   }
-  const { lockedUntil: locked } = await recordPinFailure(user.id);
-  redirect(locked && locked > Date.now() ? "/parent/pin?error=locked" : "/parent/pin?error=wrong");
+  redirect(lockedUntil && lockedUntil > Date.now() ? "/parent/pin?error=locked" : "/parent/pin?error=wrong");
 }
 
 /** Clears the PIN, but only within 10 minutes of an email-link sign-in. */
