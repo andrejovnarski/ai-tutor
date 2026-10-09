@@ -97,7 +97,7 @@ export function nextTurn(s: Session, now: number, deps: Deps = DEFAULT_DEPS): { 
 
   if (s.check) return serve(s, now, deps, s.check.prereqId, 1, "check");
 
-  const current = s.current ?? frontier(s.kid);
+  const current = s.current && !isMastered(s.kid.skills[s.current]!) ? s.current : frontier(s.kid);
   const wrong = s.recent.filter((ok) => !ok).length;
   const easy = easyReview(s.kid);
   if (wrong >= LOW_ACCURACY_WRONG && easy && s.lastMode !== "review") return review(s, now, deps, easy, 1, current);
@@ -209,6 +209,11 @@ function checkAnswer(s: Session, p: Pending, correct: boolean, tag: Attempt["mis
   }
   const style = pickStyle(stepRng(s, 1), getSkill(p.skillId).styles, s.kid.styles, { tag });
   const shown = { ...feedback, style, reveal: true };
+  if (isMastered(s.kid.skills[c.prereqId]!)) {
+    // One slip on a skill still known well: no step-back, just explain the current skill another way.
+    shown.logs.push({ type: "check-passed", skillId: c.prereqId, detail: `${c.returnTo} (still mastered)` });
+    return { session: { ...s, check: null, switchStyle: [...s.switchStyle, c.returnTo] }, feedback: shown, writes };
+  }
   if (s.stepBacksInRow + 1 > MAX_STEP_BACKS) {
     shown.logs.push({ type: "loop-guard", skillId: c.returnTo, detail: `after ${MAX_STEP_BACKS} step-backs` });
     return { session: { ...s, check: null, windDown: 0 }, feedback: shown, writes };

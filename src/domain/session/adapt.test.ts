@@ -124,3 +124,24 @@ it("past the max time, at most 3 wind-down problems, then the end", () => {
   expect(wind.length).toBeLessThanOrEqual(3);
   expect(steps.at(-1)!.turn.kind).toBe("end");
 });
+
+it("a check that leaves the prerequisite mastered does not step back to it (number pad)", () => {
+  // 8–11 on the number pad: guess 0.05, so one wrong check answer after a right one keeps pKnown ≥ 0.95.
+  const kid = placedKid(firstSkills(idx("add-within-10.missing")), "8-11", "2");
+  let checks = 0;
+  const { steps } = play(fresh(kid), 0, (t) => {
+    if (t.mode === "check") return checks++ % 2 === 0 ? rightFor(t) : wrongFor(t);
+    if (t.skillId === "add-within-10.missing") return wrongFor(t);
+    return rightFor(t);
+  }, { max: 14 });
+  expect(logs(steps).some((l) => l.type === "step-back")).toBe(false);
+  const practice = firstTries(steps).filter((x) => x.turn.mode === "practice");
+  expect(practice.every((x) => x.turn.skillId === "add-within-10.missing")).toBe(true);
+});
+
+it("practice never stays on a skill that is already mastered", () => {
+  const kid = placedKid(firstSkills(4));
+  const s = { ...fresh(kid), current: "count-to-20.objects-to-10" }; // stale pointer to a mastered skill
+  const { steps } = play(s, 0, rightFor, { max: 3 });
+  expect(problems(steps)[0]!.turn.skillId).toBe("compare-numbers.to-10");
+});
