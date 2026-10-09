@@ -87,7 +87,11 @@ async function attempt(voice: TutorVoice, plan: TurnPlan, remainingMs: number) {
 
 export async function speak(
   plan: TurnPlan,
-  ctx: { voice: TutorVoice; seed: number; budgetMs?: number; now?: () => number },
+  ctx: {
+    voice: TutorVoice; seed: number; budgetMs?: number; now?: () => number;
+    /** Optional observer (the eval script). Never affects the result or the monitoring log. */
+    onResult?: (r: { outcome: string; ms: number; cacheRead: number; guardReasons: string[] }) => void;
+  },
 ): Promise<{ line: TutorLine; outcome: string }> {
   const now = ctx.now ?? Date.now;
   const budget = ctx.budgetMs ?? BUDGET_MS;
@@ -95,6 +99,7 @@ export async function speak(
   let line: TutorLine | undefined;
   let outcome = "canned:config";
   let cacheRead = 0;
+  const guardReasons: string[] = [];
 
   if (ctx.voice !== cannedVoice) {
     let reason: FailReason = "timeout";
@@ -111,6 +116,7 @@ export async function speak(
           break;
         }
         reason = "guard";
+        if (!ok.ok) guardReasons.push(ok.reason);
       } catch (e) {
         reason = e instanceof VoiceError ? e.reason : "error";
       }
@@ -123,6 +129,11 @@ export async function speak(
     console.log(JSON.stringify({ evt: "tutor", event: plan.event, outcome, ms: Math.round(now() - start), cacheRead }));
   } catch {
     // logging must never cost the child a line
+  }
+  try {
+    ctx.onResult?.({ outcome, ms: Math.round(now() - start), cacheRead, guardReasons });
+  } catch {
+    // an observer must never cost the child a line
   }
   return { line, outcome };
 }

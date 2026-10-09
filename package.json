@@ -11,6 +11,7 @@
     "start": "next start",
     "test:db": "vitest run -c vitest.db.config.ts",
     "test:e2e": "playwright test",
+    "eval:tutor": "tsx --conditions=react-server scripts/eval-tutor.ts",
     "env:local": "npx supabase status -o env | node scripts/env-local.mjs"
   },
   "devDependencies": {
@@ -20,6 +21,7 @@
     "@types/react-dom": "^19.3.0",
     "fast-check": "^4.10.2",
     "supabase": "^2.120.0",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
   },

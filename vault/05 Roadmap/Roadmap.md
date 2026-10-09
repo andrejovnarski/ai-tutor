@@ -17,7 +17,7 @@ gantt
   Skill map + problem maker :done, b1, after d2, 10d
   Session engine + kid model:done, b2, after b1, 10d
   Kid app + voice           :b3, after d2, 20d
-  Tutor voice (Claude)      :b4, after b2, 7d
+  Tutor voice (Claude) (done) :done, b4, after b2, 7d
   3a Sign-up + data (done)  :done, b5a, after b2, 7d
   3b Consent + report (done) :done, b5b, after b5a, 7d
   section Beta

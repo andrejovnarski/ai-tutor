@@ -77,6 +77,13 @@ describe("speak", () => {
     expect(JSON.parse(log.mock.calls[0]![0] as string)).toMatchObject({ evt: "tutor", event: "present", outcome: "ai", cacheRead: 900 });
   });
 
+  it("reports outcome, cacheRead and guard reasons to onResult", async () => {
+    const seen: unknown[] = [];
+    const { client } = fakeClient([{ text: EARLY, cacheRead: 5 }, { text: GOOD, cacheRead: 7 }]);
+    await speak(plan, { voice: claudeVoice(client), seed: 0, onResult: (r) => seen.push(r) });
+    expect(seen).toEqual([expect.objectContaining({ outcome: "ai-retry", cacheRead: 7, guardReasons: ["early-answer"] })]);
+  });
+
   it("retries after a guard failure", async () => {
     const { fake, result } = run([{ text: EARLY }, { text: GOOD }]);
     expect((await result).outcome).toBe("ai-retry");
