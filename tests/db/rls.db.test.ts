@@ -38,6 +38,13 @@ describe("parents", () => {
     const r2 = await A.client.from("parents").update({ pin_hash: "x" }).eq("id", A.userId);
     expect(r2.error).not.toBeNull();
   });
+  it("rejects updating own last_active_at directly (only touch_activity may refresh it)", async () => {
+    const before = (await admin().from("parents").select("last_active_at").eq("id", A.userId).single()).data!.last_active_at;
+    const r = await A.client.from("parents").update({ last_active_at: "2100-01-01T00:00:00Z" }).eq("id", A.userId);
+    expect(r.error).not.toBeNull();
+    const after = (await admin().from("parents").select("last_active_at").eq("id", A.userId).single()).data!.last_active_at;
+    expect(after).toBe(before);
+  });
   it("lets a parent read only their own row", async () => {
     const { data } = await A.client.from("parents").select("id");
     expect(data?.map((r) => r.id)).toEqual([A.userId]);

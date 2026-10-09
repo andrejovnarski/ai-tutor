@@ -3,15 +3,20 @@ import type { User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyParentCookie } from "./pin";
+import { touchActivity } from "./retention";
 import { createServerSupabase } from "./supabase";
 
 export const PARENT_COOKIE = "parent_ok";
 
-/** Signed-in parent or redirect to sign-in. */
+/**
+ * Signed-in parent or redirect to sign-in. Every signed-in page or action counts as activity (spec §8): a parent who
+ * comes back on a persisted session clears any retention warning. touchActivity is hourly-limited and never throws.
+ */
 export async function requireUser() {
   const supabase = await createServerSupabase();
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/sign-in");
+  await touchActivity(supabase);
   return { supabase, user: data.user as User };
 }
 

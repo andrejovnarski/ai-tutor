@@ -1,11 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createServerSupabase } from "@/server/supabase";
+import { requireUser } from "@/server/parentGate";
 
 export default async function HomePage() {
-  const supabase = await createServerSupabase();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) redirect("/sign-in");
+  const { supabase } = await requireUser(); // counts as activity
   const { data: kids } = await supabase.from("kids").select("id, nickname, avatar").order("created_at");
   return (
     <main style={{ padding: 24 }}>

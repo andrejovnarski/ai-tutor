@@ -15,6 +15,8 @@ Built by one person with Claude, target 1–2 months to real families.
 | Voice | Cloud STT + TTS vendor | Browser speech is weak for kids; vendor must not keep kid audio (COPPA) |
 | Hosting | Vercel | Push = live |
 | Email | Resend (custom SMTP for Supabase Auth) | Owner's choice, 2026-10-09; sign its data processing agreement |
+| Consent | Stripe Checkout setup mode (card check, no charge) | Owner's choice, 2026-10-09; sign Stripe's data processing agreement |
+| Schedule | Vercel Cron | Owner's choice, 2026-10-09; hourly crons need a plan that allows them |
 
 Open: which speech vendor (pick in a later section).
 

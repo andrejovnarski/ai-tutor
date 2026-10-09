@@ -1,6 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { SupabaseRepo } from "./persist/supabaseRepo";
+import { touchActivity } from "./retention";
 import { createServerSupabase } from "./supabase";
 
 export const seed = () => crypto.getRandomValues(new Uint32Array(1))[0]!;
@@ -18,5 +19,7 @@ export const MAX_INT = 2 ** 31 - 1;
 export async function parentRepo(): Promise<SupabaseRepo | null> {
   const supabase = await createServerSupabase();
   const { data } = await supabase.auth.getUser();
-  return data.user ? new SupabaseRepo(supabase) : null;
+  if (!data.user) return null;
+  await touchActivity(supabase);
+  return new SupabaseRepo(supabase);
 }

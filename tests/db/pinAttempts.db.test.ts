@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { admin, anon, makeParent } from "../helpers/admin";
 
-const email = () => `pin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
+const email = () => `pin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.dev`;
 const row = async (id: string) =>
   (await admin().from("parents").select("pin_failed, pin_locked_until").eq("id", id).single()).data!;
 type Reserved = { allowed: boolean; locked_until: string | null };
