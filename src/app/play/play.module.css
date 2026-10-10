@@ -35,7 +35,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 16px;
+  padding: 8px 16px;
   min-height: 0;
   background: var(--tray);
   color: var(--ink);
@@ -101,4 +101,62 @@
 
 @media (orientation: portrait) {
   .screen { grid-template-rows: 150px 1fr 260px; }
+}
+
+.tiles,
+.keys {
+  display: grid;
+  gap: 16px;
+}
+
+.tiles {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(88px, 160px);
+}
+
+.keys {
+  grid-template-columns: repeat(6, 88px);
+}
+
+.padWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.entry {
+  min-width: 128px;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xl);
+  line-height: 1;
+  border-bottom: 4px solid var(--ink);
+}
+
+.tile,
+.key {
+  min-width: 88px;
+  min-height: 88px;
+  font: inherit;
+  font-size: var(--text-l);
+  color: var(--ink);
+  background: var(--tray);
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.tile:active:not(:disabled),
+.key:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.tile:disabled,
+.key:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
