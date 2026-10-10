@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { admin } from "../helpers/admin";
+import { admin, makeParent } from "../helpers/admin";
 import { addKid, consent, setPin, signIn, unique } from "./helpers";
 
 /** Signs in, consents via admin, sets a PIN, adds Mia, and lands on the picker. Returns Mia's parent id. */
@@ -107,6 +107,19 @@ test("another family's kid id shows nothing and the API says 404", async ({ page
   await setUpMia(page);
   const res = await page.request.post("/api/kids/00000000-0000-4000-8000-000000000000/turn");
   expect(res.status()).toBe(404);
+  // The play page itself is a 404 for an unknown kid and for another family's kid, and shows none of their data.
+  const other = await makeParent(unique("other"), { consent: true });
+  const { data: zed, error } = await admin().from("kids")
+    .insert({ parent_id: other.userId, nickname: "Zedekiah", grade: "1", age_band: "5-7", avatar: "frog" }).select("id").single();
+  if (error) throw error;
+  for (const id of ["00000000-0000-4000-8000-000000000000", zed.id as string, "not-a-uuid"]) {
+    const page404 = await page.goto(`/play/${id}`);
+    expect(page404?.status()).toBe(404);
+    await expect(page.getByTestId("board")).toHaveCount(0);
+    const html = await page.content();
+    expect(html).not.toContain("Zedekiah");
+    expect(html).not.toContain("frog");
+  }
 });
 
 test("a signed-out visitor to a play page is sent to sign-in", async ({ page }) => {

@@ -79,42 +79,67 @@ test("ages 5-7: five tapped answers on the felt board, Nova's line changes, no c
   expect(errors).toEqual([]);
 });
 
+/** Answers problems until a number-pad problem is on screen; fails loudly if none shows within `max` problems. */
+async function reachPad(page: Page, max = 8) {
+  await waitForProblem(page);
+  for (let i = 0; i < max && !(await pad(page).count()); i++) {
+    await answer(page);
+    await waitForProblem(page);
+  }
+  await expect(pad(page), `no number-pad problem within ${max} problems`).toBeVisible();
+}
+
 test("ages 8-11: a number-pad problem is answered with the keys and OK", async ({ page }) => {
   const errors = collectErrors(page);
   const kidId = await setUpKid(page, "Theo", "3");
   await page.goto(`/play/${kidId}`);
   await waitForProblem(page);
   await expect(page.getByTestId("nova-line")).toHaveCSS("font-size", "22px");
-  let padAnswers = 0;
-  for (let i = 0; i < 6 && padAnswers === 0; i++) if ((await answer(page)) === "pad") padAnswers++;
-  expect(padAnswers).toBe(1);
+  await reachPad(page);
   // The keys: digits, Delete and OK; OK is off while the entry is empty.
-  await waitForProblem(page);
-  if (await pad(page).count()) {
-    await expect(pad(page).getByRole("button", { name: "OK" })).toBeDisabled();
-    await pad(page).getByRole("button", { name: "4", exact: true }).click();
-    await pad(page).getByRole("button", { name: "Delete" }).click();
-    await expect(pad(page).getByRole("button", { name: "OK" })).toBeDisabled();
-  }
+  const ok = pad(page).getByRole("button", { name: "OK" });
+  await expect(ok).toBeDisabled();
+  await pad(page).getByRole("button", { name: "4", exact: true }).click();
+  await expect(pad(page).getByLabel("Your answer")).toHaveText("4");
+  await pad(page).getByRole("button", { name: "Delete" }).click();
+  await expect(pad(page).getByLabel("Your answer")).toHaveText("");
+  await expect(ok).toBeDisabled();
+  expect(await answer(page)).toBe("pad");
+  expect(await attempts(kidId)).toBeGreaterThanOrEqual(1);
   expect(errors).toEqual([]);
 });
 
-test("a lost answer request shows the connection notice, then the next problem, and saves one attempt", async ({ page }) => {
+test("a lost response: the server saved the answer, the retry gets a 409 and adopts the turn; one attempt", async ({ page }) => {
+  const errors = collectErrors(page);
   const kidId = await setUpKid(page, "Ava", "K");
   await page.goto(`/play/${kidId}`);
   await waitForProblem(page);
   let first = true;
+  const retried: number[] = [];
   await page.route("**/api/kids/*/answer", async (route) => {
-    if (first) { first = false; await route.abort("failed"); } else await route.continue();
+    const res = await route.fetch(); // the server sees and commits the answer
+    if (first) {
+      first = false;
+      await route.abort("failed"); // ...but the browser never gets the reply
+    } else {
+      retried.push(res.status());
+      await route.fulfill({ response: res });
+    }
   });
   const before = await version(page);
   await page.getByTestId("choices").getByRole("button").first().click();
   await expect(page.getByTestId("connection-notice")).toContainText("Trying to reach Nova");
   await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
   await expect(page.getByTestId("connection-notice")).toHaveCount(0);
+  await expect(page.locator("main")).toHaveAttribute("data-phase", "problem");
   await waitForProblem(page);
-  await page.waitForTimeout(300);
+  expect(retried).toEqual([409]); // the same { version, given } re-sent: a duplicate, adopted, not saved again
+  await expect.poll(() => attempts(kidId)).toBe(1);
+  await page.waitForTimeout(500);
   expect(await attempts(kidId)).toBe(1);
+  // Chromium logs the aborted request and the 409 as resource errors; no other error (and no page error) may appear.
+  const network = /^Failed to load resource: (net::ERR_FAILED|the server responded with a status of 409 \(Conflict\))$/;
+  expect(errors.filter((e) => !network.test(e))).toEqual([]);
 });
 
 test("I'm done for now goes home, and reopening the kid resumes the same problem", async ({ page }) => {
@@ -160,7 +185,12 @@ test.describe("portrait 768 x 1024", () => {
     }));
     expect(scroll).toBeLessThanOrEqual(inner);
     expect(width).toBeLessThanOrEqual(innerW);
+    // .screen is 100dvh with overflow hidden, so the document never scrolls: check what is actually on screen.
+    await expect(page.getByTestId("say")).toBeInViewport({ ratio: 1 });
+    const board = (await page.getByTestId("board").boundingBox())!;
     const tray = (await page.getByTestId("tray").boundingBox())!;
+    expect(board.y + board.height).toBeLessThanOrEqual(tray.y);
+    expect(tray.y + tray.height).toBeLessThanOrEqual(1024);
     for (const b of await page.getByTestId("tray").getByRole("button").all()) {
       const box = (await b.boundingBox())!;
       expect(box.width).toBeGreaterThanOrEqual(88);
@@ -185,8 +215,7 @@ test.describe("portrait 768 x 1024", () => {
   test("number pad: nothing scrolls and every key is fully in view", async ({ page }) => {
     const kidId = await setUpKid(page, "Rex", "3");
     await page.goto(`/play/${kidId}`);
-    for (let i = 0; i < 6 && !(await pad(page).count()); i++) await answer(page);
-    await expect(pad(page)).toBeVisible();
+    await reachPad(page);
     await expect(pad(page).getByRole("button")).toHaveCount(12);
     await fits(page);
     mkdirSync("test-results/screens", { recursive: true });
