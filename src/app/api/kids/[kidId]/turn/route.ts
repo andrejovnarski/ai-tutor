@@ -13,5 +13,5 @@ export async function POST(_req: Request, { params }: { params: Promise<{ kidId:
     return tryAgain("turn", err);
   }
   if (r.status === 404) return notFound();
-  return NextResponse.json({ version: r.version, turn: r.turn, ...(r.line ? { line: forKid(r.line, nickname) } : {}) });
+  return NextResponse.json({ version: r.version, turn: r.turn, ...(r.line ? { line: forKid(r.line, nickname, kidId) } : {}) });
 }

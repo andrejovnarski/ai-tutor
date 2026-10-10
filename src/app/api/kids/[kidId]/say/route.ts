@@ -3,7 +3,7 @@ import { detectDistress } from "@/server/distress/detect";
 import { DISTRESS_REPLY } from "@/server/distress/phrases";
 import { reportDistress } from "@/server/distress/report";
 import { playSay } from "@/server/play";
-import { badRequest, forKid, nicknameOrNull, notFound, novaSpeak, parentRepo, seed, tryAgain } from "@/server/playApi";
+import { badRequest, forKid, nicknameOrNull, notFound, novaSpeak, parentRepo, seed, speechFor, tryAgain } from "@/server/playApi";
 
 // Recognised speech arrives here. Text is only ever kept (and logged) when it matches the distress list.
 // Anything else gets Nova's steer-back to the problem (no open chat): nothing is stored, and only the turn plan
@@ -29,7 +29,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ kidId: 
     if (!hit) {
       const [line, nickname] = await Promise.all([playSay(repo, kidId, text, seed(), novaSpeak()), nicknameOrNull(repo, kidId)]);
       if (!line) return notFound();
-      return NextResponse.json({ reply: forKid(line, nickname).say });
+      const out = forKid(line, nickname, kidId);
+      return NextResponse.json({ reply: out.say, ...(out.speech ? { replySpeech: out.speech } : {}) });
     }
     await reportDistress(kidId, text, Date.now());
   } catch (err) {
@@ -37,5 +38,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ kidId: 
     const res = tryAgain("say", err);
     return hit ? NextResponse.json({ error: "try again", reply: DISTRESS_REPLY }, { status: res.status }) : res;
   }
-  return NextResponse.json({ reply: DISTRESS_REPLY });
+  const replySpeech = speechFor(kidId, DISTRESS_REPLY);
+  return NextResponse.json({ reply: DISTRESS_REPLY, ...(replySpeech ? { replySpeech } : {}) });
 }

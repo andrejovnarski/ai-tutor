@@ -4,6 +4,12 @@ import { SupabaseRepo } from "./persist/supabaseRepo";
 import type { Speak } from "./play";
 import { touchActivity } from "./retention";
 import { createServerSupabase } from "./supabase";
+import { clipFor } from "./speech/clips";
+import { speechMode } from "./speech/config";
+import type { LineSpeech } from "./speech/lineSpeech";
+import { speakable } from "./speech/speakable";
+import { speechToken } from "./speech/token";
+import { env } from "./env";
 import { fillName } from "./tutor/plan";
 import type { TutorLine } from "./tutor/types";
 import { getTutorVoice, speak } from "./tutor/voice";
@@ -34,9 +40,31 @@ export function novaSpeak(): Speak {
   return async (plan, s) => (await speak(plan, { voice, seed: s })).line;
 }
 
-/** The line as the browser gets it: `{name}` filled with the nickname here, after every plan has been built. */
-export function forKid(line: TutorLine, nickname: string | null): TutorLine {
-  return { ...line, say: fillName(line.say, nickname ?? "") };
+export type { LineSpeech };
+
+/** What to speak for this text, or undefined when speech is off. The token ties the text to this kid for /speak. */
+export function speechFor(kidId: string, text: string): LineSpeech | undefined {
+  if (speechMode() === "off") return undefined;
+  const clip = clipFor(text);
+  return { text, token: speechToken(env.speechTokenSecret(), kidId, text), ...(clip ? { clip } : {}) };
+}
+
+/** The fixed notices the tablet speaks itself (no round trip to decide what to say). */
+export function speechCues(kidId: string): Record<"tryAgain" | "notCaught" | "cantHear", LineSpeech> | undefined {
+  const tryAgain = speechFor(kidId, "Let's try again.");
+  if (!tryAgain) return undefined;
+  return {
+    tryAgain,
+    notCaught: speechFor(kidId, "I didn't catch that. Try again or tap your answer.")!,
+    cantHear: speechFor(kidId, "I couldn't hear. Tap your answer.")!,
+  };
+}
+
+/** The line as the browser gets it: `{name}` filled with the nickname here, after every plan has been built.
+ *  The speech text is made from the line before the name is filled, so the name never reaches the voice. */
+export function forKid(line: TutorLine, nickname: string | null, kidId: string): TutorLine & { speech?: LineSpeech } {
+  const speech = speechFor(kidId, speakable(line.say));
+  return { ...line, say: fillName(line.say, nickname ?? ""), ...(speech ? { speech } : {}) };
 }
 
 /** The nickname for `{name}`, or null ("friend") if the lookup fails: a name must never fail a step that was saved. */

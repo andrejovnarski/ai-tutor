@@ -1,7 +1,8 @@
 // Pure play state machine and request runner. Framework-free: no React, no timers, no global fetch.
+import type { LineSpeech } from "../../server/speech/lineSpeech";
 import { revealNote, type PublicTurn } from "../../server/publicTurn";
 
-export type TutorLine = { say: string; show?: string; tone: "cheer" | "calm" | "curious" };
+export type TutorLine = { say: string; show?: string; tone: "cheer" | "calm" | "curious"; speech?: LineSpeech };
 export type EndTurn = Extract<PublicTurn, { kind: "end" }>;
 export type Summary = EndTurn["summary"];
 

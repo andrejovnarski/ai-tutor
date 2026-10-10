@@ -28,13 +28,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ kidId: 
   if (r.status === 404) return notFound();
   if (r.status === 409) {
     return NextResponse.json(
-      { version: r.version, turn: r.turn, ...(r.line ? { line: forKid(r.line, nickname) } : {}) }, { status: 409 });
+      { version: r.version, turn: r.turn, ...(r.line ? { line: forKid(r.line, nickname, kidId) } : {}) }, { status: 409 });
   }
   // Only what the screen needs: no engine logs.
   const { result, then, style, reveal, mastered } = r.feedback;
   return NextResponse.json({
     version: r.version, feedback: { result, then, style, reveal, mastered }, next: r.next,
-    line: forKid(r.line, nickname), ...(r.nextLine ? { nextLine: forKid(r.nextLine, nickname) } : {}),
+    line: forKid(r.line, nickname, kidId), ...(r.nextLine ? { nextLine: forKid(r.nextLine, nickname, kidId) } : {}),
     ...(r.revealed !== undefined ? { revealed: r.revealed } : {}),
   });
 }
