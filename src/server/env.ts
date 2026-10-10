@@ -7,6 +7,7 @@ function need(name: string): string {
 }
 
 let warnedTutorVoice = false;
+let warnedSpeech = false;
 
 export const env = {
   supabaseUrl: () => need("NEXT_PUBLIC_SUPABASE_URL"),
@@ -20,6 +21,19 @@ export const env = {
   emailFrom: () => need("EMAIL_FROM"),
   cronSecret: () => need("CRON_SECRET"),
   appOrigin: () => need("APP_ORIGIN"),
+  /** "azure", "fake" or "off"; unset or bad is "off" (warned once). */
+  speech: (): "azure" | "fake" | "off" => {
+    const v = process.env.SPEECH || "off";
+    if (v === "azure" || v === "fake" || v === "off") return v;
+    if (!warnedSpeech) {
+      warnedSpeech = true;
+      console.warn(`SPEECH must be "azure", "fake" or "off", got "${v}"; using "off"`);
+    }
+    return "off";
+  },
+  azureSpeechKey: () => need("AZURE_SPEECH_KEY"),
+  azureSpeechRegion: () => need("AZURE_SPEECH_REGION"),
+  speechTokenSecret: () => need("SPEECH_TOKEN_SECRET"),
   /** "claude" or "canned"; unset means "canned" so nothing calls Claude by accident. A bad value is
    * "canned" too (warned once): a typo must never cost a child a line or a request a 500. */
   tutorVoice: (): "claude" | "canned" => {
