@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/server/parentGate";
 import styles from "./picker.module.css";
-
-const FACES: Record<string, string> = {
-  fox: "🦊", bear: "🐻", owl: "🦉", frog: "🐸", duck: "🦆", rabbit: "🐰", cat: "🐱", turtle: "🐢",
-};
+import { faceOf } from "./avatars";
 
 export default async function HomePage() {
   const { supabase } = await requireUser(); // counts as activity
@@ -17,7 +14,7 @@ export default async function HomePage() {
           {kids.map((k) => (
             <li key={k.id}>
               <Link href={`/play/${k.id}`} className={styles.kid}>
-                <span aria-hidden="true" className={styles.avatar}>{FACES[k.avatar] ?? k.avatar}</span>
+                <span aria-hidden="true" className={styles.avatar}>{faceOf(k.avatar)}</span>
                 {k.nickname}
               </Link>
             </li>

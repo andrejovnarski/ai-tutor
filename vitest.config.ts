@@ -1,11 +1,12 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   test: {
-    include: ["src/**/*.test.ts", "src/app/play/**/*.test.{ts,tsx}"],
-    // The rest of src/app is covered by Playwright; only the play tree runs
-    // here (node environment, static markup via react-dom/server).
-    exclude: ["tests/**", "src/app/*.test.*", "src/app/!(play)/**", "node_modules/**"],
+    // Node environment; components are tested as static markup via react-dom/server.
+    include: ["src/**/*.test.{ts,tsx}"],
+    exclude: ["tests/**", "node_modules/**"],
     globals: true,
   },
 });
