@@ -8,6 +8,7 @@ import { collectWeek } from "./collect";
 
 const DAY = 86_400_000;
 const PG_UNIQUE_VIOLATION = "23505";
+const PG_FOREIGN_KEY_VIOLATION = "23503";
 
 /** Date (YYYY-MM-DD) a number of days before a YYYY-MM-DD date. */
 const minusDays = (date: string, n: number) => new Date(Date.parse(`${date}T00:00:00Z`) - n * DAY).toISOString().slice(0, 10);
@@ -39,6 +40,8 @@ export async function sendWeeklyReports(now: Date, pageSize = 500): Promise<{ se
     const claim = await db.from("report_sends").insert({ parent_id: id, week_start: weekStart });
     if (claim.error) {
       if (claim.error.code === PG_UNIQUE_VIOLATION) continue;
+      // The parent was deleted after being listed (account deletion cascades); nothing left to send or release.
+      if (claim.error.code === PG_FOREIGN_KEY_VIOLATION) continue;
       throw claim.error;
     }
     try {

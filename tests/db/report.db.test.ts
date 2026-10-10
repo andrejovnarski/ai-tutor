@@ -3,6 +3,28 @@ import { mailpitMailer } from "../../src/server/email/mailer";
 import { admin, makeParent, latestEmailTo, mailCountTo } from "../helpers/admin";
 
 vi.mock("server-only", () => ({}));
+// Seam for the "parent deleted mid-sweep" test: runs just before the cron claims a row in report_sends.
+let beforeClaim: (() => Promise<void>) | null = null;
+vi.mock("@supabase/supabase-js", async (orig) => {
+  const actual = await orig<typeof import("@supabase/supabase-js")>();
+  return {
+    ...actual,
+    createClient: (...args: Parameters<typeof actual.createClient>) => {
+      const client = actual.createClient(...args);
+      const from = client.from.bind(client);
+      client.from = ((table: string) => {
+        const q = from(table);
+        if (table !== "report_sends") return q;
+        const insert = q.insert.bind(q);
+        q.insert = ((...a: Parameters<typeof q.insert>) =>
+          // Thenable: defer the hook until the insert is awaited, then run it first.
+          Promise.resolve(beforeClaim?.()).then(() => insert(...a))) as unknown as typeof q.insert;
+        return q;
+      }) as typeof client.from;
+      return client;
+    },
+  };
+});
 const { sendWeeklyReports } = await import("../../src/server/report/send");
 const { GET } = await import("../../src/app/api/cron/weekly-report/route");
 
@@ -102,6 +124,29 @@ describe("weekly report", () => {
     await sendWeeklyReports(SUNDAY_7PM);
     expect(await mailCount(emailOf("f"))).toBe(1);
     expect(await reportRows(f.userId)).toHaveLength(1);
+  });
+
+  it("skips a parent deleted between being listed and claimed, and still sends to the rest", async () => {
+    const gone = await makeParent(emailOf("h"), { consent: true });
+    await seedKid(gone.userId, "Hal");
+    const stays = await makeParent(emailOf("i"), { consent: true });
+    await seedKid(stays.userId, "Ida");
+    let deleted = false;
+    beforeClaim = async () => {
+      if (deleted) return;
+      deleted = true;
+      expect((await admin().auth.admin.deleteUser(gone.userId)).error).toBeNull();
+    };
+    try {
+      // The hook fires at the sweep's first claim, so the parent is gone before its own claim whatever its position.
+      await expect(sendWeeklyReports(SUNDAY_5PM)).resolves.toBeDefined();
+    } finally {
+      beforeClaim = null;
+    }
+    expect(deleted).toBe(true);
+    expect(await reportRows(gone.userId)).toHaveLength(0);
+    expect(await reportRows(stays.userId)).toHaveLength(1);
+    expect(await mailCount(emailOf("i"))).toBe(1);
   });
 
   it("pages through all consented parents", async () => {
