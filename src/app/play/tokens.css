@@ -15,7 +15,5 @@
 
 body {
   margin: 0;
-  background: var(--felt);
-  color: var(--chalk);
   font-family: var(--font-andika), system-ui, sans-serif;
 }

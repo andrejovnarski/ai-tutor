@@ -20,8 +20,8 @@ describe("Nova", () => {
     expect(new Set([a, b, c]).size).toBe(3);
   });
   it("hops only when asked", () => {
-    expect(renderToStaticMarkup(<Nova tone="cheer" hop />)).toContain("hop");
-    expect(renderToStaticMarkup(<Nova tone="cheer" />)).not.toContain("hop");
+    expect(renderToStaticMarkup(<Nova tone="cheer" hop />)).toContain('data-hop="true"');
+    expect(renderToStaticMarkup(<Nova tone="cheer" />)).not.toContain('data-hop="true"');
   });
 });
 

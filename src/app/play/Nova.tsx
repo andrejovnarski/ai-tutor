@@ -22,13 +22,13 @@ export function Nova({ tone, hop }: { tone: NovaTone; hop?: boolean }) {
       className={[styles.nova, hop ? styles.hop : ""].join(" ").trim()}
       {...(hop ? { "data-hop": "true" } : {})}
     >
-      <line x1="60" y1="14" x2="60" y2="28" stroke="#f4f7f2" strokeWidth="4" strokeLinecap="round" />
-      <circle cx="60" cy="10" r="6" fill="#f6c531" className={hop ? styles.blink : undefined} />
-      <ellipse cx="60" cy="72" rx="44" ry="42" fill="#fbfaf5" stroke="#23544a" strokeWidth="4" />
-      <rect x="26" y="38" width="68" height="38" rx="16" fill="#1e2b28" />
-      <path data-eye="l" d={eye.l} fill={tone === "cheer" ? "none" : "#f4f7f2"} stroke="#f4f7f2" strokeWidth="5" strokeLinecap="round" />
-      <path data-eye="r" d={eye.r} fill={tone === "cheer" ? "none" : "#f4f7f2"} stroke="#f4f7f2" strokeWidth="5" strokeLinecap="round" />
-      <circle cx="60" cy="96" r="5" fill="#3b7dd8" />
+      <line x1="60" y1="14" x2="60" y2="28" stroke="var(--chalk)" strokeWidth="4" strokeLinecap="round" />
+      <circle cx="60" cy="10" r="6" fill="var(--counter-yellow)" className={hop ? styles.blink : undefined} />
+      <ellipse cx="60" cy="72" rx="44" ry="42" fill="var(--tray)" stroke="var(--felt-deep)" strokeWidth="4" />
+      <rect x="26" y="38" width="68" height="38" rx="16" fill="var(--ink)" />
+      <path data-eye="l" d={eye.l} fill={tone === "cheer" ? "none" : "var(--chalk)"} stroke="var(--chalk)" strokeWidth="5" strokeLinecap="round" />
+      <path data-eye="r" d={eye.r} fill={tone === "cheer" ? "none" : "var(--chalk)"} stroke="var(--chalk)" strokeWidth="5" strokeLinecap="round" />
+      <circle cx="60" cy="96" r="5" fill="var(--cube-blue)" />
     </svg>
   );
 }

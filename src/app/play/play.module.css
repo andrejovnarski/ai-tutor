@@ -42,14 +42,15 @@
   text-align: center;
 }
 
-.tray :focus-visible {
-  outline: 3px solid var(--chalk);
+.tray :focus-visible,
+.bubble :focus-visible {
+  outline: 3px solid var(--ink);
   outline-offset: 2px;
 }
 
 .board :focus-visible,
 .top :focus-visible {
-  outline: 3px solid var(--ink);
+  outline: 3px solid var(--chalk);
   outline-offset: 2px;
 }
 
