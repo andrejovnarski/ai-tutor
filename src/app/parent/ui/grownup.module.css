@@ -125,12 +125,14 @@
   border: 2px solid var(--ink);
   border-radius: 8px;
   background-color: #fff;
+  overflow: clip; /* not hidden: the box must never scroll to follow the caret */
   background-image: linear-gradient(90deg, transparent 47px, var(--grid) 47px, var(--grid) 48px, transparent 48px, transparent 95px, var(--grid) 95px, var(--grid) 96px, transparent 96px, transparent 143px, var(--grid) 143px, var(--grid) 144px, transparent 144px);
 }
 .pinBox:focus-within { outline: 3px solid var(--link); outline-offset: 2px; }
 .pinInput {
   display: block;
-  width: 100%;
+  /* the 4th digit's trailing letter-spacing must fit, or the field scrolls sideways once it is full */
+  width: calc(100% + 17px);
   height: 100%;
   margin: 0;
   /* monospace glyph is 0.6em = 14.4px; advance = 14.4 + 33.6 = 48px = one cell */
@@ -250,6 +252,6 @@
 .dataLinks a.dangerLink { color: var(--danger); }
 .tableWrap table { border-collapse: collapse; font-size: 15px; }
 .tableWrap th { font-family: var(--font-andika), sans-serif; text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--ink); white-space: nowrap; }
-.tableWrap td { padding: 6px 10px; }
+.tableWrap td { padding: 6px 10px; white-space: nowrap; } /* wide tables scroll inside their wrapper, not wrap into slivers */
 .tableWrap tbody tr:nth-child(even) { background: var(--paper); }
 .tableWrap table { background: #fff; }
