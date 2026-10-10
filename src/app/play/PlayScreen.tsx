@@ -12,6 +12,10 @@ import { LineBubble } from "./LineBubble";
 import { Nova } from "./Nova";
 import { usePlay } from "./usePlay";
 import styles from "./play.module.css";
+import { MicStrip } from "./speech/ConfirmHeard";
+import { Mic } from "./speech/MicButton";
+import { useMic, type Cues } from "./speech/useMic";
+import { useNovaAudio } from "./speech/useNovaAudio";
 
 /** How long a correct answer's feedback line stays in the bubble before the next problem's line replaces it. */
 export const FEEDBACK_HOLD_MS = 1200;
@@ -24,9 +28,41 @@ const subscribe = (cb: () => void) => {
 };
 const useReducedMotion = () => useSyncExternalStore(subscribe, () => window.matchMedia(REDUCED).matches, () => false);
 
-export function PlayScreen({ kidId, ageBand }: { kidId: string; ageBand: AgeBand }) {
-  const { state, answer, retry } = usePlay(kidId);
+type Props = {
+  kidId: string;
+  ageBand: AgeBand;
+  /** Speech on (SPEECH=azure|fake, fully configured): the mic shows and Nova's lines are voiced. Off is Plan 5a. */
+  speech?: boolean;
+  /** Voiced copies of the mic notices. */
+  cues?: Cues;
+};
+
+export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
+  const { state, answer, retry, say } = usePlay(kidId);
   const reduced = useReducedMotion();
+  const problem = state.turn?.kind === "problem" ? state.turn : undefined;
+
+  const audio = useNovaAudio(kidId, speech);
+  const voice = useMic({
+    kidId,
+    version: speech && problem ? state.version : undefined,
+    onAnswer: (n) => void answer(n),
+    onSay: (text) => void say(text),
+    onSpeak: (line) => audio.lines([line]),
+    onOpen: audio.mic,
+    cues,
+  });
+
+  // New lines (a load, an answer, a 409) are voiced in order: the feedback line, then the problem's line. A reply to
+  // something said (same line, new message) is voiced alone.
+  const voiced = useRef<{ line?: unknown; message?: unknown }>({});
+  useEffect(() => {
+    if (!speech) return;
+    const was = voiced.current;
+    voiced.current = { line: state.line, message: state.messageSpeech };
+    if (state.line !== was.line) audio.lines([state.messageSpeech, state.line?.speech]);
+    else if (state.messageSpeech && state.messageSpeech !== was.message) audio.lines([state.messageSpeech]);
+  }, [speech, state.line, state.messageSpeech, audio]);
 
   // A correct answer that moved on: the feedback line for 1.2 s, then the next problem's line (the new problem is on
   // the board at once). Anything else keeps both lines on screen (see bubbleView).
@@ -59,7 +95,6 @@ export function PlayScreen({ kidId, ageBand }: { kidId: string; ageBand: AgeBand
     el.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
   }, [state.phase, state.version]);
 
-  const problem = state.turn?.kind === "problem" ? state.turn : undefined;
   const ended = state.phase === "ended" && state.summary;
   const notice = state.phase === "retrying" || state.phase === "offline"
     ? <ConnectionNotice offline={state.phase === "offline"} answering={!!problem} onRetry={retry} />
@@ -70,7 +105,13 @@ export function PlayScreen({ kidId, ageBand }: { kidId: string; ageBand: AgeBand
       {...(view.holding ? { "data-hold": "true" } : {})}>
       <header className={styles.top}>
         {/* keyed by version on a correct answer so the hop plays once per answer */}
-        <Nova key={view.hop ? `hop-${state.version}` : "nova"} tone={view.tone} hop={view.hop} />
+        {speech ? (
+          <button type="button" className={styles.novaButton} aria-label="Hear Nova again" onClick={audio.replay}>
+            <Nova key={view.hop ? `hop-${state.version}` : "nova"} tone={view.tone} hop={view.hop} />
+          </button>
+        ) : (
+          <Nova key={view.hop ? `hop-${state.version}` : "nova"} tone={view.tone} hop={view.hop} />
+        )}
         {view.say ? (
           <LineBubble say={view.say} lead={view.lead} note={view.note} tone={view.tone} ageBand={ageBand} />
         ) : (
@@ -87,6 +128,7 @@ export function PlayScreen({ kidId, ageBand }: { kidId: string; ageBand: AgeBand
         <>
           <section className={styles.board} data-testid="board" aria-label="Felt board">
             {problem ? <Board problem={problem} /> : null}
+            {speech && problem ? <MicStrip mic={voice.mic} onYes={voice.yes} onNo={voice.no} /> : null}
             {notice}
           </section>
           <section
@@ -95,6 +137,11 @@ export function PlayScreen({ kidId, ageBand }: { kidId: string; ageBand: AgeBand
             data-testid="tray"
             aria-label="Answers"
             onFocus={() => { trayFocus.current = true; }}
+            // A tile or pad key tapped while the mic listens: the tap wins (the recording or /listen is dropped).
+            onClickCapture={(e) => {
+              const t = e.target as Element;
+              if (speech && t.closest("button") && !t.closest("[data-mic]")) voice.cancel();
+            }}
             onBlur={(e) => {
               const to = e.relatedTarget as Node | null;
               if (to && !e.currentTarget.contains(to)) trayFocus.current = false;
@@ -107,6 +154,9 @@ export function PlayScreen({ kidId, ageBand }: { kidId: string; ageBand: AgeBand
                 choices={problem.choices}
                 locked={state.phase !== "problem"}
                 onAnswer={(n) => void answer(n)}
+                mic={speech && !voice.mic.hidden ? (
+                  <Mic speech mic={voice.mic} locked={state.phase !== "problem"} onTap={voice.start} />
+                ) : undefined}
               />
             ) : null}
           </section>

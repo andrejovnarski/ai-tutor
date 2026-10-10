@@ -17,6 +17,8 @@ export type PlayState = {
   message?: string;
   /** The feedback line's own tone, for Nova's face while `message` is held in the bubble. */
   messageTone?: TutorLine["tone"];
+  /** What to voice for `message` (speech on only). Set wherever `message` is set. */
+  messageSpeech?: LineSpeech;
   summary?: Summary;
   /** 1..4 while phase is "retrying". */
   attempt?: number;
@@ -42,7 +44,9 @@ export type PlayEvent =
   | { type: "conflict"; body: StepBody }
   | { type: "retrying"; attempt: number }
   | { type: "offline" }
-  | { type: "gone" };
+  | { type: "gone" }
+  /** Nova's reply to something the kid said (not a number): shown above the problem's line; the problem stays. */
+  | { type: "said"; line: TutorLine };
 
 export const initialPlayState: PlayState = { phase: "loading" };
 
@@ -56,7 +60,7 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
     case "conflict": {
       const { version, turn, line } = ev.body;
       if (turn.kind === "end") return { phase: "ended", version, turn, summary: turn.summary, line };
-      return { phase: "problem", version, turn, line, note: null, message: undefined, correct: false };
+      return { phase: "problem", version, turn, line, note: null, message: undefined, messageSpeech: undefined, correct: false };
     }
     case "answered": {
       const b = ev.body;
@@ -70,6 +74,7 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
         line: b.nextLine ?? b.line,
         message: b.nextLine ? b.line.say : undefined,
         messageTone: b.nextLine ? b.line.tone : undefined,
+        messageSpeech: b.nextLine ? b.line.speech : undefined,
         note, correct,
       };
     }
@@ -81,6 +86,11 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
       return { ...state, phase: "offline", attempt: undefined };
     case "gone":
       return { phase: "gone" };
+    case "said":
+      // The reply leads (no hold, not correct); a reveal note belonged to an earlier feedback line, so it goes.
+      return state.phase === "problem"
+        ? { ...state, message: ev.line.say, messageTone: ev.line.tone, messageSpeech: ev.line.speech, note: null, correct: false }
+        : state;
   }
 }
 

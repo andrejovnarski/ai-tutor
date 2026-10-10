@@ -1,23 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { admin, makeParent } from "../helpers/admin";
-import { addKid, consent, setPin, signIn, unique } from "./helpers";
-
-/** Signs in, consents via admin, sets a PIN, adds Mia, and lands on the picker. Returns Mia's parent id. */
-async function setUpMia(page: Page): Promise<string> {
-  const email = unique("play");
-  await signIn(page, email);
-  const parentId = await consent(email);
-  await setPin(page);
-  await addKid(page, "Mia");
-  await page.goto("/");
-  return parentId;
-}
-
-const attempts = async (parentId: string) => {
-  const { data: kid } = await admin().from("kids").select("id").eq("parent_id", parentId).single();
-  const { count } = await admin().from("attempts").select("*", { count: "exact", head: true }).eq("kid_id", kid!.id);
-  return count ?? 0;
-};
+import { attempts, setUpMia, unique } from "./helpers";
 
 const choiceButtons = (page: Page) => page.getByTestId("choices").getByRole("button");
 

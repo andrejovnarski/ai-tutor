@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bubbleView, wantsHold } from "./bubble";
-import type { PlayState } from "./playMachine";
+import { playReducer, type PlayState } from "./playMachine";
 
 const next = { say: "Here is a new one.", tone: "curious" as const };
 const moved = (over: Partial<PlayState>): PlayState => ({
@@ -44,5 +44,12 @@ describe("bubbleView", () => {
   it("the note never sits under the new problem's line alone after a swap", () => {
     const s = moved({ note: "The answer is 7." });
     expect(bubbleView(s, { reduced: false, holdDone: true }).note).toBeUndefined();
+  });
+  it("said: Nova's reply leads above the problem's line, no hold, no hop, no stale note", () => {
+    const s = playReducer(moved({ message: undefined, note: "The answer is 7." }),
+      { type: "said", line: { say: "Cats are fun! Let's count.", tone: "calm" } });
+    expect(bubbleView(s, { reduced: false, holdDone: false })).toEqual({
+      say: "Here is a new one.", lead: "Cats are fun! Let's count.", tone: "curious", hop: false, holding: false,
+    });
   });
 });

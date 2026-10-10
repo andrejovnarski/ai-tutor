@@ -56,3 +56,21 @@ export async function addKid(page: Page, name: string) {
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page).toHaveURL(/\/parent$/);
 }
+
+/** Signs in, consents via admin, sets a PIN, adds Mia, and lands on the picker. Returns Mia's parent id. */
+export async function setUpMia(page: Page): Promise<string> {
+  const email = unique("play");
+  await signIn(page, email);
+  const parentId = await consent(email);
+  await setPin(page);
+  await addKid(page, "Mia");
+  await page.goto("/");
+  return parentId;
+}
+
+/** How many attempts the parent's (only) kid has saved. */
+export const attempts = async (parentId: string) => {
+  const { data: kid } = await admin().from("kids").select("id").eq("parent_id", parentId).single();
+  const { count } = await admin().from("attempts").select("*", { count: "exact", head: true }).eq("kid_id", kid!.id);
+  return count ?? 0;
+};
