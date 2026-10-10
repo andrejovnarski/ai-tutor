@@ -1,5 +1,5 @@
 // Browser-only mic capture. Not unit-tested; the pure parts live in wav.ts and silence.ts.
-import { gateStep, rms, type GateState } from "./silence";
+import { RECORD_BACKSTOP_MS, gateStep, rms, type GateState } from "./silence";
 import { downsample, encodeWav } from "./wav";
 
 const BUFFER = 2048;
@@ -43,6 +43,8 @@ async function record(
     });
     if (signal.aborted) return null;
     const s = stream;
+    if (ctx.state !== "running") await ctx.resume().catch(() => {});
+    if (signal.aborted) return null;
     return await new Promise<Uint8Array | null>((resolve) => {
       // ScriptProcessorNode, not an AudioWorklet: no extra module file to serve, works on older iPads.
       source = ctx.createMediaStreamSource(s);
@@ -54,16 +56,19 @@ async function record(
       const finish = (value: () => Uint8Array | null) => {
         if (done) return;
         done = true;
+        clearTimeout(backstop);
         signal.removeEventListener("abort", onAbort);
         resolve(value());
       };
+      // If audio callbacks never fire (suspended or interrupted context), give up rather than hold the mic.
+      const backstop = setTimeout(() => finish(() => null), RECORD_BACKSTOP_MS);
       const onAbort = () => finish(() => null);
       signal.addEventListener("abort", onAbort);
       node.onaudioprocess = (e) => {
         if (done) return;
         const frame = new Float32Array(e.inputBuffer.getChannelData(0));
         const level = rms(frame);
-        onLevel?.(level);
+        try { onLevel?.(level); } catch {}
         chunks.push(frame);
         const r = gateStep(gate, level, frameMs);
         gate = r.s;

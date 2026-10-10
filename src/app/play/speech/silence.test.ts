@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gateStep, rms, type GateState } from "./silence";
+import { RECORD_BACKSTOP_MS, gateStep, rms, type GateState } from "./silence";
 
 const LOUD = 0.1;
 const QUIET = 0.001;
@@ -45,4 +45,8 @@ describe("gateStep", () => {
     r = gateStep(r.s, LOUD, 50);
     expect(r).toMatchObject({ verdict: "go", s: { started: true } });
   });
+});
+
+describe("RECORD_BACKSTOP_MS", () => {
+  it("is later than the 6 s hard stop", () => expect(RECORD_BACKSTOP_MS).toBeGreaterThan(6000));
 });

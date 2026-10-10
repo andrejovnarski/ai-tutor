@@ -4,6 +4,8 @@ const SPEECH_RMS = 0.02;
 const SPEECH_START_MS = 100;
 const QUIET_STOP_MS = 1000;
 const MAX_MS = 6000;
+/** Wall-clock cap for the recorder, in case audio callbacks never fire. */
+export const RECORD_BACKSTOP_MS = MAX_MS + 500;
 
 export type GateState = { ms: number; speechMs: number; quietMs: number; started: boolean };
 
