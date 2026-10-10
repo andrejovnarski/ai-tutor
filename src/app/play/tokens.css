@@ -1,0 +1,21 @@
+:root {
+  --felt: #2e6b5e;
+  --felt-deep: #23544a;
+  --chalk: #f4f7f2;
+  --counter-red: #e4413b;
+  --counter-yellow: #f6c531;
+  --cube-blue: #3b7dd8;
+  --tray: #fbfaf5;
+  --ink: #1e2b28;
+  --text-s: 22px;
+  --text-m: 28px;
+  --text-l: 40px;
+  --text-xl: 64px;
+}
+
+body {
+  margin: 0;
+  background: var(--felt);
+  color: var(--chalk);
+  font-family: var(--font-andika), system-ui, sans-serif;
+}
