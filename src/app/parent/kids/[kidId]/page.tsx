@@ -1,8 +1,13 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireParent } from "@/server/parentGate";
+import { kidWeek } from "@/server/parentSummary";
 import { exportKid } from "@/server/rights";
+import { faceOf } from "../../../avatars";
+import { gradeName } from "../../../grades";
+import { GrownupFrame } from "../../ui/GrownupFrame";
+import styles from "../../ui/grownup.module.css";
 import { deleteKidAction } from "./actions";
+import { WeekSummary } from "./WeekSummary";
 
 type Row = Record<string, unknown>;
 
@@ -13,9 +18,9 @@ function Table({ title, rows }: { title: string; rows: Row[] }) {
     <section>
       <h2>{title}</h2>
       {rows.length === 0 ? (
-        <p>Nothing yet.</p>
+        <p className={styles.quiet}>Nothing yet.</p>
       ) : (
-        <div style={{ overflowX: "auto" }}>
+        <div className={styles.tableWrap}>
           <table>
             <thead>
               <tr>
@@ -53,32 +58,39 @@ export default async function KidPage({
   const data = await exportKid(supabase, kidId);
   if (!data) notFound();
   const { kid } = data;
+  const week = await kidWeek(supabase, kidId, new Date());
   return (
-    <main>
-      <h1>{kid.nickname}</h1>
-      <p>
-        Grade {kid.grade}, avatar {kid.avatar}. <a href={`/parent/kids/${kidId}/export`}>Download all data (JSON)</a>
+    <GrownupFrame back={{ href: "/parent", label: "Your kids" }}>
+      <h1>
+        <span aria-hidden="true">{faceOf(kid.avatar)} </span>
+        {`${kid.nickname}'s week`}
+      </h1>
+      <p className={styles.quiet}>{gradeName(kid.grade)}</p>
+      {week && <WeekSummary nickname={kid.nickname} week={week.week} playedDays={week.playedDays} />}
+      <details className={styles.details}>
+        <summary>See everything we store about {kid.nickname}</summary>
+        <Table title="Skills" rows={data.skill_state} />
+        <Table title="Styles" rows={data.style_stats} />
+        <Table title="Attempts" rows={data.attempts} />
+        <Table title="Sessions" rows={data.sessions} />
+        <Table title="Flagged messages" rows={data.distress_flags} />
+      </details>
+      <p className={styles.dataLinks}>
+        <a href={`/parent/kids/${kidId}/export`}>Download {kid.nickname}&apos;s data</a>
+        <a href="#delete" className={styles.dangerLink}>Delete {kid.nickname}</a>
       </p>
-      <Table title="Skills" rows={data.skill_state} />
-      <Table title="Styles" rows={data.style_stats} />
-      <Table title="Attempts" rows={data.attempts} />
-      <Table title="Sessions" rows={data.sessions} />
-      <Table title="Flagged messages" rows={data.distress_flags} />
-      <section>
+      <section id="delete" className={styles.section}>
         <h2>Delete {kid.nickname}</h2>
         <p>This removes {kid.nickname} and everything above, right away. It cannot be undone.</p>
         {error === "confirm" && <p role="alert">That name did not match. Nothing was deleted.</p>}
         <form action={deleteKidAction.bind(null, kidId)}>
-          <label>
+          <label className={styles.field}>
             Type {kid.nickname} to confirm
-            <input name="confirm" required autoComplete="off" />
+            <input name="confirm" required autoComplete="off" className={styles.input} />
           </label>
-          <button type="submit">Delete {kid.nickname}</button>
+          <button type="submit" className={styles.btnDanger}>Delete {kid.nickname}</button>
         </form>
       </section>
-      <p>
-        <Link href="/parent">Back</Link>
-      </p>
-    </main>
+    </GrownupFrame>
   );
 }

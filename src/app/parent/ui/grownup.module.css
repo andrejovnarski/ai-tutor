@@ -240,3 +240,16 @@
 .kidFace { font-size: 36px; line-height: 1; }
 .kidName { display: block; font-family: var(--font-andika), sans-serif; font-weight: 700; font-size: 21px; line-height: 1.3; }
 .plainList { list-style: none; margin: 0; padding: 0; }
+
+.weekBlock { margin: 0 0 16px; }
+.weekRow { margin: 0 0 12px; }
+.details { margin: 0 0 12px; }
+.details > summary { display: flex; align-items: center; min-height: 44px; color: var(--link); text-decoration: underline; cursor: pointer; }
+.dataLinks { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0 0 12px; }
+.dataLinks a { display: inline-flex; align-items: center; min-height: 44px; }
+.dataLinks a.dangerLink { color: var(--danger); }
+.tableWrap table { border-collapse: collapse; font-size: 15px; }
+.tableWrap th { font-family: var(--font-andika), sans-serif; text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--ink); white-space: nowrap; }
+.tableWrap td { padding: 6px 10px; }
+.tableWrap tbody tr:nth-child(even) { background: var(--paper); }
+.tableWrap table { background: #fff; }

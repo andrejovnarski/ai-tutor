@@ -25,11 +25,12 @@ test("view, export, delete a kid, then delete the account", async ({ page }) => 
   // The kid page lists the attempt; the export is JSON with the nickname.
   await page.goto("/parent");
   await page.getByRole("link", { name: "Mia" }).click();
-  await expect(page.getByRole("heading", { name: "Mia", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Mia's week/ })).toBeVisible();
+  await page.getByText("See everything we store about Mia").click();
   await expect(page.getByRole("heading", { name: "Attempts" })).toBeVisible();
   await expect(page.locator("section", { has: page.getByRole("heading", { name: "Attempts" }) }).locator("tbody tr")).toHaveCount(1);
   const download = page.waitForEvent("download");
-  await page.getByRole("link", { name: /Download all data/ }).click();
+  await page.getByRole("link", { name: /Download Mia's data/ }).click();
   const file = await download;
   expect(file.suggestedFilename()).toBe("Mia-data.json");
   expect(await readFile((await file.path())!, "utf8")).toContain('"nickname":"Mia"');
