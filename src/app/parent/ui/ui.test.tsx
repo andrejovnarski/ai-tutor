@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { vi } from "vitest";
 import { Cubes } from "./Cubes";
@@ -29,4 +31,11 @@ it("PinField keeps a labelled 4-digit numeric input", () => {
 it("IndexCard with href is one link", () => {
   const html = renderToStaticMarkup(<IndexCard color="#e4413b" href="/parent/kids/1">Mia</IndexCard>);
   expect(html.match(/<a /g)).toHaveLength(1); expect(html).toContain("#e4413b");
+});
+
+it("link colour rule does not override classed links", () => {
+  const css = readFileSync(join(__dirname, "grownup.module.css"), "utf8");
+  expect(css).not.toContain("!important");
+  expect(css).not.toMatch(/\.frame a\s*\{/);
+  expect(css).toMatch(/\.pinBox:focus-within\s*\{[^}]*outline: 3px solid var\(--link\)/);
 });
