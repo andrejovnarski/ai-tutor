@@ -102,6 +102,9 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
 
   return (
     <main className={styles.screen} data-version={state.version} data-phase={state.phase}
+      // iOS: the first tap or key anywhere (a tile, the mic, Nova) unlocks Nova's audio element, synchronously. Touch
+      // pointerdown doesn't count as a user activation, so pointerup, click and keydown are used.
+      {...(speech ? { onPointerUpCapture: audio.unlock, onClickCapture: audio.unlock, onKeyDownCapture: audio.unlock } : {})}
       {...(view.holding ? { "data-hold": "true" } : {})}>
       <header className={styles.top}>
         {/* keyed by version on a correct answer so the hop plays once per answer */}

@@ -4,6 +4,21 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { LineSpeech } from "../../../server/speech/lineSpeech";
 import { audioReducer, initialAudioState, type AudioEvent, type AudioState } from "./audioMachine";
 
+/** A tenth of a second of 8 kHz 8-bit silence. */
+export const SILENT_WAV =
+  "data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==";
+
+/** iOS lets an <audio> element play later (after a fetch, from an effect) only once play() was called on it inside a
+ * tap. This must run synchronously in the tap handler: silent clip, play(), then pause unless a real line took over. */
+export function unlockElement(a: { src: string; play: () => Promise<void>; pause: () => void }): void {
+  a.src = SILENT_WAV;
+  try {
+    a.play().then(() => { if (a.src === SILENT_WAV) a.pause(); }, () => {});
+  } catch {
+    // very old engines return nothing from play(); the call itself is what counts
+  }
+}
+
 export type NovaAudio = {
   /** New lines replace whatever is playing or queued. */
   lines: (lines: Array<LineSpeech | undefined>) => void;
@@ -11,6 +26,8 @@ export type NovaAudio = {
   replay: () => void;
   /** The mic opened (stop Nova, hold new lines) or closed (play what is held). */
   mic: (on: boolean) => void;
+  /** Call synchronously from a tap/key handler: makes the one audio element playable on iOS (first gesture only). */
+  unlock: () => void;
 };
 
 /**
@@ -27,6 +44,7 @@ export function useNovaAudio(kidId: string, enabled: boolean): NovaAudio {
   const fetching = useRef<AbortController | null>(null);
   const last = useRef<LineSpeech | undefined>(undefined); // the last line started, for replay
   const live = useRef(true);
+  const unlocked = useRef(false);
 
   const release = useCallback(() => {
     fetching.current?.abort();
@@ -97,6 +115,20 @@ export function useNovaAudio(kidId: string, enabled: boolean): NovaAudio {
     else release();
   };
 
+  const unlock = useRef<() => void>(() => {});
+  unlock.current = () => {
+    if (!enabled || !live.current || unlocked.current) return;
+    unlocked.current = true;
+    const a = (el.current ??= new Audio());
+    if (!a.paused) return; // already playing a line: this engine needs no unlock
+    // A line that is "current" here was refused (no gesture yet) or is between plays: start it again once unlocked.
+    const cur = state.current.current;
+    a.onended = null;
+    a.onerror = null;
+    unlockElement(a);
+    if (cur && !fetching.current) play(cur);
+  };
+
   useEffect(() => {
     live.current = true;
     return () => {
@@ -114,5 +146,6 @@ export function useNovaAudio(kidId: string, enabled: boolean): NovaAudio {
       if (line) send.current({ type: "replay", line });
     },
     mic: (on) => send.current({ type: "mic", on }),
+    unlock: () => unlock.current(),
   }), []);
 }

@@ -60,10 +60,20 @@ export function speechCues(kidId: string): Record<"tryAgain" | "notCaught" | "ca
   };
 }
 
+/** Whether `text` contains `name` as a whole word (any case; letters and digits of any script count as word parts). */
+export function mentions(text: string, name: string): boolean {
+  const n = name.trim();
+  if (!n) return false;
+  const esc = n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![\\p{L}\\p{N}])${esc}(?![\\p{L}\\p{N}])`, "iu").test(text);
+}
+
 /** The line as the browser gets it: `{name}` filled with the nickname here, after every plan has been built.
- *  The speech text is made from the line before the name is filled, so the name never reaches the voice. */
+ *  The speech text is made from the line before the name is filled, so the name never reaches the voice. A line that
+ *  already spells the nickname itself (a Claude line can) is not voiced at all: the text is on screen. */
 export function forKid(line: TutorLine, nickname: string | null, kidId: string): TutorLine & { speech?: LineSpeech } {
-  const speech = speechFor(kidId, speakable(line.say));
+  const text = speakable(line.say);
+  const speech = nickname && mentions(text, nickname) ? undefined : speechFor(kidId, text);
   return { ...line, say: fillName(line.say, nickname ?? ""), ...(speech ? { speech } : {}) };
 }
 

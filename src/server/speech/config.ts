@@ -15,10 +15,15 @@ function warnOnce(msg: string) {
   console.warn(msg);
 }
 
-/** off unless fully configured: azure needs key and region; azure and fake both need SPEECH_TOKEN_SECRET. */
+/** off unless fully configured: azure needs key and region; azure and fake both need SPEECH_TOKEN_SECRET; fake is
+ * never allowed in production (a kid would be "heard" saying twelve). */
 export function speechMode(): "azure" | "fake" | "off" {
   const mode = env.speech();
   if (mode === "off") return "off";
+  if (mode === "fake" && process.env.VERCEL_ENV === "production") {
+    warnOnce("SPEECH=fake is not allowed in production; speech is off");
+    return "off";
+  }
   if (!process.env.SPEECH_TOKEN_SECRET) {
     warnOnce(`SPEECH=${mode} needs SPEECH_TOKEN_SECRET; speech is off`);
     return "off";

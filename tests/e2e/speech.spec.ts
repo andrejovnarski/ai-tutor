@@ -93,6 +93,21 @@ test("say: words that are not a number go to /say, and Nova's reply shows above 
   expect(await attempts(parentId)).toBe(0);
 });
 
+test("a /say that fails after a distress hit still shows and voices Nova's reply", async ({ page }) => {
+  await setUpMia(page);
+  await listenWith(page, { heard: "I am sad", route: { kind: "say", text: "I am sad" } });
+  const reply = "That sounds hard. Please tell a grown-up you trust.";
+  await page.route("**/api/kids/*/say", (r) => r.fulfill({
+    status: 503, json: { error: "try again", reply, replySpeech: { text: reply, token: "stub" } },
+  }));
+  const voiced: string[] = [];
+  page.on("request", (r) => { if (r.url().endsWith("/speak")) voiced.push((r.postDataJSON() as { text: string }).text); });
+  await openMia(page);
+  await mic(page).click();
+  await expect(page.getByTestId("nova-line").locator("[data-lead]")).toHaveText(reply, { timeout: 10_000 });
+  await expect.poll(() => voiced).toContain(reply);
+});
+
 test("mic denied: the mic goes away and the tiles still answer", async ({ page }) => {
   await page.addInitScript(() => {
     navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("denied", "NotAllowedError"));

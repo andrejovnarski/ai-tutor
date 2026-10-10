@@ -94,6 +94,19 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
   }
 }
 
+/** Nova's reply from a /say body, whatever its status: a 5xx still carries the distress line when storing it failed, and
+ * the child must see (and hear) it. Null when there is no reply to show. */
+export function replyLine(body: unknown): TutorLine | null {
+  if (typeof body !== "object" || body === null) return null;
+  const { reply, replySpeech } = body as { reply?: unknown; replySpeech?: unknown };
+  if (typeof reply !== "string" || !reply) return null;
+  const sp = replySpeech as Partial<LineSpeech> | undefined;
+  const speech = sp && typeof sp.text === "string" && typeof sp.token === "string"
+    ? { text: sp.text, token: sp.token, ...(typeof sp.clip === "string" ? { clip: sp.clip } : {}) }
+    : undefined;
+  return { say: reply, tone: "calm", ...(speech ? { speech } : {}) };
+}
+
 /** A 401 (signed out) or 404 (kid not this parent's any more) once the page has loaded: leave rather than retry. */
 export const isGone = (status: number) => status === 401 || status === 404;
 

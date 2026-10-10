@@ -36,7 +36,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ kidId: 
   } catch (err) {
     // Even if storing failed, a child who said something worrying still hears the line.
     const res = tryAgain("say", err);
-    return hit ? NextResponse.json({ error: "try again", reply: DISTRESS_REPLY }, { status: res.status }) : res;
+    if (!hit) return res;
+    const replySpeech = speechFor(kidId, DISTRESS_REPLY);
+    return NextResponse.json({ error: "try again", reply: DISTRESS_REPLY, ...(replySpeech ? { replySpeech } : {}) }, { status: res.status });
   }
   const replySpeech = speechFor(kidId, DISTRESS_REPLY);
   return NextResponse.json({ reply: DISTRESS_REPLY, ...(replySpeech ? { replySpeech } : {}) });

@@ -21,7 +21,8 @@ export function Mic({ speech, mic, locked, onTap }: Props) {
       aria-label="Talk to Nova"
       aria-pressed={busy}
       data-mic={mic.phase}
-      disabled={locked}
+      // Off (and looking off) while /listen works and while "Did you say" waits for Yes or No.
+      disabled={locked || mic.phase === "thinking" || mic.phase === "confirm"}
       onClick={() => { if (!busy) onTap(); }}
     >
       <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true" focusable="false">

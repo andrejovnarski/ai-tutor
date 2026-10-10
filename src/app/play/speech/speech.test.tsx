@@ -1,11 +1,13 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
+import { vi } from "vitest";
 import { bubbleView } from "../bubble";
-import { playReducer, type PlayState } from "../playMachine";
+import { playReducer, replyLine, type PlayState } from "../playMachine";
 import { ConfirmHeard, MicStrip } from "./ConfirmHeard";
 import { Mic } from "./MicButton";
 import { micReducer, type MicState } from "./micMachine";
+import { SILENT_WAV, unlockElement } from "./useNovaAudio";
 
 const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'").replace(/\s+/g, " ").trim();
 const idle: MicState = { phase: "idle", version: 3, failures: 0, hidden: false };
@@ -38,6 +40,15 @@ describe("Mic", () => {
     const listening = micReducer(idle, { type: "start", version: 3 });
     expect(renderToStaticMarkup(<Mic speech mic={listening} locked={false} onTap={noop} />)).toContain('data-mic="listening"');
     expect(renderToStaticMarkup(<Mic speech mic={idle} locked onTap={noop} />)).toMatch(/<button[^>]*disabled/);
+  });
+  it("is visibly off while thinking and while Did you say is up (a tap there would do nothing)", () => {
+    const thinking = micReducer(micReducer(idle, { type: "start", version: 3 }), { type: "sent" });
+    const confirm = micReducer(thinking, { type: "result", version: 3, heard: "x", route: { kind: "confirm", n: 12 } });
+    for (const m of [thinking, confirm]) {
+      expect(renderToStaticMarkup(<Mic speech mic={m} locked={false} onTap={noop} />)).toMatch(/<button[^>]*disabled/);
+    }
+    const listening = micReducer(idle, { type: "start", version: 3 });
+    expect(renderToStaticMarkup(<Mic speech mic={listening} locked={false} onTap={noop} />)).not.toMatch(/<button[^>]*disabled/);
   });
 });
 
@@ -99,5 +110,43 @@ describe("the said event", () => {
     });
     expect(next.messageSpeech).toEqual(fb.speech);
     expect(playReducer(next, { type: "conflict", body: { version: 6, turn: { kind: "problem" } as never } }).messageSpeech).toBeUndefined();
+  });
+});
+
+describe("replyLine (the /say body, on any status)", () => {
+  it("takes the reply and its speech, even from an error body (distress line whose storing failed)", () => {
+    const sp = { text: "That sounds hard.", token: "t" };
+    expect(replyLine({ error: "try again", reply: "That sounds hard.", replySpeech: sp }))
+      .toEqual({ say: "That sounds hard.", tone: "calm", speech: sp });
+    expect(replyLine({ reply: "Hi" })).toEqual({ say: "Hi", tone: "calm" });
+  });
+  it("nothing to show without a string reply", () => {
+    for (const b of [null, "x", {}, { error: "try again" }, { reply: 3 }, { reply: "" }]) expect(replyLine(b)).toBeNull();
+  });
+});
+
+describe("unlockElement (iOS: an <audio> may play later only if play() was called on it inside a tap)", () => {
+  const el = () => ({ src: "", play: vi.fn(() => Promise.resolve()), pause: vi.fn() });
+  it("calls play() on the silent clip synchronously, then pauses it", async () => {
+    const a = el();
+    unlockElement(a);
+    expect(a.play).toHaveBeenCalledTimes(1); // no await before it: still inside the tap
+    expect(a.src).toBe(SILENT_WAV);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(a.pause).toHaveBeenCalledTimes(1);
+  });
+  it("does not pause a real line that took the element over meanwhile", async () => {
+    const a = el();
+    unlockElement(a);
+    a.src = "blob:line";
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(a.pause).not.toHaveBeenCalled();
+  });
+  it("a refused play() is swallowed", async () => {
+    const a = { ...el(), play: vi.fn(() => Promise.reject(new Error("NotAllowedError"))) };
+    expect(() => unlockElement(a)).not.toThrow();
+    await Promise.resolve();
   });
 });

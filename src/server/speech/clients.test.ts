@@ -105,4 +105,12 @@ describe("speechMode", () => {
     process.env.SPEECH_TOKEN_SECRET = "s";
     expect(speechMode()).toBe("fake");
   });
+  it("fake is refused in production (off), allowed in preview", () => {
+    process.env.SPEECH = "fake"; process.env.SPEECH_TOKEN_SECRET = "s";
+    vi.stubEnv("VERCEL_ENV", "production");
+    expect(speechMode()).toBe("off");
+    vi.stubEnv("VERCEL_ENV", "preview");
+    expect(speechMode()).toBe("fake");
+    vi.unstubAllEnvs();
+  });
 });

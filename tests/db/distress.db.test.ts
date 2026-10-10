@@ -20,6 +20,18 @@ vi.mock("../../src/server/email/mailer", async (orig) => {
   };
 });
 
+const store = vi.hoisted(() => ({ fail: false }));
+vi.mock("../../src/server/distress/report", async (orig) => {
+  const real = await orig<typeof import("../../src/server/distress/report")>();
+  return {
+    ...real,
+    reportDistress: async (...a: Parameters<typeof real.reportDistress>) => {
+      if (store.fail) throw new Error("db down");
+      return real.reportDistress(...a);
+    },
+  };
+});
+
 import { sendPendingDistressEmails } from "../../src/server/distress/report";
 import { POST as sayPost } from "../../src/app/api/kids/[kidId]/say/route";
 
@@ -119,5 +131,27 @@ describe("say route", () => {
     expect((await flags()).filter((f) => f.emailed_at === null)).toHaveLength(0);
     expect((await latestEmailTo(emailA)).Text).toContain("my brother hits me");
     expect(await mailCount(emailA)).toBe(before + 1);
+  });
+
+  it("if storing fails the reply still comes back (5xx) with its speech, so the tablet shows and voices it", async () => {
+    who.client = A.client;
+    vi.stubEnv("SPEECH", "fake");
+    vi.stubEnv("SPEECH_TOKEN_SECRET", "db-secret");
+    store.fail = true;
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    let res;
+    try {
+      res = await sayPost(say("I want to die"), ctx(kidA));
+    } finally {
+      store.fail = false;
+      vi.unstubAllEnvs();
+    }
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.reply).toBe("That sounds hard. Please tell a grown-up you trust.");
+    expect(body.replySpeech).toMatchObject({ text: "That sounds hard. Please tell a grown-up you trust." });
+    expect(typeof body.replySpeech.token).toBe("string");
+    expect(JSON.stringify(err.mock.calls)).not.toContain("want to die");
+    err.mockRestore();
   });
 });

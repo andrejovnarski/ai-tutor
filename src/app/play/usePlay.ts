@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
   initialPlayState, isGone, playReducer, runRequest,
-  type AnswerBody, type FetchFn, type PlayEvent, type SleepFn, type StepBody, type TutorLine,
+  type AnswerBody, type FetchFn, type PlayEvent, type SleepFn, type StepBody, replyLine,
 } from "./playMachine";
 
 /** Resolves after `ms`, or at once when `signal` aborts (runRequest then stops). */
@@ -96,10 +96,10 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
         method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }),
         signal: abort.current.signal,
       });
-      if (!r.ok) return;
-      const body = (await r.json()) as { reply?: unknown; replySpeech?: TutorLine["speech"] };
-      if (typeof body.reply !== "string" || stateRef.current.version !== v) return;
-      emit(g, { type: "said", line: { say: body.reply, tone: "calm", ...(body.replySpeech ? { speech: body.replySpeech } : {}) } });
+      // Read the body on any status: a 5xx from a distress line whose storing failed still carries the reply.
+      const line = replyLine(await r.json().catch(() => null));
+      if (!line || stateRef.current.version !== v) return;
+      emit(g, { type: "said", line });
     } catch {
       // offline or aborted: the kid can still answer
     }
