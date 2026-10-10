@@ -131,3 +131,11 @@ export function cannedLine(plan: TurnPlan, seed: number): TutorLine {
   const entry = list[((n % list.length) + list.length) % list.length]!;
   return { ...entry, say: entry.say.replaceAll("{answer}", String(plan.answer)) };
 }
+
+/** Every canned `say` template, unfilled ({name} and {answer} left in). */
+export function allCannedSays(): string[] {
+  const out: string[] = [];
+  for (const byBand of Object.values(TABLE)) for (const list of Object.values(byBand)) for (const x of list) out.push(x.say);
+  for (const list of Object.values(EXPLAIN_HIDDEN)) for (const x of list) out.push(x.say);
+  return out;
+}
