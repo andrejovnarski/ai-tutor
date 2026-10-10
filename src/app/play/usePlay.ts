@@ -5,7 +5,13 @@ import {
   type AnswerBody, type FetchFn, type PlayEvent, type SleepFn, type StepBody,
 } from "./playMachine";
 
-const realSleep: SleepFn = (ms) => new Promise((r) => setTimeout(r, ms));
+/** Resolves after `ms`, or at once when `signal` aborts (runRequest then stops). */
+const realSleep: SleepFn = (ms, signal) => new Promise((resolve) => {
+  if (signal?.aborted) return resolve();
+  const t = setTimeout(done, ms);
+  function done() { clearTimeout(t); signal?.removeEventListener("abort", done); resolve(); }
+  signal?.addEventListener("abort", done, { once: true });
+});
 
 export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn }) {
   const [state, dispatch] = useReducer(playReducer, initialPlayState);
@@ -14,6 +20,9 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
   const live = useRef(true);
   const gen = useRef(0); // bumped by every new load; a response from an older generation is dropped
   const busy = useRef(false); // same-tick double-tap guard
+  // Aborted on unmount ("I'm done for now", Back to kids): an in-flight request and its backoff stop, so an answer
+  // is never posted after the kid has left (spec §9: quitting mid-problem does not count the attempt).
+  const abort = useRef<AbortController>(new AbortController());
   const stateRef = useRef(state);
   stateRef.current = state;
   const fetchRef = useRef(fetchFn); fetchRef.current = fetchFn;
@@ -30,7 +39,9 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
     const r = await runRequest(fetchRef.current, sleepRef.current, {
       url: `/api/kids/${kidId}/turn`, init: { method: "POST" },
       onRetry: (attempt) => emit(g, { type: "retrying", attempt }),
+      signal: abort.current.signal,
     });
+    if (r === "aborted") return;
     if (r === "offline" || !r.ok) return emit(g, { type: "offline" });
     try {
       emit(g, { type: "loaded", body: (await r.json()) as StepBody });
@@ -41,8 +52,9 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
 
   useEffect(() => {
     live.current = true;
+    if (abort.current.signal.aborted) abort.current = new AbortController(); // remount (React strict mode)
     void load();
-    return () => { live.current = false; };
+    return () => { live.current = false; abort.current.abort(); };
   }, [load]);
 
   const answer = useCallback(async (given: number) => {
@@ -56,7 +68,9 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
         url: `/api/kids/${kidId}/answer`,
         init: { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ version: s.version, given }) },
         onRetry: (attempt) => emit(g, { type: "retrying", attempt }),
+        signal: abort.current.signal,
       });
+      if (r === "aborted") return;
       if (r === "offline") return emit(g, { type: "offline" });
       if (r.status === 409) return emit(g, { type: "conflict", body: (await r.json()) as StepBody });
       if (!r.ok) return emit(g, { type: "offline" });

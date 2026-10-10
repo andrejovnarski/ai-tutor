@@ -59,6 +59,13 @@ describe("AnswerTray", () => {
     expect(html).toContain('data-testid="number-pad"');
     expect(buttons(html)).toHaveLength(12);
   });
+  it("shows the pad for number-pad input even when choices exist (ages 8-11 keep the choices)", () => {
+    const html = renderToStaticMarkup(
+      <AnswerTray input="number-pad" choices={[12, 15, 21]} locked={false} onAnswer={() => {}} />,
+    );
+    expect(html).toContain('data-testid="number-pad"');
+    expect(html).not.toContain('data-testid="choices"');
+  });
   it("shows tiles for voice input with choices", () => {
     const html = renderToStaticMarkup(
       <AnswerTray input="voice" choices={[2, 4]} locked={false} onAnswer={() => {}} />,

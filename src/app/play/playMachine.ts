@@ -82,20 +82,29 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
 export const RETRY_DELAYS = [500, 1000, 2000, 4000] as const;
 
 export type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
-export type SleepFn = (ms: number) => Promise<void>;
-export type Req = { url: string; init?: RequestInit; onRetry?: (attempt: number) => void };
+export type SleepFn = (ms: number, signal?: AbortSignal) => Promise<void>;
+export type Req = { url: string; init?: RequestInit; onRetry?: (attempt: number) => void; signal?: AbortSignal };
 
-/** Retries a network error or status >= 500 at 0.5, 1, 2 and 4 s (4 retries). Other statuses are returned as is. */
-export async function runRequest(fetchFn: FetchFn, sleep: SleepFn, req: Req): Promise<Response | "offline"> {
+/** Retries a network error or status >= 500 at 0.5, 1, 2 and 4 s (4 retries). Other statuses are returned as is.
+ * Once `signal` aborts (the kid left the screen) nothing more is fetched or retried, and the result is "aborted". */
+export async function runRequest(fetchFn: FetchFn, sleep: SleepFn, req: Req): Promise<Response | "offline" | "aborted"> {
+  const { signal } = req;
+  const init = signal ? { ...req.init, signal } : req.init;
   for (let i = 0; ; i++) {
+    if (signal?.aborted) return "aborted";
     try {
-      const r = await fetchFn(req.url, req.init);
+      const r = await fetchFn(req.url, init);
       if (r.status < 500) return r;
     } catch {
-      // network error: fall through to retry
+      // network error (or the abort): fall through to retry
     }
+    if (signal?.aborted) return "aborted";
     if (i >= RETRY_DELAYS.length) return "offline";
     req.onRetry?.(i + 1);
-    await sleep(RETRY_DELAYS[i]!);
+    try {
+      await sleep(RETRY_DELAYS[i]!, signal);
+    } catch {
+      // an abortable sleep may reject on abort; the check at the top decides
+    }
   }
 }

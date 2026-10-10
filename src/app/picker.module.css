@@ -1,0 +1,97 @@
+/* The kid picker wears the felt look itself; body styles stay global and plain for the parent pages. */
+.picker {
+  position: relative;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 32px 24px;
+  background: var(--felt);
+  color: var(--chalk);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-l);
+  font-weight: 700;
+}
+
+.kids {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 176px;
+  padding: 24px 24px 20px;
+  box-sizing: border-box;
+  border-radius: 28px;
+  background: var(--tray);
+  color: var(--ink);
+  font-size: var(--text-m);
+  text-decoration: none;
+  box-shadow: 0 6px 0 var(--felt-deep);
+  touch-action: manipulation;
+}
+
+.kid:active {
+  transform: scale(0.97);
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: var(--felt);
+  font-size: 64px;
+  line-height: 1;
+}
+
+.add {
+  display: inline-flex;
+  align-items: center;
+  min-height: 88px;
+  padding: 0 32px;
+  border-radius: 20px;
+  background: var(--tray);
+  color: var(--ink);
+  font-size: var(--text-m);
+  text-decoration: none;
+}
+
+.grownUps {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  color: var(--chalk);
+  font-size: 18px;
+  opacity: 0.85;
+  text-underline-offset: 4px;
+}
+
+.kid:focus-visible,
+.add:focus-visible,
+.grownUps:focus-visible {
+  outline: 3px solid var(--chalk);
+  outline-offset: 4px;
+}

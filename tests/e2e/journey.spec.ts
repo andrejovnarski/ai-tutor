@@ -36,12 +36,12 @@ test("parent journey: sign up, PIN, consent, kid, play 5 answers, weekly report 
 
   await expect(page.getByTestId("say")).toBeVisible();
   for (let i = 0; i < 5; i++) {
-    await expect(page.getByTestId("choices").or(page.getByRole("button", { name: "Go" }))).toBeVisible();
+    await expect(page.getByTestId("choices").or(page.getByRole("button", { name: "OK" }))).toBeVisible();
     const before = await page.locator("main").getAttribute("data-version");
     if (await page.getByTestId("choices").count()) await page.getByTestId("choices").getByRole("button").first().click();
     else {
       await page.getByRole("button", { name: "1", exact: true }).click();
-      await page.getByRole("button", { name: "Go" }).click();
+      await page.getByRole("button", { name: "OK" }).click();
     }
     await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
   }

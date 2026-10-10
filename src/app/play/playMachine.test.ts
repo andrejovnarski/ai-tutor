@@ -49,6 +49,42 @@ describe("runRequest", () => {
     expect(h.sleeps).toEqual([500]);
     expect(attempts).toEqual([1]);
   });
+  it("an abort during the backoff stops the loop: no more fetches, no more retries", async () => {
+    const ctl = new AbortController();
+    let fetches = 0;
+    const retries: number[] = [];
+    const fetchFn: FetchFn = async () => { fetches++; throw new Error("down"); };
+    const sleep = async () => { ctl.abort(); };
+    const r = await runRequest(fetchFn, sleep, { url: "/u", signal: ctl.signal, onRetry: (a) => retries.push(a) });
+    expect(r).toBe("aborted");
+    expect(fetches).toBe(1);
+    expect(retries).toEqual([1]);
+  });
+  it("an already aborted signal never fetches", async () => {
+    const ctl = new AbortController();
+    ctl.abort();
+    let fetches = 0;
+    const r = await runRequest(async () => { fetches++; return res(200); }, async () => {}, { url: "/u", signal: ctl.signal });
+    expect(r).toBe("aborted");
+    expect(fetches).toBe(0);
+  });
+  it("hands the signal to fetch and to sleep; a fetch killed by the abort is not retried", async () => {
+    const ctl = new AbortController();
+    const seen: Array<AbortSignal | null | undefined> = [];
+    const sleeps: Array<AbortSignal | undefined> = [];
+    const fetchFn: FetchFn = async (_u, init) => {
+      seen.push(init?.signal);
+      if (seen.length === 1) throw new Error("x");
+      ctl.abort();
+      throw new DOMException("aborted", "AbortError");
+    };
+    const r = await runRequest(fetchFn, async (_ms, signal) => { sleeps.push(signal); }, {
+      url: "/u", init: { method: "POST", body: "{}" }, signal: ctl.signal,
+    });
+    expect(r).toBe("aborted");
+    expect(seen).toEqual([ctl.signal, ctl.signal]);
+    expect(sleeps).toEqual([ctl.signal]);
+  });
   it("lost response: network error, then 409 with the next turn, shows the next problem", async () => {
     const next: StepBody = { version: 5, turn: problem(2), line: line("hi") };
     const h = harness([new Error("lost"), res(409, next)]);

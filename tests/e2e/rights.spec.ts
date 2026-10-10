@@ -18,7 +18,7 @@ test("view, export, delete a kid, then delete the account", async ({ page }) => 
   if (await page.getByTestId("choices").count()) await page.getByTestId("choices").getByRole("button").first().click();
   else {
     await page.getByRole("button", { name: "1", exact: true }).click();
-    await page.getByRole("button", { name: "Go" }).click();
+    await page.getByRole("button", { name: "OK" }).click();
   }
   await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
 

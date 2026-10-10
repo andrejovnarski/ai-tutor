@@ -1,29 +1,32 @@
 import Link from "next/link";
 import { requireUser } from "@/server/parentGate";
+import styles from "./picker.module.css";
+
+const FACES: Record<string, string> = {
+  fox: "🦊", bear: "🐻", owl: "🦉", frog: "🐸", duck: "🦆", rabbit: "🐰", cat: "🐱", turtle: "🐢",
+};
 
 export default async function HomePage() {
   const { supabase } = await requireUser(); // counts as activity
   const { data: kids } = await supabase.from("kids").select("id, nickname, avatar").order("created_at");
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Math Friend</h1>
+    <main className={styles.picker}>
+      <h1 className={styles.title}>Who&apos;s playing?</h1>
       {kids && kids.length > 0 ? (
-        <ul style={{ display: "flex", gap: 24, flexWrap: "wrap", listStyle: "none", padding: 0 }}>
+        <ul className={styles.kids}>
           {kids.map((k) => (
             <li key={k.id}>
-              <Link href={`/play/${k.id}`} style={{ display: "block", padding: "32px 48px", fontSize: 32, border: "3px solid", borderRadius: 24, textAlign: "center", textDecoration: "none" }}>
-                <span aria-hidden="true" style={{ display: "block", fontSize: 20 }}>{k.avatar}</span>
+              <Link href={`/play/${k.id}`} className={styles.kid}>
+                <span aria-hidden="true" className={styles.avatar}>{FACES[k.avatar] ?? k.avatar}</span>
                 {k.nickname}
               </Link>
             </li>
           ))}
         </ul>
       ) : (
-        <Link href="/parent">Add your first kid</Link>
+        <Link href="/parent" className={styles.add}>Add your first kid</Link>
       )}
-      <p>
-        <Link href="/parent" style={{ fontSize: 14 }}>Grown-ups</Link>
-      </p>
+      <Link href="/parent" className={styles.grownUps}>Grown-ups</Link>
     </main>
   );
 }

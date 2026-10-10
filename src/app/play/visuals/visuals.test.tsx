@@ -165,6 +165,14 @@ describe("number-line", () => {
     expect(labels(html)).toContain("+4");
     assertInside(html);
   });
+  it("0..20 labels are small enough that two-digit numbers keep a gap; 0..10 stays at 28", () => {
+    const sizes = (html: string) => [...html.matchAll(/<text data-label="\d+"[^>]*font-size="(\d+)"/g)].map((m) => Number(m[1]));
+    const dense = sizes(render({ kind: "number-line", from: 0, to: 20, marks: [] }));
+    expect(dense).toHaveLength(21);
+    // label pitch is 720 / 20 = 36; two Andika digits are about 1.1 em wide
+    for (const s of dense) expect(s * 1.1).toBeLessThanOrEqual(36 - 10);
+    expect(new Set(sizes(render({ kind: "number-line", from: 0, to: 10, marks: [] })))).toEqual(new Set([28]));
+  });
   it("0..100 labels only multiples of 10 and keeps 47 off the line", () => {
     const v: V = { kind: "number-line", from: 0, to: 100, marks: [], jump: { from: 40, by: 7 } };
     const html = render(v);

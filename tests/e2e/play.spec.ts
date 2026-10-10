@@ -21,13 +21,13 @@ const attempts = async (parentId: string) => {
 
 const choiceButtons = (page: Page) => page.getByTestId("choices").getByRole("button");
 
-/** Answers by tapping the first choice (or the first pad digit then Go) and waits for the next prompt. */
+/** Answers by tapping the first choice (or the first pad digit then OK) and waits for the next prompt. */
 async function answerOnce(page: Page, pick = 0) {
   const before = await page.locator("main").getAttribute("data-version");
   if (await page.getByTestId("choices").count()) await choiceButtons(page).nth(pick).click();
   else {
     await page.getByRole("button", { name: "1", exact: true }).click();
-    await page.getByRole("button", { name: "Go" }).click();
+    await page.getByRole("button", { name: "OK" }).click();
   }
   await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
 }
@@ -42,13 +42,13 @@ test("tap Mia and answer problems; attempts are saved and responses never carry 
   await expect(page).toHaveURL(/\/play\/[0-9a-f-]{36}$/);
   await expect(page.getByTestId("say")).toBeVisible();
   const target = (await attempts(parentId)) + 6;
-  const feedback: string[] = [];
+  const said: string[] = [];
   for (let i = 0; i < 6; i++) {
     await answerOnce(page, i % 3);
-    // A retry (same problem, try 2) shows its line as Nova's line, so the feedback slot may be empty.
-    if (await page.getByTestId("feedback").count()) feedback.push(await page.getByTestId("feedback").innerText());
+    // Straight after an answer the bubble holds the feedback line (1.2 s after a correct one).
+    said.push(await page.getByTestId("nova-line").innerText());
   }
-  for (const f of feedback) expect(f).not.toMatch(/undefined|NaN/);
+  for (const f of said) expect(f).not.toMatch(/undefined|NaN/);
   await expect.poll(() => attempts(parentId)).toBeGreaterThanOrEqual(target);
   const responses = await Promise.all(bodies);
   expect(responses.length).toBeGreaterThan(6);
@@ -62,19 +62,21 @@ test("tap Mia and answer problems; attempts are saved and responses never carry 
 test("Nova speaks above the problem and after each answer, with Mia's name filled in", async ({ page }) => {
   await setUpMia(page);
   await page.getByRole("link", { name: /Mia/ }).click();
-  await expect(page.getByTestId("nova")).toBeVisible();
-  const lines = [await page.getByTestId("nova").innerText()];
+  const bubble = page.getByTestId("nova-line");
+  await expect(bubble).toBeVisible();
+  const lines = [await bubble.innerText()];
   for (let i = 0; i < 6; i++) {
     await answerOnce(page, i % 3);
-    // After a retry the wrong line is Nova's line and there is no separate feedback line.
-    if (await page.getByTestId("feedback").count()) lines.push(await page.getByTestId("feedback").innerText());
-    lines.push(await page.getByTestId("nova").innerText());
+    // The feedback line first; after a correct answer the next problem's line replaces it 1.2 s later.
+    lines.push(await bubble.innerText());
+    await page.waitForTimeout(1300);
+    lines.push(await bubble.innerText());
   }
   for (const l of lines) {
     expect(l.length).toBeGreaterThan(0);
     expect(l).not.toMatch(/\{name\}|\{answer\}|undefined/);
   }
-  // Canned lines rotate and most use {name}: across 13 lines Mia's name shows up.
+  // Canned lines rotate and most use {name}: across these lines Mia's name shows up.
   expect(lines.some((l) => l.includes("Mia"))).toBe(true);
 });
 

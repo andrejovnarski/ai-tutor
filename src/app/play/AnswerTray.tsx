@@ -10,7 +10,9 @@ type Props = {
 };
 
 export function AnswerTray({ input, choices, locked, onAnswer }: Props) {
-  const useTiles = input === "tap-choice" || (choices !== undefined && choices.length > 0);
+  // number-pad always gets the pad (ages 8-11 keep their choices on the turn); voice and drag fall back to tiles
+  // when there are choices, else the pad.
+  const useTiles = input === "tap-choice" || (input !== "number-pad" && choices !== undefined && choices.length > 0);
   if (useTiles) {
     return (
       <div className={styles.tiles} data-testid="choices">

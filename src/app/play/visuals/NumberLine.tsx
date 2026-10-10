@@ -11,6 +11,9 @@ export function NumberLine({ v }: { v: Extract<Visual, { kind: "number-line" }> 
   const x = (n: number) => r1(SIDE + ((Math.min(v.to, Math.max(v.from, n)) - v.from) / span) * (W - 2 * SIDE));
   const minor = span <= 20 ? 1 : 5;
   const labelEvery = labelStep(v.from, v.to);
+  // Two-digit labels need a visible gap: about 1.1 em of digits inside each label pitch, less 10 units.
+  const pitch = ((W - 2 * SIDE) / span) * labelEvery;
+  const labelSize = span <= 20 ? Math.min(28, Math.floor((pitch - 10) / 1.1)) : 22;
   const ticks: number[] = [];
   for (let n = Math.ceil(v.from / minor) * minor; n <= v.to; n += minor) ticks.push(n);
 
@@ -42,7 +45,7 @@ export function NumberLine({ v }: { v: Extract<Visual, { kind: "number-line" }> 
           <g key={n}>
             <line data-tick={n} x1={x(n)} y1={LINE_Y - (major ? 14 : 8)} x2={x(n)} y2={LINE_Y + (major ? 14 : 8)} stroke="var(--chalk)" strokeWidth={major ? 4 : 2} />
             {major ? (
-              <text data-label={n} x={x(n)} y={LINE_Y + 48} textAnchor="middle" fontSize={span <= 20 ? 28 : 22} fill="var(--chalk)">{n}</text>
+              <text data-label={n} x={x(n)} y={LINE_Y + 48} textAnchor="middle" fontSize={labelSize} fill="var(--chalk)">{n}</text>
             ) : null}
           </g>
         );
