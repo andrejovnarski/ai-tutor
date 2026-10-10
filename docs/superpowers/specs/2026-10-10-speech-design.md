@@ -24,8 +24,8 @@ tablet mic ─16 kHz WAV─▶ POST /api/kids/[kidId]/listen ─▶ Azure STT (s
                                    ▼
                      route: number? confident? → answer | confirm | say
 
-Nova line ─▶ server adds `speech` {text without name, token} ─▶ tablet
-tablet: pre-made clip for this text? play it : POST /api/kids/[kidId]/speak {text, token} ─▶ Azure TTS (mp3)
+Nova line ─▶ server adds `speech` {text without name, token, clip?} ─▶ tablet
+tablet: speech.clip? play it : POST /api/kids/[kidId]/speak {text, token} ─▶ Azure TTS (mp3)
 ```
 
 - **Record, then send.** Live streaming is not used: Vercel functions don't hold WebSockets well, and a direct tablet-to-Azure connection would break "speech called server-side". A clip of 6 s or less costs about 1 s round trip.
@@ -36,17 +36,18 @@ tablet: pre-made clip for this text? play it : POST /api/kids/[kidId]/speak {tex
 
 | Unit | Where | Does |
 |---|---|---|
-| Speech config | `src/server/speech/config.ts` | Reads `SPEECH=azure\|off` (default `off`), `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`, `SPEECH_TOKEN_SECRET`, and the voice name. `azure` without a key counts as `off`. |
+| Speech config | `src/server/speech/config.ts` | Reads `SPEECH=azure\|fake\|off` (default `off`; `fake` = canned STT/TTS for local dev and e2e), `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`, `SPEECH_TOKEN_SECRET`, and the voice name. `azure` without a key counts as `off`. |
 | STT client | `src/server/speech/stt.ts` | `recognize(wav) → { text, confidence, alternatives } \| null`. Uses the Azure short-audio REST API, en-US, `format=detailed`. Interface plus a fake for tests. |
 | TTS client | `src/server/speech/tts.ts` | `synthesize(text) → mp3 bytes`. SSML with the Ava voice. Interface plus a fake for tests. |
+| Clip lookup | `src/server/speech/clips.ts` | The server checks the manifest and puts `clip` in the line's `speech` when a pre-made file exists. |
 | Speakable text | `src/server/speech/speakable.ts` | `speakable(template)` removes `{name}` with its neighbouring comma or space ("Great thinking, {name}!" → "Great thinking!"), then fills `{answer}`. Pure function. |
 | Speech token | `src/server/speech/token.ts` | HMAC of (kidId, text) with a server secret. `/speak` only speaks text the server issued, so it can't be used as a free TTS service. |
 | Heard router | `src/domain/checker/heard.ts` | Pure. `(text, confidence, alternatives) → {kind:"answer", n} \| {kind:"confirm", n} \| {kind:"say", text}`. Confidence ≥ 0.6 and every alternative that parses to a number agreeing → answer. A number with lower confidence or disagreement → confirm. No number → say. Uses `parseSpokenNumber`. |
 | Listen route | `src/app/api/kids/[kidId]/listen/route.ts` | Auth and kid check, WAV body ≤ 256 KB, STT, heard router. Returns `{heard, route}`. Never stores or logs audio or text (`/say` keeps its own distress rule). |
 | Speak route | `src/app/api/kids/[kidId]/speak/route.ts` | Auth, token check, text ≤ 300 characters → mp3. `Cache-Control: private`. |
-| Pre-made audio | `scripts/premake-audio.ts` → `public/audio/nova/<hash>.mp3` + `manifest.json` | Speaks every canned line that has no `{answer}`, in its speakable form, once. The files are committed. Hash = sha256 of the speakable text plus the voice name. |
+| Pre-made audio | `scripts/premake-audio.ts` → `public/audio/nova/<hash>.mp3` + `manifest.json` | Speaks every canned line that has no `{answer}`, in its speakable form, once. The files are committed. Hash = sha256 of the voice name, the rate and the speakable text. |
 | Line payloads | `src/server/playApi.ts` | Each Nova line sent to the tablet gains `speech?: { text, token }` (omitted when `SPEECH=off`). |
-| Mic + player | `src/app/play/` (`useMic`, `useNovaAudio`, `MicButton`, `ConfirmHeard`) | Mic capture, WAV encoding, silence stop. The player looks up the manifest first, else calls `/speak`, and handles replay and stop. |
+| Mic + player | `src/app/play/` (`useMic`, `useNovaAudio`, `MicButton`, `ConfirmHeard`) | Mic capture, WAV encoding, silence stop. The player plays `speech.clip` when present, else calls `/speak`, and handles replay and stop. Mic notices and "Did you say" are spoken too. |
 
 ## Kid flow
 
