@@ -19,7 +19,6 @@ Built by one person with Claude, target 1–2 months to real families.
 | Schedule | Vercel Cron | Owner's choice, 2026-10-09; hourly crons need a plan that allows them |
 | Tutor | Nova the robot | Owner's choice, 2026-10-09 |
 | Tutor lines | Check before speak: code checks every AI line (numbers, early answer, words) and falls back to a canned line | Owner's choice, 2026-10-09 |
-
-Open: which speech vendor (pick in a later section).
+| Speech vendor | Azure AI Speech | Owner's choice, 2026-10-10; must not keep kid audio (COPPA) |
 
 Related: [[Decision - Approach]], [[Decision - Platform]]
