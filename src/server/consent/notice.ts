@@ -1,4 +1,4 @@
-export const PRIVACY_NOTICE_VERSION = "2026-10-09-draft";
+export const PRIVACY_NOTICE_VERSION = "2026-10-10-draft";
 
 export const DRAFT_BANNER = "Draft — pending legal review.";
 
@@ -23,7 +23,8 @@ export const NOTICE_SECTIONS: NoticeSection[] = [
   {
     heading: "Who helps us run the app",
     body: [
-      "Supabase (database), Vercel (hosting), Anthropic (AI), a speech vendor, an email vendor, and Stripe (card check).",
+      "Supabase (database), Vercel (hosting), Anthropic (AI), Microsoft Azure (speech), Resend (email), and Stripe (card check).",
+      "When your child talks to the tutor, the recording goes to Microsoft Azure to be turned into text, and is not kept. Your child's name is never sent.",
       "Each is under a data processing agreement and may not train on our data.",
       "We do not use ads, sell data, or load third-party trackers or analytics in the kid area.",
     ],

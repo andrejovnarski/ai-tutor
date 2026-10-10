@@ -1,8 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { NOVA_VOICE } from "./voice";
+// Imported, not read from disk: on Vercel `public/` is served by the CDN and is not on the function's filesystem.
+import manifestJson from "../../../public/audio/nova/manifest.json";
 
 /** Cache key of a pre-rendered clip: changes with the voice, so a new voice never serves stale audio. */
 export function clipKey(text: string): string {
@@ -18,19 +18,10 @@ export function clipsFrom(json: unknown): Record<string, true> {
   return out;
 }
 
-let manifest: Record<string, true> | null = null;
-function load(): Record<string, true> {
-  if (manifest) return manifest;
-  try {
-    manifest = clipsFrom(JSON.parse(readFileSync(path.join(process.cwd(), "public/audio/nova/manifest.json"), "utf8")));
-  } catch {
-    manifest = {};
-  }
-  return manifest;
-}
+const manifest = clipsFrom(manifestJson);
 
 /** The public URL of the clip for this exact text, or undefined when none is in the manifest. */
 export function clipFor(text: string): string | undefined {
   const key = clipKey(text);
-  return Object.hasOwn(load(), key) ? `/audio/nova/${key}.mp3` : undefined;
+  return Object.hasOwn(manifest, key) ? `/audio/nova/${key}.mp3` : undefined;
 }

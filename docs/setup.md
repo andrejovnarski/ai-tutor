@@ -13,10 +13,22 @@ Owner steps for local development and for going live. Nothing here is run automa
    - `npm run test:e2e` (Playwright)
 4. `npm run dev` to use the app.
 
+## Order of going live
+
+1. GitHub: create a **private** repository and push `main` (Vercel deploys from it).
+2. Hosted Supabase (below).
+3. Resend: domain, DPA, SMTP in Supabase (below).
+4. Stripe in test mode (below).
+5. Vercel: import the repo, set the variables, deploy (below).
+6. Speech, if any pilot kid is 5 to 7 (below).
+7. Run the checks in "Before the first family signs up".
+
+Pick a US region everywhere (Supabase, Vercel functions, Azure) so data stays in one country.
+
 ## Hosted Supabase
 
 1. Create a project at supabase.com. Save the database password.
-2. Link and push the schema (migrations `0001_init`, `0002_save_step_hardening`, `0003_pin_attempts`):
+2. Link and push the schema (every file in `supabase/migrations`, `0001` to `0008`):
    ```
    npx supabase link --project-ref <ref>
    npx supabase db push
@@ -107,6 +119,25 @@ The goal is the first word within about 1.5 s. Each line is capped at 2.5 s: aft
 
 If measured latency or cost is too high, Sonnet 5.5 or Haiku 4.5 are candidates (`MODEL` in `src/server/tutor/voice.ts`), but switching models is more than changing that constant: re-check that the new model supports every request option the voice sends, in particular `output_config.effort` (Haiku 4.5 rejects `effort` with an error, which would turn every line into `canned:error`) and the server-side `fallbacks` beta. Run the eval after any switch. Only do it if the eval shows it is needed; it is the owner's decision (spec section 7).
 
+## Speech (Azure)
+
+Kids talk to Nova and hear her lines when `SPEECH=azure`. Unset (or `off`) means the screen without mic or audio. Needed for kids aged 5 to 7, who can't read the lines yet.
+
+1. In the Azure portal create a **Speech** resource (Azure AI services, Speech) in a US region, for example `eastus`. The free F0 tier is enough for a pilot.
+2. Copy Key 1 and the region into `.env.local`:
+   | Variable | Value |
+   |---|---|
+   | `SPEECH` | `azure` |
+   | `AZURE_SPEECH_KEY` | Key 1 |
+   | `AZURE_SPEECH_REGION` | The region, for example `eastus` |
+   | `SPEECH_TOKEN_SECRET` | Output of `openssl rand -hex 32` |
+3. `npm run speech:smoke`: hears the sample "twelve" and speaks one line (about $0.01).
+4. `npm run speech:premake`: renders Nova's fixed lines to `public/audio/nova/` once. Commit the mp3 files and `manifest.json`.
+5. Set the same four variables on Vercel (a new `SPEECH_TOKEN_SECRET` there is fine).
+6. The app never asks Azure to keep audio (it does not send `storeAudio`). Keep it that way.
+7. Microsoft's data protection terms (DPA) apply to Azure services; confirm they cover the resource and keep a copy for the lawyer.
+8. Check on a real iPad in Safari: Nova speaks after the avatar tap, the mic asks for permission, "twelve" answers, a mumble asks "Did you say...?".
+
 ## Vercel
 
 Set these environment variables for the project:
@@ -120,9 +151,12 @@ Set these environment variables for the project:
 | `CRON_SECRET` | Output of `openssl rand -hex 32`; Vercel sends it as a bearer token to the cron routes |
 | `APP_ORIGIN` | The production origin, for example `https://your-app.vercel.app` |
 | `STRIPE_SECRET_KEY`, `CONSENT_GATEWAY`, `RESEND_API_KEY`, `EMAIL_FROM`, `MAILER` | As in the Stripe and Resend sections |
-| `TUTOR_VOICE`, `ANTHROPIC_API_KEY` | As in the Tutor voice section |
+| `TUTOR_VOICE`, `ANTHROPIC_API_KEY` | As in the Tutor voice section. For the pilot leave `TUTOR_VOICE` unset (canned lines) |
+| `SPEECH`, `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`, `SPEECH_TOKEN_SECRET` | As in the Speech section. Unset means no mic and no audio |
 
-Crons come from `vercel.json`: the weekly report (hourly on Sundays, it sends from 17:00 New York time) and daily retention. Hourly crons need a Vercel plan that allows them; the free Hobby plan does not.
+Crons come from `vercel.json`: the weekly report (hourly on Sundays, it sends from 17:00 New York time) and daily retention. Hourly crons need a Vercel plan that allows them; the free Hobby plan does not, so use Pro. Hobby is also for non-commercial use only.
+
+Steps: in Vercel, Add New Project, import the GitHub repo, set the variables above for Production (and Preview if you use previews), deploy. Then set the Supabase Site URL and Redirect URLs to the deployed origin and set `APP_ORIGIN` to match. Redeploy after changing variables.
 
 ### Production cautions
 
@@ -133,8 +167,10 @@ Crons come from `vercel.json`: the weekly report (hourly on Sundays, it sends fr
 
 Do not invite real families until all of these are done:
 
-1. A lawyer reviews the privacy notice, the distress phrase list and the consent method (spec sections 8 and 11, `docs/superpowers/specs/2026-10-08-adaptive-tutor-design.md`).
-   Also ask the lawyer: the privacy notice is currently reachable only after sign-in and the parent PIN. Does it need a public link before sign-up?
+1. A lawyer reviews the privacy notice, the distress phrase list and the consent method. Send them `docs/lawyer-brief.md`; it lists every question.
 2. Remove the "Draft" banner by changing `PRIVACY_NOTICE_VERSION` (in `src/server/consent/notice.ts`) to a non-draft version.
 3. The Stripe, Resend and Vercel steps above are done, including the hosted retention check.
-4. `npm run eval:tutor -- --yes` passes (Tutor voice section).
+4. Data processing agreements are signed (or accepted) with Supabase, Vercel, Resend, Stripe, and Microsoft if speech is on, and Anthropic if Claude is on.
+5. If `SPEECH=azure`: the Speech steps are done, including the iPad check.
+6. If `TUTOR_VOICE=claude`: `npm run eval:tutor -- --yes` passes (Tutor voice section). Not needed for canned lines.
+7. 3 to 5 playtests with a parent present (spec section 10) on the deployed app.

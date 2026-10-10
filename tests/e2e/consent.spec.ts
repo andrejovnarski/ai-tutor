@@ -30,7 +30,7 @@ test("consent through the UI: checkbox gates the button, then Add kid appears", 
   await expect(page.getByRole("link", { name: "Add kid" })).toBeVisible();
   const rows = await consentRows(await parentId(email));
   expect(rows).toHaveLength(1);
-  expect(rows[0]!.notice_version).toBe("2026-10-09-draft");
+  expect(rows[0]!.notice_version).toBe("2026-10-10-draft");
   expect(rows[0]!.method).toBe("fake");
 });
 
