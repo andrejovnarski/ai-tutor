@@ -9,16 +9,24 @@ export function clipKey(text: string): string {
   return createHash("sha256").update(`${NOVA_VOICE.name}|${NOVA_VOICE.rate}|${text}`).digest("hex");
 }
 
-let manifest: Record<string, unknown> | null = null;
-function load(): Record<string, unknown> {
+/** The clip keys in a parsed manifest ({ voice, rate, clips: { [key]: true } }); anything malformed gives {}. */
+export function clipsFrom(json: unknown): Record<string, true> {
+  const out: Record<string, true> = {};
+  const clips = json && typeof json === "object" ? (json as { clips?: unknown }).clips : undefined;
+  if (!clips || typeof clips !== "object" || Array.isArray(clips)) return out;
+  for (const [k, v] of Object.entries(clips)) if (v === true) out[k] = true;
+  return out;
+}
+
+let manifest: Record<string, true> | null = null;
+function load(): Record<string, true> {
   if (manifest) return manifest;
   try {
-    const raw = JSON.parse(readFileSync(path.join(process.cwd(), "public/audio/nova/manifest.json"), "utf8"));
-    manifest = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    manifest = clipsFrom(JSON.parse(readFileSync(path.join(process.cwd(), "public/audio/nova/manifest.json"), "utf8")));
   } catch {
     manifest = {};
   }
-  return manifest!;
+  return manifest;
 }
 
 /** The public URL of the clip for this exact text, or undefined when none is in the manifest. */

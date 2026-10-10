@@ -12,6 +12,7 @@
     "test:db": "vitest run -c vitest.db.config.ts",
     "test:e2e": "playwright test",
     "speech:smoke": "tsx --conditions=react-server scripts/speech-smoke.ts",
+    "speech:premake": "tsx --conditions=react-server scripts/premake-audio.ts",
     "eval:tutor": "tsx --conditions=react-server scripts/eval-tutor.ts",
     "env:local": "npx supabase status -o env | node scripts/env-local.mjs"
   },
