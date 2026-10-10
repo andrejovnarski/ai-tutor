@@ -35,10 +35,7 @@ export function describeVisual(v: Visual): string {
       if (v.marks.length) s += `, with ${v.marks.length === 1 ? "a dot" : "dots"} at ${join(v.marks.map(String))}`;
       const j = v.jump;
       if (j && j.by !== 0) {
-        const land = j.from + j.by;
-        const shown = land >= v.from && land <= v.to && land % labelStep(v.from, v.to) === 0;
         s += `, and a jump ${j.by > 0 ? "forward" : "back"} ${Math.abs(j.by)} from ${j.from}`;
-        if (shown) s += `, landing on ${land}`;
       }
       return s;
     }
@@ -51,7 +48,7 @@ export function describeVisual(v: Visual): string {
         if (c.tens) bits.push(plural(c.tens, "ten rod", "ten rods"));
         if (c.ones) bits.push(plural(c.ones, "single cube", "single cubes"));
         s += `, ${join(bits)} crossed out`;
-        if (c.ones > (v.groups[0]?.ones ?? 0)) s += ", with one ten rod broken into single cubes";
+        if (c.ones > (v.groups[0]?.ones ?? 0) && (v.groups[0]?.tens ?? 0) - c.tens >= 1) s += ", with one ten rod broken into 10 single cubes";
       }
       return s;
     }

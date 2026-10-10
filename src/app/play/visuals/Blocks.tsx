@@ -6,23 +6,23 @@ type Group = { tens: number; ones: number };
 const r1 = (n: number) => Math.round(n * 10) / 10;
 const COLW = 5; // loose cubes stack five high
 
-type Plan = { rods: number; crossedRods: number; ones: number; crossedOnes: number; broken: boolean };
+type Plan = { rods: number; crossedRods: number; ones: number; loose: number; crossedOnes: number; broken: boolean };
 
 function plan(g: Group, c: { tens: number; ones: number } | undefined): Plan {
   const cOnes = c?.ones ?? 0;
   let rods = g.tens;
-  let ones = g.ones;
+  const ones = g.ones;
   const crossedRodsWanted = Math.min(c?.tens ?? 0, g.tens);
   const broken = cOnes > g.ones && g.tens - crossedRodsWanted >= 1;
-  if (broken) { rods -= 1; ones += 10; }
-  return { rods, crossedRods: Math.min(crossedRodsWanted, rods), ones, crossedOnes: Math.min(cOnes, ones), broken };
+  if (broken) rods -= 1;
+  return { rods, crossedRods: Math.min(crossedRodsWanted, rods), ones, loose: broken ? 10 : 0, crossedOnes: Math.min(cOnes, ones + (broken ? 10 : 0)), broken };
 }
 
 export function Blocks({ v }: { v: Extract<Visual, { kind: "blocks" }> }) {
   const plans = v.groups.map((g, i) => plan(g, i === 0 ? v.crossedOut : undefined));
   const GAPG = 44;
   const widthAt = (c: number) =>
-    plans.reduce((sum, p) => sum + (p.rods + Math.ceil(p.ones / COLW)) * (c + 6) + (p.rods && p.ones ? 14 : 0), 0) + GAPG * Math.max(0, plans.length - 1);
+    plans.reduce((sum, p) => sum + (p.rods + Math.ceil(p.ones / COLW) + (p.loose ? 2 : 0)) * (c + 6) + (p.rods && p.ones ? 14 : 0) + (p.loose ? 28 : 0), 0) + GAPG * Math.max(0, plans.length - 1);
   let c = 30;
   while (c > 8 && widthAt(c) > W - 80) c -= 1;
   const total = widthAt(c);
@@ -55,7 +55,26 @@ export function Blocks({ v }: { v: Extract<Visual, { kind: "blocks" }> }) {
         </g>,
       );
     }
-    x += cols * (c + 6) + GAPG;
+    x += cols * (c + 6);
+    if (p.loose) {
+      x += 28;
+      out.push(
+        <rect key={`${gi}ghost`} data-broken-outline="true" x={r1(x - 5)} y={r1(base - 5 * c - 5)} width={r1(2 * (c + 6) + 4)} height={r1(5 * c + 10)} rx="6"
+          fill="none" stroke="var(--chalk)" strokeOpacity="0.5" strokeWidth="2" strokeDasharray="5 5" />,
+      );
+      for (let o = 0; o < p.loose; o++) {
+        const cx0 = r1(x + Math.floor(o / COLW) * (c + 6));
+        const cy0 = r1(base - ((o % COLW) + 1) * c);
+        out.push(
+          <g key={`${gi}b${o}`}>
+            <rect data-cube="true" data-broken="true" x={cx0} y={cy0} width={c} height={c} rx="3" fill="var(--cube-blue)" stroke="var(--chalk)" strokeWidth="1.5" />
+            {p.ones + o < p.crossedOnes ? <Cross cx={r1(cx0 + c / 2)} cy={r1(cy0 + c / 2)} h={c * 0.35} /> : null}
+          </g>,
+        );
+      }
+      x += 2 * (c + 6);
+    }
+    x += GAPG;
   });
   return <Svg label={describeVisual(v)}>{out}</Svg>;
 }

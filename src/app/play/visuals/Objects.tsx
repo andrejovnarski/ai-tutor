@@ -22,7 +22,7 @@ export function IconRows({ icon, groups, crossed, top, bottom }: {
           {slots
             .filter((s) => s.group === g)
             .map((s) => (
-              <g key={s.flat} data-y={s.cy}>
+              <g key={s.flat} data-x={s.cx} data-y={s.cy}>
                 {draw({ cx: s.cx, cy: s.cy, s: s.s })}
                 {crossed(s) ? <Cross cx={s.cx} cy={s.cy} h={s.s * 0.4} /> : null}
               </g>

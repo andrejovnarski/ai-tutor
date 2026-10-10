@@ -95,6 +95,26 @@ describe("ten-frames", () => {
     const html = render({ kind: "ten-frames", first: 7, second: 0, crossedOut: 2 });
     expect(count(html, "data-cross")).toBe(2);
   });
+  it("12+3 fills frame 1 with 10 red, frame 2 with 2 red, 3 yellow, 5 empty", () => {
+    const html = render({ kind: "ten-frames", first: 12, second: 3 });
+    const frames = [...html.matchAll(/data-frame="true" x="([\d.]+)"/g)].map((m) => Number(m[1]));
+    expect(frames).toHaveLength(2);
+    const boundary = frames[1]! - 1;
+    const inFrame = (re: RegExp) => {
+      const xs = [...html.matchAll(re)].map((m) => Number(m[1]));
+      return [xs.filter((x) => x < boundary).length, xs.filter((x) => x >= boundary).length];
+    };
+    expect(inFrame(/data-counter="red" cx="([\d.]+)"/g)).toEqual([10, 2]);
+    expect(inFrame(/data-counter="yellow" cx="([\d.]+)"/g)).toEqual([0, 3]);
+    expect(inFrame(/data-empty="true" x="([\d.]+)"/g)).toEqual([0, 5]);
+  });
+  it("puts the crosses on the last N filled cells", () => {
+    const html = render({ kind: "ten-frames", first: 8, second: 5, crossedOut: 3 });
+    const counters = [...html.matchAll(/data-counter="\w+" cx="([\d.]+)" cy="([\d.]+)"/g)].map((m) => `${m[1]},${m[2]}`);
+    const crosses = [...html.matchAll(/data-cross="true" data-cx="([\d.]+)" data-cy="([\d.]+)"/g)].map((m) => `${m[1]},${m[2]}`);
+    expect(counters).toHaveLength(13);
+    expect(crosses).toEqual(counters.slice(-3));
+  });
   it("describes counters without the total", () => {
     const d = describeVisual({ kind: "ten-frames", first: 3, second: 4 });
     expect(d).toContain("3 red counters and 4 yellow counters");
@@ -118,6 +138,14 @@ describe("objects", () => {
     expect(d).toContain("7 apples");
     expect(d).toContain("2 crossed out");
     expect(d).not.toMatch(/\b5\b/);
+  });
+  it("puts the crosses on the last N of the first group", () => {
+    const html = render({ kind: "objects", icon: "apple", groups: [6, 2], crossedOut: 2 });
+    const g0 = html.split('data-group="1"')[0]!;
+    const slots = [...g0.matchAll(/data-x="([\d.]+)" data-y="([\d.]+)"/g)].map((m) => `${m[1]},${m[2]}`);
+    const crosses = [...html.matchAll(/data-cross="true" data-cx="([\d.]+)" data-cy="([\d.]+)"/g)].map((m) => `${m[1]},${m[2]}`);
+    expect(slots).toHaveLength(6);
+    expect(crosses).toEqual(slots.slice(-2));
   });
   it("wraps rows at 5", () => {
     const html = render({ kind: "objects", icon: "star", groups: [10] });
@@ -154,9 +182,25 @@ describe("number-line", () => {
     const html = render({ kind: "number-line", from: 0, to: 20, marks: [], jump: { from: 12, by: -5 } });
     expect(labels(html)).toContain("−5");
   });
-  it("may name a landing point that is on the label grid", () => {
-    const d = describeVisual({ kind: "number-line", from: 0, to: 100, marks: [], jump: { from: 30, by: 10 } });
-    expect(d).toContain("40");
+  it("never names the landing point, even on the label grid or in a small range", () => {
+    const a = describeVisual({ kind: "number-line", from: 0, to: 100, marks: [], jump: { from: 30, by: 10 } });
+    expect(a).not.toContain("40");
+    expect(a).toContain("30");
+    const b = describeVisual({ kind: "number-line", from: 0, to: 10, marks: [3], jump: { from: 3, by: 4 } });
+    expect(b).not.toMatch(/\b7\b/);
+    expect(b).toContain("forward 4 from 3");
+    const c = describeVisual({ kind: "number-line", from: 0, to: 100, marks: [], jump: { from: 40, by: 7 } });
+    expect(c).not.toContain("47");
+  });
+  it("puts marks and arc endpoints at the x of the matching tick", () => {
+    const html = render({ kind: "number-line", from: 0, to: 100, marks: [30, 60], jump: { from: 30, by: 30 } });
+    const tickX = (n: number) => Number(html.match(new RegExp(`data-tick="${n}" x1="([\\d.]+)"`))![1]);
+    const markX = (n: number) => Number(html.match(new RegExp(`data-mark="${n}" cx="([\\d.]+)"`))![1]);
+    expect(markX(30)).toBe(tickX(30));
+    expect(markX(60)).toBe(tickX(60));
+    const d = html.match(/data-jump="true"><path d="([^"]*)"/)![1]!.match(/-?[\d.]+/g)!.map(Number);
+    expect(d[0]).toBe(tickX(30));
+    expect(d[d.length - 2]).toBe(tickX(60));
   });
 });
 
@@ -172,6 +216,19 @@ describe("blocks", () => {
     expect(count(html, "data-rod")).toBe(3);
     expect(count(html, "data-cube")).toBe(13);
     expect(count(html, "data-cross")).toBe(7);
+    expect(count(html, "data-broken")).toBe(10);
+    expect(count(html, "data-broken-outline")).toBe(1);
+  });
+  it("keeps the broken cluster apart from the group's own ones", () => {
+    const html = render({ kind: "blocks", groups: [{ tens: 4, ones: 3 }], crossedOut: { tens: 0, ones: 7 } });
+    const xs = (re: RegExp) => [...html.matchAll(re)].map((m) => Number(m[1]));
+    const own = xs(/data-cube="true" x="([\d.]+)"/g);
+    const broken = xs(/data-cube="true" data-broken="true" x="([\d.]+)"/g);
+    expect(own).toHaveLength(3);
+    expect(Math.min(...broken) - Math.max(...own)).toBeGreaterThan(30);
+  });
+  it("draws no broken cluster when ones suffice", () => {
+    expect(count(render({ kind: "blocks", groups: [{ tens: 2, ones: 8 }], crossedOut: { tens: 0, ones: 3 } }), "data-broken")).toBe(0);
   });
   it("crosses out whole rods", () => {
     const html = render({ kind: "blocks", groups: [{ tens: 5, ones: 0 }], crossedOut: { tens: 2, ones: 0 } });
@@ -186,7 +243,9 @@ describe("blocks", () => {
   });
   it("describes without the difference", () => {
     const d = describeVisual({ kind: "blocks", groups: [{ tens: 4, ones: 3 }], crossedOut: { tens: 0, ones: 7 } });
-    expect(d).toContain("7");
+    expect(d).toContain("4 ten rods and 3 single cubes");
+    expect(d).toContain("one ten rod broken into 10 single cubes");
+    expect(d).toContain("7 single cubes crossed out");
     expect(d).not.toMatch(/\b36\b/);
   });
 });

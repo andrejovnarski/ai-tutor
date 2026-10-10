@@ -24,7 +24,7 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
 export function Cross({ cx, cy, h }: { cx: number; cy: number; h: number }) {
   const d = `M ${r1(cx - h)} ${r1(cy - h)} L ${r1(cx + h)} ${r1(cy + h)} M ${r1(cx - h)} ${r1(cy + h)} L ${r1(cx + h)} ${r1(cy - h)}`;
   return (
-    <g data-cross="true">
+    <g data-cross="true" data-cx={r1(cx)} data-cy={r1(cy)}>
       <path d={d} stroke="var(--ink)" strokeWidth="9" strokeLinecap="round" fill="none" />
       <path d={d} stroke="var(--chalk)" strokeWidth="5" strokeLinecap="round" fill="none" />
     </g>
