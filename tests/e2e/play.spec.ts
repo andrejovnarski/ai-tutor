@@ -24,7 +24,8 @@ const choiceButtons = (page: Page) => page.getByTestId("choices").getByRole("but
 /** Answers by tapping the first choice (or the first pad digit then OK) and waits for the next prompt. */
 async function answerOnce(page: Page, pick = 0) {
   const before = await page.locator("main").getAttribute("data-version");
-  if (await page.getByTestId("choices").count()) await choiceButtons(page).nth(pick).click();
+  const tiles = await page.getByTestId("choices").count() ? await choiceButtons(page).count() : 0;
+  if (tiles) await choiceButtons(page).nth(Math.min(pick, tiles - 1)).click();
   else {
     await page.getByRole("button", { name: "1", exact: true }).click();
     await page.getByRole("button", { name: "OK" }).click();
@@ -67,10 +68,16 @@ test("Nova speaks above the problem and after each answer, with Mia's name fille
   const lines = [await bubble.innerText()];
   for (let i = 0; i < 6; i++) {
     await answerOnce(page, i % 3);
-    // The feedback line first; after a correct answer the next problem's line replaces it 1.2 s later.
-    lines.push(await bubble.innerText());
-    await page.waitForTimeout(1300);
-    lines.push(await bubble.innerText());
+    // A correct answer holds its feedback line (main[data-hold]), then the next problem's line replaces it. Anything
+    // else shows both lines at once. Text is read before the flag: the flag only goes from on to off.
+    const first = await bubble.innerText();
+    const held = (await page.locator("main").getAttribute("data-hold")) === "true";
+    lines.push(first);
+    if (held) {
+      await expect(page.locator("main")).not.toHaveAttribute("data-hold", "true");
+      await expect.poll(() => bubble.innerText()).not.toBe(first);
+      lines.push(await bubble.innerText());
+    }
   }
   for (const l of lines) {
     expect(l.length).toBeGreaterThan(0);

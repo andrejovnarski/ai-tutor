@@ -66,6 +66,13 @@ describe("AnswerTray", () => {
     expect(html).toContain('data-testid="number-pad"');
     expect(html).not.toContain('data-testid="choices"');
   });
+  it("falls back to the pad for tap-choice with no or empty choices", () => {
+    for (const choices of [undefined, []]) {
+      const html = renderToStaticMarkup(<AnswerTray input="tap-choice" choices={choices} locked={false} onAnswer={() => {}} />);
+      expect(html).toContain('data-testid="number-pad"');
+      expect(html).not.toContain('data-testid="choices"');
+    }
+  });
   it("shows tiles for voice input with choices", () => {
     const html = renderToStaticMarkup(
       <AnswerTray input="voice" choices={[2, 4]} locked={false} onAnswer={() => {}} />,

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
-  initialPlayState, playReducer, runRequest,
+  initialPlayState, isGone, playReducer, runRequest,
   type AnswerBody, type FetchFn, type PlayEvent, type SleepFn, type StepBody,
 } from "./playMachine";
 
@@ -42,6 +42,7 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
       signal: abort.current.signal,
     });
     if (r === "aborted") return;
+    if (r !== "offline" && isGone(r.status)) return emit(g, { type: "gone" });
     if (r === "offline" || !r.ok) return emit(g, { type: "offline" });
     try {
       emit(g, { type: "loaded", body: (await r.json()) as StepBody });
@@ -72,6 +73,7 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
       });
       if (r === "aborted") return;
       if (r === "offline") return emit(g, { type: "offline" });
+      if (isGone(r.status)) return emit(g, { type: "gone" });
       if (r.status === 409) return emit(g, { type: "conflict", body: (await r.json()) as StepBody });
       if (!r.ok) return emit(g, { type: "offline" });
       emit(g, { type: "answered", body: (await r.json()) as AnswerBody });

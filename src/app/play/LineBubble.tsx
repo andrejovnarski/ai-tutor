@@ -26,13 +26,11 @@ export function LineBubble({
       {...(tone ? { "data-tone": tone } : {})}
       style={{ fontSize: `${size}px` }}
     >
-      {lead ? <div data-lead>{lead}</div> : null}
+      {lead ? <div className={styles.lead} data-lead>{lead}</div> : null}
+      {/* the note belongs to the feedback line: after the lead when there is one, else after the line */}
+      {lead && note ? <div className={styles.note} data-note>{note}</div> : null}
       <div>{say}</div>
-      {note ? (
-        <div className={styles.note} data-note>
-          {note}
-        </div>
-      ) : null}
+      {!lead && note ? <div className={styles.note} data-note>{note}</div> : null}
     </div>
   );
 }

@@ -6,13 +6,16 @@ export type EndTurn = Extract<PublicTurn, { kind: "end" }>;
 export type Summary = EndTurn["summary"];
 
 export type PlayState = {
-  phase: "loading" | "problem" | "sending" | "retrying" | "offline" | "ended";
+  /** "gone": a 401 or 404 after the page loaded (session expired, kid removed); the screen leaves for `/`. */
+  phase: "loading" | "problem" | "sending" | "retrying" | "offline" | "ended" | "gone";
   version?: number;
   turn?: PublicTurn;
   line?: TutorLine;
   note?: string | null;
   /** Feedback line to show briefly before `line` (only when the problem moved on). */
   message?: string;
+  /** The feedback line's own tone, for Nova's face while `message` is held in the bubble. */
+  messageTone?: TutorLine["tone"];
   summary?: Summary;
   /** 1..4 while phase is "retrying". */
   attempt?: number;
@@ -38,7 +41,7 @@ export type PlayEvent =
   | { type: "conflict"; body: StepBody }
   | { type: "retrying"; attempt: number }
   | { type: "offline" }
-  | { type: "ended"; summary: Summary; line?: TutorLine };
+  | { type: "gone" };
 
 export const initialPlayState: PlayState = { phase: "loading" };
 
@@ -65,6 +68,7 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
         phase: "problem", version: b.version, turn: b.next,
         line: b.nextLine ?? b.line,
         message: b.nextLine ? b.line.say : undefined,
+        messageTone: b.nextLine ? b.line.tone : undefined,
         note, correct,
       };
     }
@@ -74,10 +78,13 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
         : state;
     case "offline":
       return { ...state, phase: "offline", attempt: undefined };
-    case "ended":
-      return { phase: "ended", version: state.version, turn: state.turn, summary: ev.summary, line: ev.line ?? state.line };
+    case "gone":
+      return { phase: "gone" };
   }
 }
+
+/** A 401 (signed out) or 404 (kid not this parent's any more) once the page has loaded: leave rather than retry. */
+export const isGone = (status: number) => status === 401 || status === 404;
 
 export const RETRY_DELAYS = [500, 1000, 2000, 4000] as const;
 

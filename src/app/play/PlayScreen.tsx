@@ -1,18 +1,19 @@
 "use client";
 // The kid play screen: Nova and the line bubble on top, the felt board with the problem's picture, the answer tray.
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { AgeBand } from "@/domain/types";
 import { AnswerTray } from "./AnswerTray";
+import { Board } from "./Board";
+import { bubbleView, wantsHold } from "./bubble";
 import { ConnectionNotice } from "./ConnectionNotice";
 import { EndCard } from "./EndCard";
 import { LineBubble } from "./LineBubble";
 import { Nova } from "./Nova";
 import { usePlay } from "./usePlay";
-import { Visual } from "./visuals/Visual";
 import styles from "./play.module.css";
 
-/** How long the feedback line stays in the bubble before the next problem's line replaces it. */
+/** How long a correct answer's feedback line stays in the bubble before the next problem's line replaces it. */
 export const FEEDBACK_HOLD_MS = 1200;
 
 const REDUCED = "(prefers-reduced-motion: reduce)";
@@ -27,39 +28,51 @@ export function PlayScreen({ kidId, ageBand }: { kidId: string; ageBand: AgeBand
   const { state, answer, retry } = usePlay(kidId);
   const reduced = useReducedMotion();
 
-  // After an answer that moved on, the bubble shows the feedback line for 1.2 s, then the next problem's line. The
-  // new problem is on the board at once. With reduced motion nothing swaps on a timer: both lines show together.
-  const holdKey = state.message ? `${state.version}:${state.message}` : null;
+  // A correct answer that moved on: the feedback line for 1.2 s, then the next problem's line (the new problem is on
+  // the board at once). Anything else keeps both lines on screen (see bubbleView).
+  const holdKey = wantsHold(state, reduced) ? `${state.version}:${state.message}` : null;
   const [heldDone, setHeldDone] = useState<string | null>(null);
-  const holding = !reduced && holdKey !== null && heldDone !== holdKey;
+  const view = bubbleView(state, { reduced, holdDone: holdKey === null || heldDone === holdKey });
   useEffect(() => {
-    if (!holding) return;
+    if (!view.holding) return;
     const t = setTimeout(() => setHeldDone(holdKey), FEEDBACK_HOLD_MS);
     return () => clearTimeout(t);
-  }, [holding, holdKey]);
+  }, [view.holding, holdKey]);
+
+  // 401/404 after load (session expired, kid removed): go home; requireUser sends a signed-out visitor to sign-in.
+  useEffect(() => {
+    if (state.phase === "gone") window.location.replace("/");
+  }, [state.phase]);
+
+  // The tray is remounted per problem. If focus was in the tray (keyboard or switch user), put it on the first
+  // button of the new problem; never take focus on load or from elsewhere.
+  const tray = useRef<HTMLElement>(null);
+  const trayFocus = useRef(false);
+  useEffect(() => {
+    const down = (e: PointerEvent) => { if (!tray.current?.contains(e.target as Node)) trayFocus.current = false; };
+    document.addEventListener("pointerdown", down);
+    return () => document.removeEventListener("pointerdown", down);
+  }, []);
+  useEffect(() => {
+    const el = tray.current;
+    if (state.phase !== "problem" || !trayFocus.current || !el || el.contains(document.activeElement)) return;
+    el.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
+  }, [state.phase, state.version]);
 
   const problem = state.turn?.kind === "problem" ? state.turn : undefined;
   const ended = state.phase === "ended" && state.summary;
-  const say = holding ? state.message : state.line?.say;
-  const tone = ended || (holding && state.correct) ? "cheer" : (state.line?.tone ?? "calm");
-  const hop = !!state.correct && !reduced;
   const notice = state.phase === "retrying" || state.phase === "offline"
-    ? <ConnectionNotice offline={state.phase === "offline"} onRetry={retry} />
+    ? <ConnectionNotice offline={state.phase === "offline"} answering={!!problem} onRetry={retry} />
     : null;
 
   return (
-    <main className={styles.screen} data-version={state.version} data-phase={state.phase}>
+    <main className={styles.screen} data-version={state.version} data-phase={state.phase}
+      {...(view.holding ? { "data-hold": "true" } : {})}>
       <header className={styles.top}>
         {/* keyed by version on a correct answer so the hop plays once per answer */}
-        <Nova key={hop ? `hop-${state.version}` : "nova"} tone={tone} hop={hop} />
-        {say ? (
-          <LineBubble
-            say={say}
-            lead={reduced && state.message ? state.message : undefined}
-            note={state.note ?? undefined}
-            tone={tone}
-            ageBand={ageBand}
-          />
+        <Nova key={view.hop ? `hop-${state.version}` : "nova"} tone={view.tone} hop={view.hop} />
+        {view.say ? (
+          <LineBubble say={view.say} lead={view.lead} note={view.note} tone={view.tone} ageBand={ageBand} />
         ) : (
           <div className={styles.bubbleSpace} />
         )}
@@ -73,15 +86,20 @@ export function PlayScreen({ kidId, ageBand }: { kidId: string; ageBand: AgeBand
       ) : (
         <>
           <section className={styles.board} data-testid="board" aria-label="Felt board">
-            {problem ? (
-              <>
-                <div className={styles.picture}><Visual v={problem.prompt.show} /></div>
-                <h1 className={styles.prompt} data-testid="say">{problem.prompt.say}</h1>
-              </>
-            ) : null}
+            {problem ? <Board problem={problem} /> : null}
             {notice}
           </section>
-          <section className={styles.tray} data-testid="tray" aria-label="Answers">
+          <section
+            ref={tray}
+            className={styles.tray}
+            data-testid="tray"
+            aria-label="Answers"
+            onFocus={() => { trayFocus.current = true; }}
+            onBlur={(e) => {
+              const to = e.relatedTarget as Node | null;
+              if (to && !e.currentTarget.contains(to)) trayFocus.current = false;
+            }}
+          >
             {problem ? (
               <AnswerTray
                 key={state.version}

@@ -37,7 +37,8 @@ async function answer(page: Page, pick = 0): Promise<"tiles" | "pad"> {
   const before = await version(page);
   let used: "tiles" | "pad";
   if (await page.getByTestId("choices").count()) {
-    await page.getByTestId("choices").getByRole("button").nth(pick).click();
+    const tiles = page.getByTestId("choices").getByRole("button");
+    await tiles.nth(Math.min(pick, (await tiles.count()) - 1)).click();
     used = "tiles";
   } else {
     await pad(page).getByRole("button", { name: "1", exact: true }).click();
@@ -272,11 +273,16 @@ test("screenshots of the picture kinds at 1024 x 768", async ({ page }) => {
     ["ten-frame", { kind: "ten-frames", first: 8, second: 5 }, "How many counters in all?", [12, 13, 14]],
     ["number-line", { kind: "number-line", from: 0, to: 20, marks: [6], jump: { from: 6, by: 5 } }, "Start at 6 and jump 5. Where do you land?", [10, 11, 12]],
     ["blocks", { kind: "blocks", groups: [{ tens: 3, ones: 4 }, { tens: 2, ones: 5 }] }, "How many blocks in all?", [57, 59, 69]],
+    ["story", { kind: "story", text: "Mia has 4 apples. She picks 3 more. How many apples does she have now?", icon: "apple", groups: [4, 3] },
+      "Mia has 4 apples. She picks 3 more. How many apples does she have now?", [6, 7, 8]],
   ];
   for (const [name, show, say, choices] of shots) {
     await page.unroute("**/api/kids/*/turn");
     await showTurn(page, kidId, turnBody(show, say, choices));
     await expect(page.getByTestId("board").locator('svg[role="img"]')).toBeVisible();
+    // A story picture prints the sentence itself; the h1 is then for screen readers only, so it is not printed twice.
+    if (name === "story") await expect(page.getByTestId("say")).toHaveCSS("position", "absolute");
+    else await expect(page.getByTestId("say")).toBeInViewport({ ratio: 1 });
     await page.screenshot({ path: `test-results/screens/${name}.png` });
   }
   // A number-pad problem (ages 8-11 get number-pad input), for the owner too.
@@ -285,4 +291,108 @@ test("screenshots of the picture kinds at 1024 x 768", async ({ page }) => {
   await showTurn(page, kidId, { ...eq, turn: { ...eq.turn, input: "number-pad", choices: undefined } });
   await expect(pad(page)).toBeVisible();
   await page.screenshot({ path: "test-results/screens/number-pad.png" });
+});
+
+// ---- Final review: bubble rules, leaving on 401/404, focus, and the longest lines -------------------------------
+
+const LONG = "Nice try, Mia! Let's count the red counters together, one at a time, and then add the yellow counters to find how many there are.";
+const tenFrames = { kind: "ten-frames", first: 8, second: 5 };
+const step = (version: number, line: { say: string; tone: string }) => ({
+  version, turn: turnBody(tenFrames, "How many counters are on the felt board in all?", [12, 13, 14]).turn, line,
+});
+const reply = (correct: boolean, over: Record<string, unknown> = {}) => ({
+  version: 2,
+  feedback: { result: { kind: correct ? "correct" : "wrong" }, then: "next", reveal: !correct },
+  next: step(2, { say: "x", tone: "calm" }).turn,
+  line: { say: correct ? "Yes! That's it, Mia." : "8 and 5 make 13.", tone: correct ? "cheer" : "calm" },
+  nextLine: { say: "Here is a new one for you.", tone: "curious" },
+  ...(correct ? {} : { revealed: 13 }),
+  ...over,
+});
+
+async function stubPlay(page: Page, kidId: string, turn: unknown, answerBody: unknown) {
+  await page.route("**/api/kids/*/turn", (r) => r.fulfill({ json: turn }));
+  await page.route("**/api/kids/*/answer", (r) => r.fulfill({ json: answerBody }));
+  await page.goto(`/play/${kidId}`);
+  await waitForProblem(page);
+}
+
+test("a correct answer holds its line, then swaps; a wrong move-on keeps the explain line with its note", async ({ page }) => {
+  const kidId = await setUpKid(page, "Kai", "K");
+  const bubble = page.getByTestId("nova-line");
+  await stubPlay(page, kidId, step(1, { say: "Let's count.", tone: "curious" }), reply(true));
+  await page.getByTestId("choices").getByRole("button").first().click();
+  await expect(bubble).toHaveText("Yes! That's it, Mia.");
+  await expect(page.locator("main")).toHaveAttribute("data-hold", "true");
+  await expect(bubble).toHaveAttribute("data-tone", "cheer");
+  await expect(bubble).toHaveText("Here is a new one for you.");
+  await expect(page.locator("main")).not.toHaveAttribute("data-hold", "true");
+
+  await page.unroute("**/api/kids/*/turn");
+  await page.unroute("**/api/kids/*/answer");
+  await stubPlay(page, kidId, step(1, { say: "Let's count.", tone: "curious" }), reply(false));
+  await page.getByTestId("choices").getByRole("button").first().click();
+  await expect(bubble.locator("[data-lead]")).toHaveText("8 and 5 make 13.");
+  await expect(bubble).toContainText("Here is a new one for you.");
+  await expect(page.locator("main")).not.toHaveAttribute("data-hold", "true");
+  await page.waitForTimeout(1500); // past any hold: the explain line is still there
+  await expect(bubble.locator("[data-lead]")).toHaveText("8 and 5 make 13.");
+  await expect(bubble.locator("[data-note]")).toHaveCount(0); // the line states 13, so no note is needed
+});
+
+test("the longest lines (25 words at 28 px, a lead and a note) leave the prompt and board clear of the tray", async ({ page }) => {
+  const kidId = await setUpKid(page, "Noa", "K");
+  await stubPlay(page, kidId, step(1, { say: LONG, tone: "curious" }),
+    reply(false, { line: { say: LONG, tone: "calm" }, nextLine: { say: LONG, tone: "curious" }, revealed: 13 }));
+  await page.getByTestId("choices").getByRole("button").first().click();
+  const bubble = page.getByTestId("nova-line");
+  await expect(bubble.locator("[data-lead]")).toHaveText(LONG);
+  await expect(bubble.locator("[data-note]")).toHaveText("The answer is 13.");
+  await expect(bubble).toHaveCSS("font-size", "28px");
+  mkdirSync("test-results/screens", { recursive: true });
+  await page.screenshot({ path: "test-results/screens/longest-lines.png" });
+  const box = async (id: string) => (await page.getByTestId(id).boundingBox())!;
+  const [b, board, tray, say] = [await box("nova-line"), await box("board"), await box("tray"), await box("say")];
+  await expect(page.getByTestId("say")).toBeInViewport({ ratio: 1 });
+  expect(b.y + b.height).toBeLessThanOrEqual(board.y);
+  expect(say.y + say.height).toBeLessThanOrEqual(board.y + board.height);
+  expect(board.y + board.height).toBeLessThanOrEqual(tray.y);
+  expect(tray.y + tray.height).toBeLessThanOrEqual(768);
+  // What is drawn (not the SVG box): the ten-frames must stay big enough to count.
+  const drawn = await page.getByTestId("board").locator('svg[role="img"]').evaluate((svg: SVGSVGElement) =>
+    svg.getBBox().height * (svg.getBoundingClientRect().height / svg.viewBox.baseVal.height));
+  expect(drawn).toBeGreaterThanOrEqual(60);
+});
+
+test("a 404 on answer after the page loaded (session or kid gone) goes home instead of 'can't connect'", async ({ page }) => {
+  const kidId = await setUpKid(page, "Sol", "K");
+  await page.goto(`/play/${kidId}`);
+  await waitForProblem(page);
+  await page.route("**/api/kids/*/answer", (r) => r.fulfill({ status: 404, json: { error: "not found" } }));
+  await page.getByTestId("choices").getByRole("button").first().click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("link", { name: /Sol/ })).toBeVisible();
+});
+
+test("a 401 on the turn load goes home too", async ({ page }) => {
+  const kidId = await setUpKid(page, "Uma", "K");
+  await page.route("**/api/kids/*/turn", (r) => r.fulfill({ status: 401, json: { error: "signed out" } }));
+  await page.goto(`/play/${kidId}`);
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test("focus: not taken on load; after a keyboard answer it lands on the new problem's first button", async ({ page }) => {
+  const kidId = await setUpKid(page, "Ezra", "K");
+  await page.goto(`/play/${kidId}`);
+  await waitForProblem(page);
+  expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  const before = await version(page);
+  await page.getByTestId("choices").getByRole("button").first().focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
+  await waitForProblem(page);
+  await expect.poll(() => page.evaluate(() => {
+    const a = document.activeElement;
+    return !!a && a.tagName === "BUTTON" && !!a.closest('[data-testid="tray"]');
+  })).toBe(true);
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  playReducer, runRequest, type AnswerBody, type FetchFn, type PlayState, type StepBody,
+  isGone, playReducer, runRequest, type AnswerBody, type FetchFn, type PlayState, type StepBody,
 } from "./playMachine";
 
 const problem = (n: number) => ({
@@ -113,6 +113,16 @@ describe("playReducer", () => {
     const s = playReducer(base, { type: "answered", body: answered() });
     expect(s).toMatchObject({ phase: "problem", version: 2, line: line("Next one"), message: "Yes!", correct: true });
   });
+  it("200 with nextLine keeps the feedback line's tone for the hold", () => {
+    const s = playReducer(base, { type: "answered", body: answered({ line: { say: "Yes!", tone: "cheer" } }) });
+    expect(s).toMatchObject({ message: "Yes!", messageTone: "cheer", line: line("Next one") });
+    const retry = playReducer(base, { type: "answered", body: answered({ nextLine: undefined, next: problem(1) }) });
+    expect(retry.messageTone).toBeUndefined();
+  });
+  it("gone (401/404 after load) leaves the problem behind", () => {
+    expect(playReducer(base, { type: "gone" })).toEqual({ phase: "gone" });
+    expect(playReducer({ phase: "loading" }, { type: "gone" })).toEqual({ phase: "gone" });
+  });
   it("200 retry keeps feedback line, clears message, wrong is not correct", () => {
     const b = answered({ nextLine: undefined, feedback: { result: { kind: "wrong" }, then: "retry", reveal: false }, next: problem(1) });
     const s = playReducer(base, { type: "answered", body: b });
@@ -141,5 +151,13 @@ describe("playReducer", () => {
     const r = playReducer(base, { type: "retrying", attempt: 2 });
     expect(r).toMatchObject({ phase: "retrying", attempt: 2, turn: base.turn });
     expect(playReducer(r, { type: "offline" })).toMatchObject({ phase: "offline", turn: base.turn });
+  });
+});
+
+describe("isGone", () => {
+  it("401 and 404 mean the session or the kid is gone; 400 and 5xx do not", () => {
+    expect(isGone(401)).toBe(true);
+    expect(isGone(404)).toBe(true);
+    for (const s of [200, 400, 409, 500, 503]) expect(isGone(s)).toBe(false);
   });
 });

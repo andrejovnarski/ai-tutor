@@ -230,6 +230,11 @@
   color: var(--ink);
   text-align: left;
   line-height: 1.3;
+  /* Capped so the board keeps room to count on: an extreme pair of long lines scrolls inside the bubble. */
+  max-height: 216px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .note {
@@ -332,4 +337,23 @@
 @media (orientation: portrait) {
   .tray { padding: 8px; }
   .entry { min-width: 112px; }
+}
+
+/* Kept for screen readers and tests, hidden from sight (not display: none). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The earlier (feedback) line sits a step smaller, so the new problem's line leads and long pairs stay compact. */
+.lead {
+  font-size: 0.8em;
+  margin-bottom: 4px;
 }
