@@ -1,6 +1,9 @@
 import { requireUser } from "@/server/parentGate";
 import { readPinRow } from "@/server/parentPinStore";
 import { forgotPin, setPin, unlock } from "../actions";
+import { GrownupFrame } from "../ui/GrownupFrame";
+import { PinField } from "../ui/PinField";
+import styles from "../ui/grownup.module.css";
 
 const MESSAGES: Record<string, string> = {
   format: "The PIN must be exactly 4 digits.",
@@ -10,7 +13,7 @@ const MESSAGES: Record<string, string> = {
   forgot: "To reset your PIN, sign in again by email first, then tap Forgot PIN within 10 minutes.",
 };
 
-const pinInput = { type: "password", inputMode: "numeric", pattern: "[0-9]{4}", maxLength: 4, required: true, autoComplete: "off" } as const;
+const back = { href: "/", label: "Back to kids" };
 
 export default async function PinPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { user } = await requireUser();
@@ -21,38 +24,44 @@ export default async function PinPage({ searchParams }: { searchParams: Promise<
 
   if (!row.pin_hash) {
     return (
-      <main>
+      <GrownupFrame back={back}>
         <h1>Set a PIN</h1>
-        <p>This 4-digit PIN keeps the parent area for grown-ups.</p>
-        {message && <p role="alert">{message}</p>}
+        <p className={styles.lede}>This 4-digit PIN keeps the parent area for grown-ups.</p>
+        {message && (
+          <p role="alert" className={styles.note}>
+            {message}
+          </p>
+        )}
         <form action={setPin}>
-          <label>
-            New PIN
-            <input name="pin" {...pinInput} />
-          </label>
-          <label>
-            Repeat PIN
-            <input name="pin2" {...pinInput} />
-          </label>
-          <button type="submit">Save PIN</button>
+          <PinField name="pin" label="New PIN" />
+          <PinField name="pin2" label="Repeat PIN" />
+          <button type="submit" className={styles.btn}>
+            Save PIN
+          </button>
         </form>
-      </main>
+      </GrownupFrame>
     );
   }
   return (
-    <main>
-      <h1>Parent area</h1>
-      {message && <p role="alert">{message}</p>}
+    <GrownupFrame back={back}>
+      <h1>Enter your PIN</h1>
+      <p className={styles.lede}>So little fingers stay on the kids&apos; side.</p>
+      {message && (
+        <p role="alert" className={styles.note}>
+          {message}
+        </p>
+      )}
       <form action={unlock}>
-        <label>
-          PIN
-          <input name="pin" {...pinInput} />
-        </label>
-        <button type="submit">Unlock</button>
+        <PinField name="pin" label="PIN" />
+        <button type="submit" className={styles.btn}>
+          Unlock
+        </button>
       </form>
       <form action={forgotPin}>
-        <button type="submit">Forgot PIN</button>
+        <button type="submit" className={styles.linkBtn}>
+          Forgot PIN
+        </button>
       </form>
-    </main>
+    </GrownupFrame>
   );
 }

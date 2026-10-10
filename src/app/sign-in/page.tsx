@@ -1,3 +1,5 @@
+import { GrownupFrame } from "../parent/ui/GrownupFrame";
+import styles from "../parent/ui/grownup.module.css";
 import { requestLink } from "./actions";
 
 export default async function SignInPage({
@@ -8,24 +10,36 @@ export default async function SignInPage({
   const { sent, error, deleted } = await searchParams;
   if (sent) {
     return (
-      <main>
+      <GrownupFrame bare>
         <h1>Check your email</h1>
-        <p>We sent a sign-in link. Open it on any device.</p>
-      </main>
+        <p>We sent a sign-in link to you. Open it on any device.</p>
+      </GrownupFrame>
     );
   }
   return (
-    <main>
+    <GrownupFrame bare>
       <h1>Sign in</h1>
-      {deleted && <p role="status">Your account and all data were deleted.</p>}
-      {error === "link" && <p role="alert">That link expired. Send a new one.</p>}
+      <p className={styles.lede}>Nova, a patient math tutor for kids aged 5 to 11. Grown-ups sign in here.</p>
+      {deleted && (
+        <p role="status" className={styles.note}>
+          Your account and all data were deleted.
+        </p>
+      )}
+      {error === "link" && (
+        <p role="alert" className={styles.note}>
+          That link expired. Send a new one.
+        </p>
+      )}
       <form action={requestLink}>
-        <label>
-          Email
-          <input name="email" type="email" required autoComplete="email" />
+        <label className={styles.field}>
+          Your email
+          <input className={styles.input} name="email" type="email" required autoComplete="email" />
         </label>
-        <button type="submit">Send link</button>
+        <button type="submit" className={styles.btn}>
+          Email me a sign-in link
+        </button>
       </form>
-    </main>
+      <p className={styles.quiet}>No password to remember.</p>
+    </GrownupFrame>
   );
 }

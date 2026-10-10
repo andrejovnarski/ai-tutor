@@ -7,8 +7,8 @@ export const unique = (prefix = "parent") => `${prefix}-${Date.now()}-${Math.ran
 /** Asks for a sign-in link and waits for the "Check your email" page. */
 export async function requestLink(page: Page, email: string) {
   await page.goto("/sign-in");
-  await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Send link" }).click();
+  await page.getByLabel("Your email").fill(email);
+  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
   await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
 }
 
