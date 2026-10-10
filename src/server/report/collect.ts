@@ -46,29 +46,38 @@ function stuckOf(attempts: A[]): string[] {
 
 const nameOf = (id: string) => { try { return getSkill(id).name; } catch { return null; } };
 
-export async function collectWeek(db: SupabaseClient, parentId: string, from: Date, to: Date): Promise<KidWeek[]> {
-  const { data: kids, error } = await db.from("kids").select("id, nickname, grade, age_band, placed")
-    .eq("parent_id", parentId).order("created_at");
-  if (error) throw error;
-  const weeks: KidWeek[] = [];
-  for (const k of kids as (KidRow & { nickname: string })[]) {
-    const attempts = await attemptsIn(db, k.id, from, to);
-    const { data: skills, error: se } = await db.from("skill_state").select("*").eq("kid_id", k.id);
-    if (se) throw se;
-    const rows = skills as (SkillRow & { mastered_at: string | null })[];
-    const mastered = rows
-      .filter((r) => r.mastered_at && Date.parse(r.mastered_at) >= from.getTime() && Date.parse(r.mastered_at) < to.getTime())
-      .map((r) => nameOf(r.skill_id))
-      .filter((n): n is string => n !== null);
-    const current = frontier(kidStateFromRows(k, rows, []));
-    weeks.push({
+const nyDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" });
+
+export async function collectKid(
+  db: SupabaseClient, k: KidRow & { nickname: string }, from: Date, to: Date,
+): Promise<{ week: KidWeek; playedDays: string[] }> {
+  const attempts = await attemptsIn(db, k.id, from, to);
+  const { data: skills, error: se } = await db.from("skill_state").select("*").eq("kid_id", k.id);
+  if (se) throw se;
+  const rows = skills as (SkillRow & { mastered_at: string | null })[];
+  const mastered = rows
+    .filter((r) => r.mastered_at && Date.parse(r.mastered_at) >= from.getTime() && Date.parse(r.mastered_at) < to.getTime())
+    .map((r) => nameOf(r.skill_id))
+    .filter((n): n is string => n !== null);
+  const current = frontier(kidStateFromRows(k, rows, []));
+  return {
+    week: {
       nickname: k.nickname,
       sessions: new Set(attempts.map((a) => a.session_id)).size,
       minutes: minutesOf(attempts),
       mastered,
       currentSkill: current ? nameOf(current) : null,
       stuck: stuckOf(attempts),
-    });
-  }
+    },
+    playedDays: [...new Set(attempts.map((a) => nyDate.format(new Date(a.at))))].sort(),
+  };
+}
+
+export async function collectWeek(db: SupabaseClient, parentId: string, from: Date, to: Date): Promise<KidWeek[]> {
+  const { data: kids, error } = await db.from("kids").select("id, nickname, grade, age_band, placed")
+    .eq("parent_id", parentId).order("created_at");
+  if (error) throw error;
+  const weeks: KidWeek[] = [];
+  for (const k of kids as (KidRow & { nickname: string })[]) weeks.push((await collectKid(db, k, from, to)).week);
   return weeks;
 }
