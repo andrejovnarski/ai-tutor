@@ -29,6 +29,7 @@
 .frame a:not([class]) { color: var(--link); }
 
 .strip { background: var(--felt); color: var(--chalk); }
+.strip :focus-visible { outline-color: var(--chalk); }
 .stripInner {
   max-width: 560px;
   margin: 0 auto;
@@ -50,6 +51,8 @@
   font-size: 15px;
 }
 
+.novaAntenna { stroke: var(--chalk); }
+.bareHead .novaAntenna { stroke: var(--felt-deep); }
 .bareHead { max-width: 560px; margin: 0 auto; padding: 32px 20px 0; }
 .novaBig { width: 96px; height: 96px; display: block; }
 .appName {
@@ -214,6 +217,7 @@
   color: var(--ink);
   border-radius: 2px;
   box-shadow: 2px 3px 0 rgba(30, 43, 40, 0.25);
+  transform: rotate(-1.2deg);
 }
 
 .visuallyHidden {
@@ -246,7 +250,11 @@
 .weekBlock { margin: 0 0 16px; }
 .weekRow { margin: 0 0 12px; }
 .details { margin: 0 0 12px; }
-.details > summary { display: flex; align-items: center; min-height: 44px; color: var(--link); text-decoration: underline; cursor: pointer; }
+.details > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; margin: 0 0 16px; color: var(--link); text-decoration: underline; cursor: pointer; list-style: none; }
+.details > summary::-webkit-details-marker { display: none; }
+.details > summary::after { content: "+"; flex: none; font-weight: 700; font-size: 24px; line-height: 1; text-decoration: none; }
+.details[open] > summary::after { content: "\2212"; }
+.details > section { margin: 0 0 16px; }
 .dataLinks { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0 0 12px; }
 .dataLinks a { display: inline-flex; align-items: center; min-height: 44px; }
 .dataLinks a.dangerLink { color: var(--danger); }

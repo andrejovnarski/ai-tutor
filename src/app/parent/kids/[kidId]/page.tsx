@@ -82,7 +82,7 @@ export default async function KidPage({
       <section id="delete" className={styles.section}>
         <h2>Delete {kid.nickname}</h2>
         <p>This removes {kid.nickname} and everything above, right away. It cannot be undone.</p>
-        {error === "confirm" && <p role="alert">That name did not match. Nothing was deleted.</p>}
+        {error === "confirm" && <p role="alert" className={styles.note}>That name did not match. Nothing was deleted.</p>}
         <form action={deleteKidAction.bind(null, kidId)}>
           <label className={styles.field}>
             Type {kid.nickname} to confirm

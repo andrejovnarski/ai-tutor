@@ -5,9 +5,13 @@ import { requireParent } from "@/server/parentGate";
 import { DRAFT_BANNER, NOTICE_SECTIONS, NOTICE_SUMMARY, PRIVACY_NOTICE_VERSION } from "@/server/consent/notice";
 
 export default async function PrivacyPage() {
-  await requireParent();
+  const { supabase, user } = await requireParent();
+  const { data: parent } = await supabase.from("parents").select("consent_at").eq("id", user.id).single();
+  const back = parent?.consent_at
+    ? { href: "/parent", label: "Your kids" }
+    : { href: "/parent/consent", label: "Back to consent" };
   return (
-    <GrownupFrame back={{ href: "/parent/consent", label: "Back to consent" }}>
+    <GrownupFrame back={back}>
       <StickyNote>
         <p role="note" style={{ margin: 0 }}>
           <strong>{DRAFT_BANNER}</strong>

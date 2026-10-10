@@ -39,3 +39,11 @@ it("link colour rule does not override classed links", () => {
   expect(css).not.toMatch(/\.frame a\s*\{/);
   expect(css).toMatch(/\.pinBox:focus-within\s*\{[^}]*outline: 3px solid var\(--link\)/);
 });
+
+it("strip focus ring is chalk, sticky tilts, details has a disclosure cue, bare antenna is dark", () => {
+  const css = readFileSync(join(__dirname, "grownup.module.css"), "utf8");
+  expect(css).toMatch(/\.strip :focus-visible\s*\{[^}]*outline-color: var\(--chalk\)/);
+  expect(css).toMatch(/\.sticky\s*\{[^}]*transform: rotate\(-1\.2deg\)/);
+  expect(css).toMatch(/\.details\[open\] > summary::after/);
+  expect(css).toMatch(/\.bareHead \.novaAntenna\s*\{[^}]*var\(--felt-deep\)/);
+});

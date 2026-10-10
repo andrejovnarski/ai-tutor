@@ -6,7 +6,7 @@ import styles from "./grownup.module.css";
 function NovaMark({ className }: { className?: string }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 120 120" className={className}>
-      <line x1="60" y1="14" x2="60" y2="28" stroke="var(--chalk)" strokeWidth="4" strokeLinecap="round" />
+      <line x1="60" y1="14" x2="60" y2="28" strokeWidth="4" strokeLinecap="round" className={styles.novaAntenna} />
       <circle cx="60" cy="10" r="6" fill="var(--sticky)" />
       <ellipse cx="60" cy="72" rx="44" ry="42" fill="var(--chalk)" stroke="var(--felt-deep)" strokeWidth="4" />
       <rect x="26" y="38" width="68" height="38" rx="16" fill="var(--ink)" />

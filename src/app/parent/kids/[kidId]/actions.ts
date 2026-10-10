@@ -9,7 +9,7 @@ export async function deleteKidAction(kidId: string, formData: FormData): Promis
   const { supabase } = await requireParent();
   const { data: kid } = await supabase.from("kids").select("nickname").eq("id", kidId).maybeSingle();
   if (!kid) notFound();
-  if (String(formData.get("confirm") ?? "") !== kid.nickname) redirect(`/parent/kids/${kidId}?error=confirm`);
+  if (String(formData.get("confirm") ?? "") !== kid.nickname) redirect(`/parent/kids/${kidId}?error=confirm#delete`);
   await deleteKid(supabase, kidId);
   redirect("/parent");
 }

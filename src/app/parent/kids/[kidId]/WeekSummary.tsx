@@ -19,7 +19,7 @@ export function WeekSummary({
     );
   }
   const sessions = `${week.sessions} ${week.sessions === 1 ? "session" : "sessions"}`;
-  const minutes = `${week.minutes} ${week.minutes === 1 ? "minute" : "minutes"}`;
+  const minutes = week.minutes === 0 ? "under a minute" : `${week.minutes} ${week.minutes === 1 ? "minute" : "minutes"}`;
   const tricky = week.stuck.length ? ` Tricky part: ${week.stuck.join(", ")}.` : "";
   return (
     <div className={styles.weekBlock}>
@@ -40,7 +40,7 @@ export function WeekSummary({
             total={week.mastered.length}
             color="green"
             max={10}
-            label={`${week.mastered.length} skills mastered`}
+            label={`${week.mastered.length} ${week.mastered.length === 1 ? "skill" : "skills"} mastered`}
           />
         </p>
       )}

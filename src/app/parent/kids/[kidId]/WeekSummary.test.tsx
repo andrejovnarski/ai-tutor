@@ -32,3 +32,9 @@ it("escapes skill names", () => {
   const html = renderToStaticMarkup(<WeekSummary nickname="Mia" week={{ ...base, currentSkill: "<i>x</i>" }} playedDays={["2026-10-10"]} />);
   expect(html).not.toContain("<i>x</i>");
 });
+
+it("says under a minute for zero minutes and singular for one skill", () => {
+  const html = text(renderToStaticMarkup(<WeekSummary nickname="Mia" week={{ ...base, sessions: 1, minutes: 0, mastered: ["Counting to 20"] }} playedDays={["2026-10-10"]} />));
+  expect(html).toContain("1 session, under a minute"); expect(html).not.toContain("0 minutes");
+  expect(html).toContain('aria-label="1 skill mastered"');
+});

@@ -2,10 +2,10 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { KidRow } from "./persist/rows";
 import type { KidWeek } from "./report/build";
-import { collectKid } from "./report/collect";
+import { collectKid, nyDate, nyMidnightDaysAgo } from "./report/collect";
 
 const TZ = "America/New_York";
-const ymd = new Intl.DateTimeFormat("en-CA", { timeZone: TZ });
+const ymd = nyDate;
 const weekday = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "long" });
 const monthDay = new Intl.DateTimeFormat("en-US", { timeZone: TZ, month: "short", day: "numeric" });
 const DAY = 86_400_000;
@@ -32,6 +32,7 @@ export async function lastPlayed(db: SupabaseClient, kidIds: string[]): Promise<
   return out;
 }
 
+/** Exactly 7 New York dates: today and the 6 before it. */
 export async function kidWeek(
   db: SupabaseClient, kidId: string, now: Date,
 ): Promise<{ week: KidWeek; playedDays: string[] } | null> {
@@ -39,5 +40,5 @@ export async function kidWeek(
     .eq("id", kidId).maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  return collectKid(db, data as KidRow & { nickname: string }, new Date(now.getTime() - 7 * DAY), now);
+  return collectKid(db, data as KidRow & { nickname: string }, nyMidnightDaysAgo(now, 6), now);
 }

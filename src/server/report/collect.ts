@@ -46,7 +46,23 @@ function stuckOf(attempts: A[]): string[] {
 
 const nameOf = (id: string) => { try { return getSkill(id).name; } catch { return null; } };
 
-const nyDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" });
+const nyDateFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" });
+const nyHourFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "America/New_York", hour: "2-digit", hourCycle: "h23" });
+
+/** Calendar date (YYYY-MM-DD) in New York. */
+export const nyDate = { format: (d: Date): string => nyDateFmt.format(d) };
+
+/** The UTC instant of 00:00 New York time, `daysBack` calendar days before the NY date of `now`. DST-safe. */
+export function nyMidnightDaysAgo(now: Date, daysBack: number): Date {
+  const [y, m, d] = nyDateFmt.format(now).split("-").map(Number) as [number, number, number];
+  const target = new Date(Date.UTC(y, m - 1, d - daysBack));
+  const want = target.toISOString().slice(0, 10);
+  for (const offset of [4, 5]) {
+    const t = new Date(target.getTime() + offset * 3_600_000);
+    if (nyDateFmt.format(t) === want && nyHourFmt.format(t) === "00") return t;
+  }
+  throw new Error(`no New York midnight for ${want}`);
+}
 
 export async function collectKid(
   db: SupabaseClient, k: KidRow & { nickname: string }, from: Date, to: Date,

@@ -29,7 +29,7 @@ export default async function NewKidPage({ searchParams }: { searchParams: Promi
       <form action={addKid}>
         <label className={styles.field}>
           First name only
-          <input name="nickname" required maxLength={40} autoComplete="off" className={styles.input} />
+          <input name="nickname" required maxLength={20} autoComplete="off" className={styles.input} />
         </label>
         <label className={styles.field}>
           Grade

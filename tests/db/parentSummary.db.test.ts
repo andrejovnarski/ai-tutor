@@ -58,6 +58,17 @@ describe("kidWeek", () => {
     expect(r!.week.sessions).toBe(2);
   });
 
+  it("spans exactly 7 New York dates: the edge day before the window is excluded", async () => {
+    const edge = await seedKid(a.userId, "Edge");
+    await seedAttempt(edge, "2026-10-05T03:00:00Z"); // Oct 4, 23:00 EDT: 8 NY dates back
+    await seedAttempt(edge, "2026-10-05T04:30:00Z"); // Oct 5, 00:30 EDT: first minute of the window
+    await seedAttempt(edge, "2026-10-11T13:00:00Z"); // today, morning
+    const r = await kidWeek(a.client, edge, NOW);
+    expect(r!.playedDays).toEqual(["2026-10-05", "2026-10-11"]);
+    expect(r!.playedDays.length).toBeLessThanOrEqual(7);
+    expect(r!.week.sessions).toBe(2);
+  });
+
   it("returns null for another family's kid", async () => {
     expect(await kidWeek(a.client, kidB, NOW)).toBeNull();
   });
