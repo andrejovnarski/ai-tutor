@@ -2,11 +2,11 @@ import { expect, test } from "@playwright/test";
 import { admin } from "../helpers/admin";
 import { addKid, consent, parentId, setPin, signIn, unique } from "./helpers";
 
-test("without consent: set a PIN, see the consent notice and no Add kid", async ({ page }) => {
+test("without consent: set a PIN, see the consent notice and no Add a child", async ({ page }) => {
   await signIn(page, unique());
   await setPin(page);
   await expect(page.getByText("Before your kid can play, we need a parent's consent.")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Add kid" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Add a child" })).toHaveCount(0);
 });
 
 test("with consent: add Mia, she shows in the parent list and on the home page", async ({ page }) => {

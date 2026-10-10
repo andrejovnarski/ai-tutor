@@ -155,13 +155,17 @@
 
 .tableWrap { overflow-x: auto; }
 
-.faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; border: 0; padding: 0; margin: 0 0 16px; }
+.faces { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; border: 0; padding: 0; margin: 0 0 16px; }
 .faceTile {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 56px;
+  flex-direction: column;
+  min-height: 72px;
+  padding: 6px 2px;
+  min-width: 0;
   font-size: 30px;
+  line-height: 1.2;
   border: 2px solid var(--ink);
   border-radius: 8px;
   background: #fff;
@@ -226,3 +230,13 @@
 @media (prefers-reduced-motion: reduce) {
   .btn:active, .btnDanger:active { transform: none; }
 }
+
+.legend { padding: 0; margin: 0 0 8px; font-weight: 700; }
+.faceEmoji { font-size: 30px; }
+.faceName { font-size: 15px; }
+.faces { position: relative; }
+.block { display: block; }
+.kidRow { display: flex; align-items: center; gap: 12px; }
+.kidFace { font-size: 36px; line-height: 1; }
+.kidName { display: block; font-family: var(--font-andika), sans-serif; font-weight: 700; font-size: 21px; line-height: 1.3; }
+.plainList { list-style: none; margin: 0; padding: 0; }

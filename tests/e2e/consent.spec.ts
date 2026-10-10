@@ -15,7 +15,7 @@ async function consentAt(id: string) {
   return data?.consent_at ?? null;
 }
 
-test("consent through the UI: checkbox gates the button, then Add kid appears", async ({ page }) => {
+test("consent through the UI: checkbox gates the button, then Add a child appears", async ({ page }) => {
   const email = unique();
   await signIn(page, email);
   await setPin(page);
@@ -27,7 +27,7 @@ test("consent through the UI: checkbox gates the button, then Add kid appears", 
   await expect(verify).toBeEnabled();
   await verify.click();
   await expect(page).toHaveURL(/\/parent\?consented=1$/);
-  await expect(page.getByRole("link", { name: "Add kid" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Add a child" })).toBeVisible();
   const rows = await consentRows(await parentId(email));
   expect(rows).toHaveLength(1);
   expect(rows[0]!.notice_version).toBe("2026-10-10-draft");

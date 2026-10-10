@@ -48,7 +48,7 @@ export async function consent(email: string): Promise<string> {
 /** From /parent (PIN entered, consent given): adds a grade K kid with the fox avatar and returns to /parent. */
 export async function addKid(page: Page, name: string) {
   await page.goto("/parent");
-  await page.getByRole("link", { name: "Add kid" }).click();
+  await page.getByRole("link", { name: "Add a child" }).click();
   await expect(page).toHaveURL(/\/parent\/kids\/new$/);
   await page.getByLabel("First name only").fill(name);
   await page.getByLabel("Grade").selectOption("K");

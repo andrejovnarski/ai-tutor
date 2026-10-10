@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import { requireParent } from "@/server/parentGate";
 import { AVATARS, GRADES, KID_ERRORS } from "@/server/kidProfile";
+import { faceOf } from "../../../avatars";
+import { gradeName } from "../../../grades";
+import { GrownupFrame } from "../../ui/GrownupFrame";
+import styles from "../../ui/grownup.module.css";
 import { addKid } from "../../actions";
 
 export default async function NewKidPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -15,35 +19,44 @@ export default async function NewKidPage({ searchParams }: { searchParams: Promi
         ? "We could not save that. Please try again."
         : undefined;
   return (
-    <main>
-      <h1>Add kid</h1>
-      {message && <p role="alert">{message}</p>}
+    <GrownupFrame back={{ href: "/parent", label: "Your kids" }}>
+      <h1>Add a child</h1>
+      {message && (
+        <p role="alert" className={styles.note}>
+          {message}
+        </p>
+      )}
       <form action={addKid}>
-        <label>
+        <label className={styles.field}>
           First name only
-          <input name="nickname" required maxLength={40} autoComplete="off" />
+          <input name="nickname" required maxLength={40} autoComplete="off" className={styles.input} />
         </label>
-        <label>
+        <label className={styles.field}>
           Grade
-          <select name="grade" defaultValue="K">
+          <select name="grade" defaultValue="K" className={styles.select}>
             {GRADES.map((g) => (
               <option key={g} value={g}>
-                {g}
+                {gradeName(g)}
               </option>
             ))}
           </select>
         </label>
-        <fieldset>
-          <legend>Avatar</legend>
+        <fieldset className={styles.faces}>
+          <legend className={styles.legend}>Avatar</legend>
           {AVATARS.map((a, i) => (
-            <label key={a}>
-              <input type="radio" name="avatar" value={a} defaultChecked={i === 0} />
-              {a}
+            <label key={a} className={styles.faceTile}>
+              <input type="radio" name="avatar" value={a} defaultChecked={i === 0} className={styles.visuallyHidden} />
+              <span aria-hidden="true" className={styles.faceEmoji}>
+                {faceOf(a)}
+              </span>
+              <span className={styles.faceName}>{a}</span>
             </label>
           ))}
         </fieldset>
-        <button type="submit">Save</button>
+        <button type="submit" className={styles.btn}>
+          Save
+        </button>
       </form>
-    </main>
+    </GrownupFrame>
   );
 }
