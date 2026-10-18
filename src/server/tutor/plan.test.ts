@@ -9,8 +9,8 @@ const problem: Problem = {
   prompt: { say: "How many dots are there in all?", show: { kind: "ten-frames", first: 3, second: 4 } },
   answer: 7, input: "tap-choice", choices: [6, 7, 8], mistakes: [{ answer: 6, tag: "off-by-one-counting" }],
 };
-const turn = (mode: ProblemTurn["mode"] = "practice"): ProblemTurn => ({
-  kind: "problem", problem, skillId: skill.id, templateId: "t", seed: 1, level: 1, mode, try: 1, logs: [],
+const turn = (mode: ProblemTurn["mode"] = "practice", p: Problem = problem): ProblemTurn => ({
+  kind: "problem", problem: p, skillId: skill.id, templateId: "t", seed: 1, level: 1, mode, try: 1, logs: [], style: null,
 });
 const fb = (o: Partial<Feedback>): Feedback => ({
   result: { kind: "correct" }, then: "next", style: null, reveal: false, mastered: [], logs: [], ...o,
@@ -26,7 +26,7 @@ it("plans a present event with numbers from text and visual", () => {
 it("maps feedback to events", () => {
   expect(feedbackPlan(turn(), fb({}), 7, "5-7", []).event).toBe("correct");
   expect(feedbackPlan(turn(), fb({ mastered: ["x"] }), 7, "5-7", []).event).toBe("celebrate");
-  const w = feedbackPlan(turn(), fb({ result: { kind: "known-mistake", tag: "off-by-one-counting" }, then: "retry", style: "blocks" }), 6, "5-7", []);
+  const w = feedbackPlan(turn("practice", { ...problem, sum: [3, 4] }), fb({ result: { kind: "known-mistake", tag: "off-by-one-counting" }, then: "retry", style: "blocks" }), 6, "5-7", []);
   expect(w).toMatchObject({ event: "wrong", mistakeTag: "off-by-one-counting", style: "blocks", kidAnswer: 6 });
   const e = feedbackPlan(turn(), fb({ result: { kind: "wrong" }, reveal: true }), 2, "5-7", []);
   expect(e).toMatchObject({ event: "explain", revealed: true });
@@ -36,6 +36,17 @@ it("maps feedback to events", () => {
   // A finished placement problem: the hint moves on, so there is no mistake or style to aim a clue at.
   expect(h.mistakeTag).toBeUndefined();
   expect(h.style).toBeUndefined();
+});
+
+it("names a style only when the board draws it (a sum problem, a style with a picture)", () => {
+  const sumProblem = { ...problem, sum: [3, 4] as [number, number] };
+  const wrong = { result: { kind: "wrong" } as const, then: "retry" as const };
+  const reveal = { result: { kind: "wrong" } as const, reveal: true };
+  for (const o of [wrong, reveal]) {
+    expect(feedbackPlan(turn("practice", sumProblem), fb({ ...o, style: "ten-frame" }), 2, "5-7", []).style).toBe("ten-frame");
+    expect(feedbackPlan(turn("practice", sumProblem), fb({ ...o, style: "story" }), 2, "5-7", [])).not.toHaveProperty("style");
+    expect(feedbackPlan(turn(), fb({ ...o, style: "ten-frame" }), 2, "5-7", [])).not.toHaveProperty("style");
+  }
 });
 
 it("trims kidSaid to 200 chars", () => {

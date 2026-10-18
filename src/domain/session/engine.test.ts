@@ -63,7 +63,7 @@ describe("retry flow in practice", () => {
     expect(a.feedback).toMatchObject({ then: "retry", reveal: false });
     expect(getSkill(t.skillId).styles).toContain(a.feedback.style);
     const again = turnOf(a.session, 11 * SEC);
-    expect(again.t).toEqual({ ...t, try: 2 });
+    expect(again.t).toEqual({ ...t, try: 2, style: a.feedback.style });
     const b = answer(again.s, wrongFor(again.t), 20 * SEC)!;
     expect(b.feedback).toMatchObject({ then: "next", reveal: true, style: a.feedback.style });
     expect(b.writes.styleStats).toEqual([{ ...a.session.kid.styles[a.feedback.style!], tries: 1, wins: 0 }]);

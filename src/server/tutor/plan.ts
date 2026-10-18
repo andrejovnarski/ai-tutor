@@ -1,4 +1,5 @@
 import { SKILLS } from "../../domain/curriculum";
+import { styleView } from "../../domain/problems/styleView";
 import type { Feedback, Turn } from "../../domain/session/types";
 import type { AgeBand, Visual } from "../../domain/types";
 import { numbersIn } from "./guards";
@@ -69,9 +70,12 @@ export function feedbackPlan(
   if (feedback.result.kind === "correct")
     return { event: feedback.mastered.length > 0 ? "celebrate" : "correct", ...b };
   const mistakeTag = feedback.result.kind === "known-mistake" ? feedback.result.tag : undefined;
-  if (feedback.reveal) return { event: "explain", ...b, revealed: true, ...(mistakeTag && { mistakeTag }), ...(feedback.style && { style: feedback.style }) };
+  // Nova names a style only when the board draws it, so a line never talks about a picture that is not there.
+  const { sum } = turn.problem;
+  const style = feedback.style && sum && styleView(feedback.style, sum) ? feedback.style : undefined;
+  if (feedback.reveal) return { event: "explain", ...b, revealed: true, ...(mistakeTag && { mistakeTag }), ...(style && { style }) };
   if (feedback.then === "retry")
-    return { event: "wrong", ...b, ...(mistakeTag && { mistakeTag }), ...(feedback.style && { style: feedback.style }) };
+    return { event: "wrong", ...b, ...(mistakeTag && { mistakeTag }), ...(style && { style }) };
   // A finished placement problem (no retry, no reveal): the hint is a calm move-on to the problem already on screen,
   // so it gets nothing to aim a clue at.
   return { event: "hint", ...b };

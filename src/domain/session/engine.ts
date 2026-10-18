@@ -36,7 +36,7 @@ export function startSession(kid: Session["kid"], seed: number, now: number): Se
 
 const problemTurn = (p: Pending, logs: LogEntry[]): Turn => ({
   kind: "problem", problem: p.problem, skillId: p.skillId, templateId: p.templateId,
-  seed: p.seed, level: p.level, mode: p.mode, try: p.try, logs,
+  seed: p.seed, level: p.level, mode: p.mode, try: p.try, logs, style: p.style ?? null, // older sessions: no style key
 });
 
 /** The end-turn summary of a session that ends at `now`. */

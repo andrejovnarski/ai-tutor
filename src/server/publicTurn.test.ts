@@ -29,3 +29,31 @@ describe("revealNote", () => {
     expect(revealNote("It is -3.", true, -3)).toBeNull();
   });
 });
+
+describe("the retry board", () => {
+  type ProblemTurn = Extract<Parameters<typeof publicTurn>[0], { kind: "problem" }>;
+  const show = { kind: "equation", text: "3 + 4 = ?" } as const;
+  const retry = (o: Partial<ProblemTurn>, sum: [number, number] | null = [3, 4]): ProblemTurn => ({
+    kind: "problem", skillId: "s", templateId: "t", seed: 1, level: 1, mode: "practice", try: 2, logs: [],
+    style: "number-line", ...o,
+    problem: { prompt: { say: "What is 3 + 4?", show }, answer: 7, input: "tap-choice", choices: [6, 7, 8], mistakes: [], ...(sum && { sum }) },
+  });
+  const board = (t: ProblemTurn) => (publicTurn(t) as Extract<ReturnType<typeof publicTurn>, { kind: "problem" }>).prompt.show;
+
+  it("draws the chosen style on try 2 of a sum problem", () => {
+    expect(board(retry({}))).toEqual({ kind: "number-line", from: 0, to: 10, marks: [3], jump: { from: 3, by: 4 } });
+    expect((publicTurn(retry({})) as { prompt: { say: string } }).prompt.say).toBe("What is 3 + 4?");
+  });
+
+  it("keeps the original picture on try 1, for story, and without a sum", () => {
+    expect(board(retry({ try: 1 }))).toEqual(show);
+    expect(board(retry({ style: "story" }))).toEqual(show);
+    expect(board(retry({ style: null }))).toEqual(show);
+    expect(board(retry({}, null))).toEqual(show);
+  });
+
+  it("never sends the sum or the style", () => {
+    for (const t of [retry({}), retry({ try: 1 }), retry({ style: "story" })])
+      expect(JSON.stringify(publicTurn(t))).not.toMatch(/"(sum|style)"/);
+  });
+});

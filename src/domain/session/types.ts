@@ -11,6 +11,8 @@ export type Turn =
   | {
     kind: "problem"; problem: Problem; skillId: string; templateId: string; seed: number;
     level: Level; mode: Mode; try: 1 | 2; logs: LogEntry[];
+    /** The retry's teaching style (see Pending). */
+    style: Style | null;
   }
   | { kind: "end"; summary: SessionSummary };
 

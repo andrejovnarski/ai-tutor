@@ -1,8 +1,17 @@
+import { styleView } from "../domain/problems/styleView";
 import type { Turn } from "../domain/session/types";
+import type { Visual } from "../domain/types";
 
 type ProblemTurn = Extract<Turn, { kind: "problem" }>;
 
-/** What the browser may see. Never the answer, the known mistakes, or template metadata. */
+/** The picture on the board: on a retry of a sum problem, the chosen style's picture if it has one. */
+export function boardView(turn: ProblemTurn): Visual {
+  const { style, problem } = turn;
+  return (turn.try === 2 && style && problem.sum && styleView(style, problem.sum)) || problem.prompt.show;
+}
+
+/** What the browser may see. Never the answer, the known mistakes, template metadata, the style, or the sum
+ * (its total is the answer). */
 export type PublicTurn =
   | {
     kind: "problem"; mode: ProblemTurn["mode"]; try: 1 | 2;
@@ -13,7 +22,9 @@ export type PublicTurn =
 export function publicTurn(t: Turn): PublicTurn {
   if (t.kind === "end") return t;
   const { prompt, input, choices } = t.problem;
-  return { kind: "problem", mode: t.mode, try: t.try, prompt, input, ...(choices ? { choices } : {}) };
+  return {
+    kind: "problem", mode: t.mode, try: t.try, prompt: { ...prompt, show: boardView(t) }, input, ...(choices ? { choices } : {}),
+  };
 }
 
 /** Safety net for the play screen: after a reveal, the answer is shown under Nova's line unless the line already

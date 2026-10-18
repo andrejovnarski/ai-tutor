@@ -1,6 +1,9 @@
 import { firstSkills, placedKid } from "../domain/session/testkit";
 import { startSession } from "../domain/session/engine";
+import type { Pending } from "../domain/session/types";
+import { styleView } from "../domain/problems/styleView";
 import { MemoryRepo } from "./persist/repo";
+import type { PublicTurn } from "./publicTurn";
 import { playAgain, playAnswer, playSay, playTurn, type AnswerResult, type TurnResult } from "./play";
 
 const kid = placedKid(firstSkills(3));
@@ -222,6 +225,45 @@ it("reveals the answer after a second wrong try, and not after the first", async
   const second = ok(await playAnswer(repo, kid.kidId, first.version, answer + 1000, 3000, seed));
   expect(second.feedback.reveal).toBe(true);
   expect(second.revealed).toBe(answer);
+});
+
+describe("the retry board", () => {
+  // Add within 5 is the frontier: its templates set `sum`, and none of its styles is story.
+  const sumKid = placedKid(firstSkills(7));
+  const sumRepo = () => {
+    const repo = new MemoryRepo();
+    repo.addKid(sumKid);
+    return repo;
+  };
+  const stored = (repo: MemoryRepo) => repo.sessions.find((s) => !s.ended)!.state.pending!;
+  const shown = (t: PublicTurn) => (t as Extract<PublicTurn, { kind: "problem" }>).prompt.show;
+
+  it("after a wrong first try shows the chosen style, and a reload shows the same", async () => {
+    const repo = sumRepo();
+    const t = ok(await playTurn(repo, sumKid.kidId, 1000, seed));
+    const original = shown(t.turn);
+    const r = ok(await playAnswer(repo, sumKid.kidId, t.version, pendingAnswer(repo) + 1000, 2000, seed));
+    const p = stored(repo);
+    expect(p.problem.sum).toBeDefined();
+    expect(p.style).not.toBeNull();
+    const view = styleView(p.style!, p.problem.sum!) ?? original;
+    expect(shown(r.next)).toEqual(view);
+    expect(shown(ok(await playTurn(repo, sumKid.kidId, 3000, seed)).turn)).toEqual(view);
+    expect(JSON.stringify(r)).not.toMatch(/"sum"\s*:/);
+    expect(JSON.stringify(r.next)).not.toMatch(/"style"\s*:/);
+  });
+
+  it("an older session's pending problem with no sum and no style keeps its original picture", async () => {
+    const repo = sumRepo();
+    const t = ok(await playTurn(repo, sumKid.kidId, 1000, seed));
+    await playAnswer(repo, sumKid.kidId, t.version, pendingAnswer(repo) + 1000, 2000, seed);
+    const p: Partial<Pending> = stored(repo);
+    delete p.style;
+    delete p.problem!.sum;
+    const reload = ok(await playTurn(repo, sumKid.kidId, 3000, seed));
+    expect(reload.turn).toMatchObject({ kind: "problem", try: 2 });
+    expect(shown(reload.turn)).toEqual(shown(t.turn));
+  });
 });
 
 const LEAK = /"(answer|mistakes|templateId|seed)"\s*:/;

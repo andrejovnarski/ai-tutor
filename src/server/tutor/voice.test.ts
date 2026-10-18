@@ -19,7 +19,7 @@ const turn: ProblemTurn = {
     prompt: { say: "How many dots are there in all?", show: { kind: "ten-frames", first: 3, second: 4 } },
     answer: 7, input: "tap-choice", choices: [6, 7, 8], mistakes: [],
   },
-  skillId: SKILLS[0]!.id, templateId: "t", seed: 1, level: 1, mode: "practice", try: 1, logs: [],
+  skillId: SKILLS[0]!.id, templateId: "t", seed: 1, level: 1, mode: "practice", try: 1, logs: [], style: null,
 };
 const plan: TurnPlan = presentPlan(turn, "5-7", []);
 const GOOD = JSON.stringify({ say: "Look, {name}! How many dots in all?", tone: "curious" });

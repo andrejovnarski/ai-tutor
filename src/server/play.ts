@@ -51,7 +51,7 @@ const seedFor = (version: number, event: TutorEvent) => version + EVENTS.indexOf
 
 const pendingTurn = (p: Pending): ProblemTurn => ({
   kind: "problem", problem: p.problem, skillId: p.skillId, templateId: p.templateId, seed: p.seed,
-  level: p.level, mode: p.mode, try: p.try, logs: [],
+  level: p.level, mode: p.mode, try: p.try, logs: [], style: p.style ?? null, // older sessions: no style key
 });
 
 /** The present line for a problem turn shown at `version`; undefined for an end turn. */
