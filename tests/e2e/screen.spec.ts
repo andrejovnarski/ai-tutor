@@ -239,11 +239,11 @@ async function showTurn(page: Page, kidId: string, body: unknown) {
 
 test("the end card shows the counts and Play again asks for a new turn", async ({ page }) => {
   const kidId = await setUpKid(page, "Ivy", "K");
-  let turns = 0;
-  await page.route("**/api/kids/*/turn", async (route) => {
-    turns++;
-    if (turns === 1) await route.fulfill({ json: { version: 9, turn: { kind: "end", summary: { problems: 12, firstTryCorrect: 9, minutes: 14, mastered: [] } } } });
-    else await route.continue();
+  await page.route("**/api/kids/*/turn", (route) => route.fulfill({ json: { version: 9, turn: { kind: "end", summary: { problems: 12, firstTryCorrect: 9, minutes: 14, mastered: [] } } } }));
+  let playAgains = 0;
+  await page.route("**/api/kids/*/play-again", async (route) => {
+    playAgains++;
+    await route.fulfill({ json: turnBody({ kind: "equation", text: "3 + 4 = ?" }, "What is 3 plus 4?") });
   });
   await page.goto(`/play/${kidId}`);
   const card = page.getByTestId("end-card");
@@ -255,7 +255,7 @@ test("the end card shows the counts and Play again asks for a new turn", async (
   await page.screenshot({ path: "test-results/screens/end-card.png" });
   await card.getByRole("button", { name: "Play again" }).click();
   await waitForProblem(page);
-  expect(turns).toBe(2);
+  expect(playAgains).toBe(1);
 });
 
 test("Back to kids on the end card goes to the picker", async ({ page }) => {

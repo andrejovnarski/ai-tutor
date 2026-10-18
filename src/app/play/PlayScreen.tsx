@@ -38,7 +38,7 @@ type Props = {
 };
 
 export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
-  const { state, answer, retry, say } = usePlay(kidId);
+  const { state, answer, retry, say, playAgain } = usePlay(kidId);
   const reduced = useReducedMotion();
   const problem = state.turn?.kind === "problem" ? state.turn : undefined;
 
@@ -125,7 +125,7 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
       </header>
       {ended ? (
         <div className={styles.endArea}>
-          <EndCard summary={state.summary!} onPlayAgain={retry} />
+          <EndCard summary={state.summary!} onPlayAgain={playAgain} />
         </div>
       ) : (
         <>

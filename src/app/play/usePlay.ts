@@ -32,12 +32,15 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
     if (live.current && g === gen.current) dispatch(ev);
   }, []);
 
-  const load = useCallback(async () => {
+  const lastPath = useRef<"turn" | "play-again">("turn"); // what retry() repeats
+
+  const load = useCallback(async (path: "turn" | "play-again" = "turn") => {
+    lastPath.current = path;
     const g = ++gen.current;
     busy.current = false;
     dispatch({ type: "load" });
     const r = await runRequest(fetchRef.current, sleepRef.current, {
-      url: `/api/kids/${kidId}/turn`, init: { method: "POST" },
+      url: `/api/kids/${kidId}/${path}`, init: { method: "POST" },
       onRetry: (attempt) => emit(g, { type: "retrying", attempt }),
       signal: abort.current.signal,
     });
@@ -84,7 +87,8 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
     }
   }, [kidId, emit]);
 
-  const retry = useCallback(() => { void load(); }, [load]);
+  const retry = useCallback(() => { void load(lastPath.current); }, [load]);
+  const playAgain = useCallback(() => { void load("play-again"); }, [load]);
 
   /** Something the kid said that isn't a number: one try at /say (no retries). A failure is silent, because the
    * problem is still on screen; a reply that comes back after the problem moved on is dropped. */
@@ -105,5 +109,5 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
     }
   }, [kidId, emit]);
 
-  return { state, answer, retry, say };
+  return { state, answer, retry, say, playAgain };
 }
