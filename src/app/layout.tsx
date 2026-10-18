@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Andika } from "next/font/google";
+import { DESCRIPTION } from "./about";
 import "./play/tokens.css";
 
 const andika = Andika({
@@ -12,6 +13,7 @@ const andika = Andika({
 
 export const metadata: Metadata = {
   title: "Brightling AI",
+  description: DESCRIPTION,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

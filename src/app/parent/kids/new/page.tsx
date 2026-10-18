@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireParent } from "@/server/parentGate";
 import { AVATARS, GRADES, KID_ERRORS } from "@/server/kidProfile";
+import { GRADE_HINT } from "../../../about";
 import { faceOf } from "../../../avatars";
 import { gradeName } from "../../../grades";
 import { GrownupFrame } from "../../ui/GrownupFrame";
@@ -33,7 +34,7 @@ export default async function NewKidPage({ searchParams }: { searchParams: Promi
         </label>
         <label className={styles.field}>
           Grade
-          <select name="grade" defaultValue="K" className={styles.select}>
+          <select name="grade" defaultValue="K" className={styles.select} aria-describedby="grade-hint">
             {GRADES.map((g) => (
               <option key={g} value={g}>
                 {gradeName(g)}
@@ -41,6 +42,7 @@ export default async function NewKidPage({ searchParams }: { searchParams: Promi
             ))}
           </select>
         </label>
+        <p id="grade-hint" className={styles.quiet}>{GRADE_HINT}</p>
         <fieldset className={styles.faces}>
           <legend className={styles.legend}>Avatar</legend>
           {AVATARS.map((a, i) => (

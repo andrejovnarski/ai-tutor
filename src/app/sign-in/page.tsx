@@ -1,3 +1,4 @@
+import { COVERS, TAGLINE } from "../about";
 import { GrownupFrame } from "../parent/ui/GrownupFrame";
 import styles from "../parent/ui/grownup.module.css";
 import { requestLink } from "./actions";
@@ -19,7 +20,8 @@ export default async function SignInPage({
   return (
     <GrownupFrame bare>
       <h1>Sign in</h1>
-      <p className={styles.lede}>Nova, a patient math tutor for kids aged 5 to 11. Grown-ups sign in here.</p>
+      <p className={styles.lede}>{`${TAGLINE} Grown-ups sign in here.`}</p>
+      <p className={styles.quiet}>{COVERS}</p>
       {deleted && (
         <p role="status" className={styles.note}>
           Your account and all data were deleted.

@@ -51,6 +51,7 @@ export async function addKid(page: Page, name: string) {
   await page.getByRole("link", { name: "Add a child" }).click();
   await expect(page).toHaveURL(/\/parent\/kids\/new$/);
   await page.getByLabel("First name only").fill(name);
+  await expect(page.getByLabel("Grade")).toHaveAccessibleDescription(/kindergarten to grade 2 math/);
   await page.getByLabel("Grade").selectOption("K");
   await page.getByLabel("fox").check();
   await page.getByRole("button", { name: "Save" }).click();
