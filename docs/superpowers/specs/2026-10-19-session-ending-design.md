@@ -23,11 +23,14 @@ reaches them. Practice feels endless and the session length (10–15 or 15–20 
 
 1. **Finishing.** When the engine returns an end turn, `commit()` saves the step as now (state, `ended`, attempts,
    skill and style writes) and returns `{ version, turn: end }`. It no longer calls `startFresh`.
-2. **Opening play (`playTurn` → `current`).** With an open session, unchanged. With none, read the child's most
-   recent ended session. If its `ended_at` is on today's New York date, return its end turn (summary rebuilt from its
-   state) with its version. Otherwise start a fresh session, as now.
+2. **Opening play (`playTurn` → `current`).** A session's day is the New York date of its `state.lastActivity` (its
+   last answer). With no open session, read the child's most recent ended session: if its day is today, return its
+   end turn (summary rebuilt from its state) with its version; otherwise start a fresh session. With an open session
+   that the engine now ends (for example abandoned and gone stale), save the end; show the end card only if its day
+   is today, otherwise start fresh, so yesterday's half-finished session never says "Great work today!".
 3. **Play again.** New `playAgain(repo, kidId, now, seed, ...)`: if an open session exists, return its current step
-   (another tablet already started one); otherwise start a fresh session. The `one_open_session` unique index means
+   (another tablet already started one); otherwise start a fresh session. Play again never returns an end card: an
+   open session that the engine ends is saved and replaced by a fresh one. The `one_open_session` unique index means
    racing calls create exactly one session (`createSession` returns null on the unique violation and the loser reads
    the winner's session).
 4. **Stale answers.** An answer for an ended session, or with an old version, takes the existing conflict path and
@@ -41,7 +44,7 @@ same counts. The engine's own `end()` keeps producing the live summary; a unit t
 
 ### Persistence
 
-No migration. New repository method `lastEnded(kidId)` → `{ id, version, state, endedAt } | null` (most recent
+No migration. New repository method `lastEnded(kidId)` → `{ id, version, state } | null` (most recent
 `ended_at`), in `MemoryRepo` and `SupabaseRepo`. RLS already limits it to the parent's own kids.
 
 ### API and client
