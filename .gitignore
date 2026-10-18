@@ -1,8 +1,7 @@
 node_modules/
 .env*
 .next/
-vault/.obsidian/workspace*.json
-vault/.obsidian/cache
+.obsidian/
 .trash/
 test-results/
 playwright-report/
