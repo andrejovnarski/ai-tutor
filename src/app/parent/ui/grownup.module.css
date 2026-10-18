@@ -158,7 +158,6 @@
   border-radius: 6px;
 }
 
-.tableWrap { overflow-x: auto; }
 
 .faces { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; border: 0; padding: 0; margin: 0 0 16px; }
 .faceTile {
@@ -246,20 +245,12 @@
 .kidFace { font-size: 36px; line-height: 1; }
 .kidName { display: block; font-family: var(--font-andika), sans-serif; font-weight: 700; font-size: 21px; line-height: 1.3; }
 .plainList { list-style: none; margin: 0; padding: 0; }
+.recordList { list-style: none; margin: 0; padding: 0; }
+.recordList li { padding: 10px 0; border-bottom: 1px solid var(--grid); overflow-wrap: anywhere; }
+.recordList li:last-child { border-bottom: none; }
 
 .weekBlock { margin: 0 0 16px; }
 .weekRow { margin: 0 0 12px; }
-.details { margin: 0 0 12px; }
-.details > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; margin: 0 0 16px; color: var(--link); text-decoration: underline; cursor: pointer; list-style: none; }
-.details > summary::-webkit-details-marker { display: none; }
-.details > summary::after { content: "+"; flex: none; font-weight: 700; font-size: 24px; line-height: 1; text-decoration: none; }
-.details[open] > summary::after { content: "\2212"; }
-.details > section { margin: 0 0 16px; }
 .dataLinks { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0 0 12px; }
 .dataLinks a { display: inline-flex; align-items: center; min-height: 44px; }
 .dataLinks a.dangerLink { color: var(--danger); }
-.tableWrap table { border-collapse: collapse; font-size: 15px; }
-.tableWrap th { font-family: var(--font-andika), sans-serif; text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--ink); white-space: nowrap; }
-.tableWrap td { padding: 6px 10px; white-space: nowrap; } /* wide tables scroll inside their wrapper, not wrap into slivers */
-.tableWrap tbody tr:nth-child(even) { background: var(--paper); }
-.tableWrap table { background: #fff; }

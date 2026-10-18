@@ -22,15 +22,19 @@ test("view, export, delete a kid, then delete the account", async ({ page }) => 
   }
   await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
 
-  // The kid page lists the attempt; the export is JSON with the nickname.
+  // The kid page shows the session in plain words, with no ids; the export is JSON with the nickname.
   await page.goto("/parent");
   await page.getByRole("link", { name: "Mia" }).click();
   await expect(page.getByRole("heading", { name: /Mia's week/ })).toBeVisible();
-  await page.getByText("See everything we store about Mia").click();
-  await expect(page.getByRole("heading", { name: "Attempts" })).toBeVisible();
-  await expect(page.locator("section", { has: page.getByRole("heading", { name: "Attempts" }) }).locator("tbody tr")).toHaveCount(1);
+  const sessions = page.locator("section", { has: page.getByRole("heading", { name: "Sessions" }) });
+  await expect(sessions.locator("li")).toHaveCount(1);
+  await expect(sessions.locator("li")).toContainText("1 problem,");
+  // Skill progress is saved after the placement round, so one answer is not enough to list a skill yet.
+  await expect(page.locator("section", { has: page.getByRole("heading", { name: "Progress" }) }))
+    .toContainText("Skills show up here once Mia has played a little more.");
+  expect(await page.locator("main").innerText()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
   const download = page.waitForEvent("download");
-  await page.getByRole("link", { name: /Download Mia's data/ }).click();
+  await page.getByRole("link", { name: /Download everything we store about Mia/ }).click();
   const file = await download;
   expect(file.suggestedFilename()).toBe("Mia-data.json");
   expect(await readFile((await file.path())!, "utf8")).toContain('"nickname":"Mia"');

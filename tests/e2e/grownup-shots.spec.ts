@@ -94,13 +94,11 @@ for (const size of SIZES) {
     await shot("11-your-kids");
     await page.getByRole("link", { name: /Mia/ }).first().click();
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Mia");
-    await page.locator("details summary").first().click();
-    await shot("12-mia-details-open");
+    await shot("12-mia-progress-and-sessions");
 
     await page.goto("/parent");
     await page.getByRole("link", { name: /WWWW/ }).first().click();
     await expect(page.getByRole("heading", { level: 1 })).toContainText("WWWW");
-    await page.locator("details summary").first().click();
     await shot("13-long-name-child");
 
     await page.goto("/parent/account");

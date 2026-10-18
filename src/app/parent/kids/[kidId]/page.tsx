@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireParent } from "@/server/parentGate";
 import { kidWeek } from "@/server/parentSummary";
+import { kidRecord } from "@/server/kidRecord";
 import { exportKid } from "@/server/rights";
 import { faceOf } from "../../../avatars";
 import { gradeName } from "../../../grades";
@@ -8,42 +9,6 @@ import { GrownupFrame } from "../../ui/GrownupFrame";
 import styles from "../../ui/grownup.module.css";
 import { deleteKidAction } from "./actions";
 import { WeekSummary } from "./WeekSummary";
-
-type Row = Record<string, unknown>;
-
-function Table({ title, rows }: { title: string; rows: Row[] }) {
-  const cols = rows.length ? Object.keys(rows[0]!) : [];
-  const show = (v: unknown) => (v !== null && typeof v === "object" ? JSON.stringify(v) : String(v ?? ""));
-  return (
-    <section>
-      <h2>{title}</h2>
-      {rows.length === 0 ? (
-        <p className={styles.quiet}>Nothing yet.</p>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table>
-            <thead>
-              <tr>
-                {cols.map((c) => (
-                  <th key={c} scope="col">{c}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={i}>
-                  {cols.map((c) => (
-                    <td key={c}>{show(r[c])}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
-}
 
 export default async function KidPage({
   params,
@@ -59,6 +24,7 @@ export default async function KidPage({
   if (!data) notFound();
   const { kid } = data;
   const week = await kidWeek(supabase, kidId, new Date());
+  const record = kidRecord(data);
   return (
     <GrownupFrame back={{ href: "/parent", label: "Your kids" }}>
       <h1>
@@ -67,21 +33,65 @@ export default async function KidPage({
       </h1>
       <p className={styles.quiet}>{gradeName(kid.grade)}</p>
       {week && <WeekSummary nickname={kid.nickname} week={week.week} playedDays={week.playedDays} />}
-      <details className={styles.details}>
-        <summary>See everything we store about {kid.nickname}</summary>
-        <Table title="Skills" rows={data.skill_state} />
-        <Table title="Styles" rows={data.style_stats} />
-        <Table title="Attempts" rows={data.attempts} />
-        <Table title="Sessions" rows={data.sessions} />
-        <Table title="Flagged messages" rows={data.distress_flags} />
-      </details>
-      <p className={styles.dataLinks}>
-        <a href={`/parent/kids/${kidId}/export`}>Download {kid.nickname}&apos;s data</a>
-        <a href="#delete" className={styles.dangerLink}>Delete {kid.nickname}</a>
-      </p>
+      <section className={styles.section}>
+        <h2>Progress</h2>
+        {record.skills.length === 0 ? (
+          <p className={styles.quiet}>{`Nothing yet. Skills show up here once ${kid.nickname} has played a little more.`}</p>
+        ) : (
+          <ul className={styles.recordList}>
+            {record.skills.map((s) => (
+              <li key={s.name}>
+                <b>{s.name}</b>
+                <span className={styles.block}>{s.status}</span>
+                {s.tricky && <span className={`${styles.block} ${styles.quiet}`}>{`Tricky part: ${s.tricky}`}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section className={styles.section}>
+        <h2>Sessions</h2>
+        {record.sessions.length === 0 ? (
+          <p className={styles.quiet}>No sessions yet.</p>
+        ) : (
+          <ul className={styles.recordList}>
+            {record.sessions.map((s, i) => (
+              <li key={i}>
+                <b>{s.when}</b>
+                <span className={styles.block}>{`${s.length} · ${s.problems}`}</span>
+                {s.mastered.length > 0 && <span className={styles.block}>{`Mastered: ${s.mastered.join(", ")}`}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      {record.flags.length > 0 && (
+        <section className={styles.section}>
+          <h2>Flagged messages</h2>
+          <p className={styles.quiet}>{`Things ${kid.nickname} said to Nova that sounded like ${kid.nickname} might need a grown-up.`}</p>
+          <ul className={styles.recordList}>
+            {record.flags.map((f, i) => (
+              <li key={i}>
+                <b>{f.when}</b>
+                <span className={styles.block}>{`"${f.line}"`}</span>
+                <span className={`${styles.block} ${styles.quiet}`}>{f.emailed}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <section className={styles.section}>
+        <p className={styles.dataLinks}>
+          <a href={`/parent/kids/${kidId}/export`}>Download everything we store about {kid.nickname}</a>
+        </p>
+        <p className={styles.quiet}>The file has every detail we keep, exactly as stored.</p>
+        <p className={styles.dataLinks}>
+          <a href="#delete" className={styles.dangerLink}>Delete {kid.nickname}</a>
+        </p>
+      </section>
       <section id="delete" className={styles.section}>
         <h2>Delete {kid.nickname}</h2>
-        <p>This removes {kid.nickname} and everything above, right away. It cannot be undone.</p>
+        <p>This removes {kid.nickname} and everything we store about them, right away. It cannot be undone.</p>
         {error === "confirm" && <p role="alert" className={styles.note}>That name did not match. Nothing was deleted.</p>}
         <form action={deleteKidAction.bind(null, kidId)}>
           <label className={styles.field}>

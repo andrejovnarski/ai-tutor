@@ -8,6 +8,7 @@ import { TAG_LABEL } from "./tips";
 import type { KidWeek } from "./build";
 
 type A = { session_id: string; mistake_tag: MistakeTag | null; time_ms: number; at: string };
+type Timed = Pick<A, "session_id" | "time_ms" | "at">;
 const PAGE = 1000;
 
 async function attemptsIn(db: SupabaseClient, kidId: string, from: Date, to: Date): Promise<A[]> {
@@ -23,8 +24,8 @@ async function attemptsIn(db: SupabaseClient, kidId: string, from: Date, to: Dat
 }
 
 /** Whole minutes: per session, last attempt minus first attempt plus the last attempt's own time. */
-function minutesOf(attempts: A[]): number {
-  const bySession = new Map<string, A[]>();
+export function minutesOf(attempts: Timed[]): number {
+  const bySession = new Map<string, Timed[]>();
   for (const a of attempts) bySession.set(a.session_id, [...(bySession.get(a.session_id) ?? []), a]);
   let ms = 0;
   for (const list of bySession.values()) {

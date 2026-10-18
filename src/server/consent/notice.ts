@@ -38,7 +38,7 @@ export const NOTICE_SECTIONS: NoticeSection[] = [
   {
     heading: "Your rights",
     body: [
-      "See all of your child's data at any time.",
+      "See all of your child's data at any time: download it from your child's page.",
       "Delete a kid or your whole account. All data is removed within 30 days.",
       "Revoke consent, which means deleting.",
     ],

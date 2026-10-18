@@ -68,7 +68,8 @@ Each vendor is meant to be under a data processing agreement that forbids traini
 ## Parent rights and retention
 
 - **In the parent area, a parent can:**
-  - see and export all of a child's data
+  - see the child's progress and sessions in plain words on the child's page
+  - download all of the child's data, every field exactly as stored, as one file
   - delete a child
   - delete the whole account
 - **Revoking consent:** this means deleting.
@@ -94,8 +95,9 @@ Each vendor is meant to be under a data processing agreement that forbids traini
    - Is emailing the exact line to the parent appropriate?
    - Do we have any duty beyond telling the parent?
 6. **Weekly report email.** It includes the child's nickname and progress. Is that fine over email?
-7. **Pilot terms.** Do we need terms of service or a pilot agreement with the families?
-8. **Anything else** we should do before the first family signs up.
+7. **Reviewing a child's data.** The child's page shows progress and sessions in plain words, not every stored field. The complete record is the download link on the same page. Is the download enough to meet the parent's right to review what we collected?
+8. **Pilot terms.** Do we need terms of service or a pilot agreement with the families?
+9. **Anything else** we should do before the first family signs up.
 
 ## Attached: the privacy notice (draft 2026-10-10)
 
@@ -119,7 +121,7 @@ The notice is shown in the app at `/parent/privacy`. It opens with "We keep only
 - Stripe checks that your card is real, which tells us an adult is signing up. You are not charged, and we do not keep the card.
 
 **Your rights**
-- See all of your child's data at any time.
+- See all of your child's data at any time: download it from your child's page.
 - Delete a kid or your whole account. All data is removed within 30 days.
 - Revoke consent, which means deleting.
 
