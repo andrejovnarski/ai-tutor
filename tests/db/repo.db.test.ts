@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { admin, makeParent } from "../helpers/admin";
 import { SupabaseRepo } from "../../src/server/persist/supabaseRepo";
-import { playAnswer, playTurn, type AnswerResult } from "../../src/server/play";
+import { playAgain, playAnswer, playTurn, type AnswerResult } from "../../src/server/play";
 import { startSession } from "../../src/domain/session/engine";
 import { firstSkills, placedKid } from "../../src/domain/session/testkit";
 import { skillRow } from "../../src/server/persist/rows";
@@ -91,31 +91,38 @@ describe("Play against Supabase", () => {
     const second = ok(await playAnswer(repoA(), kid, first.version, answer + 1000, 3000, seed));
     expect(second.revealed).toBe(answer);
   });
-  it("rolls over to a new session when an answer ends the old one", async () => {
+  it("an answer that ends the session returns the end card; Play again starts one new session", async () => {
     const kid = await kidFor(true);
     await playTurn(repoA(), kid, 1000, seed);
     const a = ok(await playAnswer(repoA(), kid, 1, await pending(kid), 1000 + 12 * 60_000, seed));
-    expect(a.next.kind).toBe("problem");
-    // Versions are monotonic per kid: the new session continues from the old one's final version (2).
-    expect(a.version).toBe(3);
-    const all = (await admin().from("sessions").select("id, ended_at").eq("kid_id", kid)).data!;
+    expect(a.next.kind).toBe("end");
+    expect(await openSessions(kid)).toHaveLength(0);
+    const again = ok(await playAgain(repoA(), kid, 1000 + 12 * 60_000 + 1, seed));
+    expect(again.turn.kind).toBe("problem");
+    expect(await openSessions(kid)).toHaveLength(1);
+    const all = (await admin().from("sessions").select("id").eq("kid_id", kid)).data!;
     expect(all).toHaveLength(2);
-    expect(all.filter((s) => s.ended_at === null)).toHaveLength(1);
   });
-  it("rejects a stale answer from the previous session after a rollover (two tablets)", async () => {
+  it("a stale answer after the session ended gets the end card and creates nothing; Play again then starts the second session", async () => {
     const kid = await kidFor(true);
     const a = ok(await playTurn(repoA(), kid, 1000, seed));
     const b = ok(await playTurn(repoA(), kid, 1000, seed));
     expect(b.version).toBe(a.version);
     const right = await pending(kid);
     const won = ok(await playAnswer(repoA(), kid, b.version, right, 1000 + 12 * 60_000, seed));
-    const sessions = (await admin().from("sessions").select("id, ended_at").eq("kid_id", kid)).data!;
-    expect(sessions).toHaveLength(2);
-    const fresh = sessions.find((s) => s.ended_at === null)!.id;
+    expect(won.next.kind).toBe("end");
+    const attemptsBefore = await attemptCount(kid);
     const stale = await playAnswer(repoA(), kid, a.version, right, 1000 + 12 * 60_000 + 1, seed);
     expect(stale.status).toBe(409);
-    if (stale.status === 409) expect(stale.version).toBe(won.version);
-    expect((await admin().from("attempts").select("id").eq("session_id", fresh)).data).toHaveLength(0);
+    if (stale.status === 409) {
+      expect(stale.turn.kind).toBe("end");
+      expect(stale.version).toBe(won.version);
+    }
+    expect((await admin().from("sessions").select("id").eq("kid_id", kid)).data).toHaveLength(1);
+    expect(await attemptCount(kid)).toBe(attemptsBefore);
+    ok(await playAgain(repoA(), kid, 1000 + 12 * 60_000 + 2, seed));
+    expect((await admin().from("sessions").select("id").eq("kid_id", kid)).data).toHaveLength(2);
+    expect(await openSessions(kid)).toHaveLength(1);
   });
   it("lets two racing first turns share one new session", async () => {
     const kid = await kidFor(true);
