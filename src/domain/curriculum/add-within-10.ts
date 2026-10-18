@@ -24,6 +24,7 @@ const addObjects = template("add-objects-10", (rng, lv) => {
     say: `${plural(a, item.one, item.word)} and ${b} more. How many in all?`,
     show: { kind: "objects", icon: item.icon, groups: [a, b] },
     answer: a + b,
+    sum: [a, b],
     mistakes: addMistakes(a, b),
   };
 });
@@ -34,6 +35,7 @@ const addTenFrame = template("add-ten-frame-10", (rng, lv) => {
     say: "How many dots in all?",
     show: { kind: "ten-frames", first: a, second: b },
     answer: a + b,
+    sum: [a, b],
     mistakes: addMistakes(a, b),
   };
 });
@@ -47,6 +49,7 @@ const addFacts5 = template("add-facts-5", (rng, lv) => {
     say: `What is ${a} plus ${b}?`,
     show: fade(lv, { kind: "objects", icon: item.icon, groups: [a, b] }, `${a} + ${b} = ?`),
     answer: a + b,
+    sum: [a, b],
     mistakes: addMistakes(a, b),
   };
 });
@@ -57,6 +60,7 @@ const addLine5 = template("add-line-5", (rng, lv) => {
     say: `Start at ${a}. Jump ${b}. Where do you land?`,
     show: fade(lv, { kind: "number-line", from: 0, to: 5, marks: [], jump: { from: a, by: b } }, `${a} + ${b} = ?`),
     answer: a + b,
+    sum: [a, b],
     mistakes: addMistakes(a, b),
   };
 });
@@ -71,6 +75,7 @@ const countOnBiggerFirst = template("count-on-bigger-first", (rng, lv) => {
     say: `Start at ${a}. Count on ${b}.`,
     show: fade(lv, { kind: "number-line", from: 0, to: 10, marks: [a], jump: { from: a, by: b } }, `${a} + ${b} = ?`),
     answer: s,
+    sum: [a, b],
     mistakes: plusMinus(s, 1, "off-by-one-counting"),
   };
 });
@@ -83,6 +88,7 @@ const countOnSmallerFirst = template("count-on-smaller-first", (rng, lv) => {
     say: `What is ${a} plus ${b}?`,
     show: fade(lv, { kind: "number-line", from: 0, to: 10, marks: [b], jump: { from: b, by: a } }, `${a} + ${b} = ?`),
     answer: s,
+    sum: [a, b],
     mistakes: plusMinus(s, 1, "off-by-one-counting"),
   };
 });

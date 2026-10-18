@@ -18,7 +18,7 @@ export const plusMinus = (answer: number, step: number, tag: MistakeTag): Mistak
 export const fade = (level: Level, picture: Visual, equation: string): Visual =>
   level === 3 ? { kind: "equation", text: equation } : picture;
 
-export type Draft = { say: string; show: Visual; answer: number; mistakes: Mistake[]; choiceCount?: 2 | 4 };
+export type Draft = { say: string; show: Visual; answer: number; mistakes: Mistake[]; choiceCount?: 2 | 4; sum?: [number, number] };
 
 /** Wraps a draft builder into a seeded template. */
 export const template = (id: string, draft: (rng: Rng, level: Level) => Draft): Template => ({

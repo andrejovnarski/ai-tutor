@@ -100,3 +100,20 @@ it.each([
     expect(Math.max(...cs)).toBe(bound[lv]);
   }
 });
+
+describe("sum (addends for style views)", () => {
+  const WITH_SUM = ["add-objects-10", "add-ten-frame-10", "add-facts-5", "add-line-5", "count-on-bigger-first", "count-on-smaller-first"];
+  const WITHOUT_SUM = ["make-ten-frame", "make-ten-bond", "missing-addend", "missing-first"];
+  const made = (id: string) => LEVELS.flatMap((lv) => Array.from({ length: 50 }, (_, i) => tpl(id).make(i + 1, lv)));
+
+  it.each(WITH_SUM)("%s sets sum adding up to the answer", (id) => {
+    for (const p of made(id)) {
+      expect(p.sum).toBeDefined();
+      expect(p.sum![0] + p.sum![1]).toBe(p.answer);
+    }
+  });
+
+  it.each(WITHOUT_SUM)("%s has no sum", (id) => {
+    for (const p of made(id)) expect(p.sum).toBeUndefined();
+  });
+});

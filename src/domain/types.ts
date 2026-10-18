@@ -32,6 +32,7 @@ export type Problem = {
   input: "tap-choice" | "number-pad" | "voice" | "drag";
   choices?: number[];
   mistakes: Mistake[];
+  sum?: [number, number]; // the two addends, in spoken order; server-only (their total is the answer)
 };
 export type Template = { id: string; make: (seed: number, level: Level) => Problem };
 export type Skill = {

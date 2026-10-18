@@ -32,7 +32,7 @@ export function buildChoices(rng: Rng, answer: number, wrongPool: number[], coun
 
 export function finalize(
   rng: Rng,
-  p: { say: string; show: Visual; answer: number; mistakes: Mistake[]; choiceCount?: 2 | 4 },
+  p: { say: string; show: Visual; answer: number; mistakes: Mistake[]; choiceCount?: 2 | 4; sum?: [number, number] },
 ): Problem {
   const mistakes = cleanMistakes(p.answer, p.mistakes);
   return {
@@ -41,6 +41,7 @@ export function finalize(
     input: "tap-choice",
     choices: buildChoices(rng, p.answer, mistakes.map((m) => m.answer), p.choiceCount ?? 4),
     mistakes,
+    ...(p.sum && { sum: p.sum }),
   };
 }
 
