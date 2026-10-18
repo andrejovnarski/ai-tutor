@@ -1,6 +1,6 @@
 import { getSkill } from "../curriculum/index";
 import { newKidState } from "../kid/state";
-import { answer, nextTurn, startSession } from "./engine";
+import { answer, nextTurn, startSession, summaryOf } from "./engine";
 import { MIN, SEC, firstSkills, fresh, generate, placedKid, play, rightFor, wrongFor, type ProblemTurn } from "./testkit";
 import type { Session } from "./types";
 
@@ -182,4 +182,13 @@ it("the first-session summary counts correct placement answers", () => {
   const end = steps.at(-1)!.turn;
   if (end.kind !== "end") throw new Error("no end");
   expect(end.summary.firstTryCorrect).toBe(end.summary.problems);
+});
+
+it("summaryOf a finished session is the summary of the end turn nextTurn gives it", () => {
+  const { session, now } = play(fresh(placedKid(firstSkills(3))), 0, rightFor);
+  for (const at of [now, now + 5 * MIN]) {
+    const end = nextTurn(session, at).turn;
+    if (end.kind !== "end") throw new Error("no end");
+    expect(summaryOf(session, at)).toEqual(end.summary);
+  }
 });

@@ -12,7 +12,7 @@ import { createRng, type Rng } from "../rng";
 import type { Level, Problem } from "../types";
 import {
   MAX_TIME_MS, REVIEW_EVERY, SESSION_MINUTES, STALE_MS,
-  type Deps, type Feedback, type LogEntry, type Pending, type Session, type Turn, type Writes,
+  type Deps, type Feedback, type LogEntry, type Pending, type Session, type SessionSummary, type Turn, type Writes,
 } from "./types";
 
 const DEFAULT_DEPS: Deps = { generate };
@@ -39,18 +39,16 @@ const problemTurn = (p: Pending, logs: LogEntry[]): Turn => ({
   seed: p.seed, level: p.level, mode: p.mode, try: p.try, logs,
 });
 
-function end(s: Session, now: number): { session: Session; turn: Turn } {
-  const session = { ...s, pending: null, ended: true };
+/** The end-turn summary of a session that ends at `now`. */
+export function summaryOf(s: Session, now: number): SessionSummary {
   return {
-    session,
-    turn: {
-      kind: "end",
-      summary: {
-        problems: s.problems, firstTryCorrect: s.firstTryCorrect,
-        minutes: Math.round((now - s.startedAt) / 60_000), mastered: s.mastered,
-      },
-    },
+    problems: s.problems, firstTryCorrect: s.firstTryCorrect,
+    minutes: Math.round((now - s.startedAt) / 60_000), mastered: s.mastered,
   };
+}
+
+function end(s: Session, now: number): { session: Session; turn: Turn } {
+  return { session: { ...s, pending: null, ended: true }, turn: { kind: "end", summary: summaryOf(s, now) } };
 }
 
 /** Builds a problem for the skill, falling back to its other templates if one throws (spec §9). */

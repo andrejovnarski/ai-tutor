@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSkill } from "../../domain/curriculum";
 import { frontier } from "../../domain/kid/next";
 import { MISTAKE_TAGS, type MistakeTag } from "../../domain/types";
+import { nyDay } from "../nyDay";
 import { kidStateFromRows, type KidRow, type SkillRow } from "../persist/rows";
 import { TAG_LABEL } from "./tips";
 import type { KidWeek } from "./build";
@@ -47,20 +48,19 @@ function stuckOf(attempts: A[]): string[] {
 
 const nameOf = (id: string) => { try { return getSkill(id).name; } catch { return null; } };
 
-const nyDateFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" });
 const nyHourFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "America/New_York", hour: "2-digit", hourCycle: "h23" });
 
 /** Calendar date (YYYY-MM-DD) in New York. */
-export const nyDate = { format: (d: Date): string => nyDateFmt.format(d) };
+export const nyDate = { format: (d: Date): string => nyDay(d.getTime()) };
 
 /** The UTC instant of 00:00 New York time, `daysBack` calendar days before the NY date of `now`. DST-safe. */
 export function nyMidnightDaysAgo(now: Date, daysBack: number): Date {
-  const [y, m, d] = nyDateFmt.format(now).split("-").map(Number) as [number, number, number];
+  const [y, m, d] = nyDay(now.getTime()).split("-").map(Number) as [number, number, number];
   const target = new Date(Date.UTC(y, m - 1, d - daysBack));
   const want = target.toISOString().slice(0, 10);
   for (const offset of [4, 5]) {
     const t = new Date(target.getTime() + offset * 3_600_000);
-    if (nyDateFmt.format(t) === want && nyHourFmt.format(t) === "00") return t;
+    if (nyDay(t.getTime()) === want && nyHourFmt.format(t) === "00") return t;
   }
   throw new Error(`no New York midnight for ${want}`);
 }

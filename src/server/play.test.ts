@@ -1,7 +1,7 @@
 import { firstSkills, placedKid } from "../domain/session/testkit";
 import { startSession } from "../domain/session/engine";
 import { MemoryRepo } from "./persist/repo";
-import { playAnswer, playSay, playTurn, type AnswerResult, type TurnResult } from "./play";
+import { playAgain, playAnswer, playSay, playTurn, type AnswerResult, type TurnResult } from "./play";
 
 const kid = placedKid(firstSkills(3));
 const seed = () => 42;
@@ -61,43 +61,127 @@ it("resumes the same problem without bumping the version", async () => {
   expect(b.turn).toEqual(a.turn);
 });
 
-it("starts a new session after the old one ended", async () => {
+const MIN = 60_000;
+const HOUR = 60 * MIN;
+const openSessions = (repo: MemoryRepo) => repo.sessions.filter((s) => !s.ended);
+/** Plays one problem and answers it right 12 minutes in: in the 5-7 band (10 to 15) the engine ends the session. */
+const finish = async (repo: MemoryRepo, end: number) => {
+  const t = ok(await playTurn(repo, kid.kidId, end - 12 * MIN, seed));
+  const right = pendingAnswer(repo);
+  return { right, version: t.version, a: ok(await playAnswer(repo, kid.kidId, t.version, right, end, seed)) };
+};
+// 2026-10-19 is EDT (UTC-4).
+const TODAY = Date.parse("2026-10-19T14:00:00Z");
+
+it("an answer that ends the session returns the end card and opens no new session", async () => {
   const repo = setup();
-  await repo.createSession(kid.kidId, { ...startSession(kid, 1, 0), ended: true });
-  const t = ok(await playTurn(repo, kid.kidId, 1000, seed));
+  const { a } = await finish(repo, TODAY);
+  expect(a.next.kind).toBe("end");
+  if (a.next.kind === "end") expect(a.next.summary.problems).toBeGreaterThanOrEqual(1);
+  expect(a.version).toBe(2);
+  expect(openSessions(repo)).toHaveLength(0);
+});
+
+it("opening play later the same New York day shows the same end card", async () => {
+  const repo = setup();
+  const { a } = await finish(repo, TODAY);
+  const t = ok(await playTurn(repo, kid.kidId, TODAY + 3 * HOUR, seed));
+  expect(t.turn).toEqual(a.next);
+  expect(t.version).toBe(a.version);
+  expect("line" in t).toBe(false);
+  expect(repo.sessions).toHaveLength(1);
+});
+
+it.each([
+  ["summer (EDT)", "2026-10-20T03:59:00Z", "2026-10-20T04:01:00Z"],
+  ["winter (EST)", "2026-12-02T04:59:00Z", "2026-12-02T05:01:00Z"],
+])("opening play the next New York day starts a fresh session: %s", async (_, last, next) => {
+  const repo = setup();
+  const { a } = await finish(repo, Date.parse(last));
+  expect(a.next.kind).toBe("end");
+  const t = ok(await playTurn(repo, kid.kidId, Date.parse(next), seed));
   expect(t.turn.kind).toBe("problem");
-  // The ended session was saved at version 1; the new one continues from there.
-  expect(t.version).toBe(2);
-  expect(repo.sessions).toHaveLength(2);
-  expect(repo.sessions.filter((s) => s.ended)).toHaveLength(1);
+  expect(openSessions(repo)).toHaveLength(1);
 });
 
-it("rolls over to a new session when an answer ends the old one", async () => {
+it("an open session abandoned yesterday closes quietly and starts fresh", async () => {
   const repo = setup();
-  await playTurn(repo, kid.kidId, 1000, seed);
-  const a = ok(await playAnswer(repo, kid.kidId, 1, pendingAnswer(repo), 1000 + 12 * 60_000, seed));
-  // 12 minutes in (5-7 band: 10 to 15) after a right answer, the engine ends the session.
-  expect(a.next.kind).toBe("problem");
+  await playTurn(repo, kid.kidId, TODAY - 18 * HOUR, seed); // 20:00 EDT yesterday, never answered
+  const t = ok(await playTurn(repo, kid.kidId, TODAY, seed));
+  expect(t.turn.kind).toBe("problem");
   expect(repo.sessions).toHaveLength(2);
-  expect(repo.sessions.filter((s) => !s.ended)).toHaveLength(1);
-  // Versions are monotonic per kid: the new session continues from the old one's final version (2).
-  expect(a.version).toBe(3);
+  expect(repo.sessions[0]!.ended).toBe(true);
+  expect(openSessions(repo)).toHaveLength(1);
 });
 
-it("rejects a stale answer from the previous session after a rollover (two tablets)", async () => {
+it("an open session abandoned earlier today shows its end card", async () => {
   const repo = setup();
-  const a = ok(await playTurn(repo, kid.kidId, 1000, seed));
-  const b = ok(await playTurn(repo, kid.kidId, 1000, seed));
+  await playTurn(repo, kid.kidId, TODAY, seed);
+  const t = ok(await playTurn(repo, kid.kidId, TODAY + 2 * HOUR, seed));
+  expect(t.turn.kind).toBe("end");
+  expect(openSessions(repo)).toHaveLength(0);
+  expect(await playTurn(repo, kid.kidId, TODAY + 3 * HOUR, seed)).toEqual(t);
+});
+
+it("play again starts exactly one session, also when two tablets race", async () => {
+  const repo = setup();
+  const { a } = await finish(repo, TODAY);
+  const [x, y] = (await Promise.all([
+    playAgain(repo, kid.kidId, TODAY + MIN, seed),
+    playAgain(repo, kid.kidId, TODAY + MIN, seed),
+  ])).map(ok);
+  expect(x!.turn.kind).toBe("problem");
+  expect(y!.turn.kind).toBe("problem");
+  expect(y!.version).toBe(x!.version);
+  // Versions are monotonic per kid: the new session continues from the old one's final version.
+  expect(x!.version).toBeGreaterThan(a.version);
+  expect(openSessions(repo)).toHaveLength(1);
+});
+
+it("play again on a session abandoned earlier today starts fresh, never the end card", async () => {
+  const repo = setup();
+  await playTurn(repo, kid.kidId, TODAY, seed);
+  const t = ok(await playAgain(repo, kid.kidId, TODAY + 2 * HOUR, seed));
+  expect(t.turn.kind).toBe("problem");
+  expect(repo.sessions).toHaveLength(2);
+  expect(openSessions(repo)).toHaveLength(1);
+});
+
+it("play again returns 404 for an unknown kid", async () => {
+  expect(await playAgain(setup(), "nope", 0, seed)).toEqual({ status: 404 });
+});
+
+it("a repeated answer after the end creates nothing and gets the end card", async () => {
+  const repo = setup();
+  const { a, right, version } = await finish(repo, TODAY);
+  const again = await playAnswer(repo, kid.kidId, version, right, TODAY + 1000, seed);
+  expect(again.status).toBe(409);
+  if (again.status === 409) {
+    expect(again.turn).toEqual(a.next);
+    expect(again.version).toBe(a.version);
+  }
+  expect(repo.sessions).toHaveLength(1);
+  expect(repo.attempts).toHaveLength(1);
+});
+
+it("rejects a stale answer from an ended session with the end card (two tablets)", async () => {
+  const repo = setup();
+  const a = ok(await playTurn(repo, kid.kidId, TODAY - 12 * MIN, seed));
+  const b = ok(await playTurn(repo, kid.kidId, TODAY - 12 * MIN, seed));
   expect(b.version).toBe(a.version);
   const right = pendingAnswer(repo);
-  // Tablet B answers and ends the session; play rolls over into a new one.
-  const won = ok(await playAnswer(repo, kid.kidId, b.version, right, 1000 + 12 * 60_000, seed));
-  expect(repo.sessions).toHaveLength(2);
+  // Tablet B answers and ends the session.
+  const won = ok(await playAnswer(repo, kid.kidId, b.version, right, TODAY, seed));
+  expect(won.next.kind).toBe("end");
   // Tablet A still holds the old version.
-  const stale = await playAnswer(repo, kid.kidId, a.version, right, 1000 + 12 * 60_000 + 1, seed);
+  const stale = await playAnswer(repo, kid.kidId, a.version, right, TODAY + 1, seed);
   expect(stale.status).toBe(409);
-  if (stale.status === 409) expect(stale.version).toBe(won.version);
-  expect(repo.attempts.filter((x) => x.session_id === "session-2")).toHaveLength(0);
+  if (stale.status === 409) {
+    expect(stale.version).toBe(won.version);
+    expect(stale.turn).toEqual(won.next);
+  }
+  expect(repo.sessions).toHaveLength(1);
+  expect(repo.attempts).toHaveLength(1);
 });
 
 it("returns 404 for an unknown kid", async () => {

@@ -1,6 +1,7 @@
 // Server-side play loop: the engine runs here, the browser only sees PublicTurn.
-import { answer, nextTurn, startSession } from "../domain/session/engine";
+import { answer, nextTurn, startSession, summaryOf } from "../domain/session/engine";
 import type { Feedback, Pending, Session, Turn, Writes } from "../domain/session/types";
+import { nyDay } from "./nyDay";
 import type { OpenSession, Repo } from "./persist/repo";
 import { publicTurn, type PublicTurn } from "./publicTurn";
 import { cannedLine } from "./tutor/canned";
@@ -71,7 +72,7 @@ async function startFresh(c: Ctx): Promise<Step | null> {
   return version < 0 ? null : { version, turn, line };
 }
 
-/** Saves the step that produced `turn` with the lines said for it; when it ends the session, rolls over into a new one.
+/** Saves the step that produced `turn` with the lines said for it; an end turn ends the session.
  * `onScreen` is the line that goes with `turn`: its present line, or the feedback line on a retry. */
 async function commit(c: Ctx, open: OpenSession, session: Session, turn: Turn, writes: Writes | null,
   said: { feedback?: TutorLine; present?: TutorLine }, onScreen: TutorLine | undefined = said.present): Promise<Step | null> {
@@ -79,17 +80,27 @@ async function commit(c: Ctx, open: OpenSession, session: Session, turn: Turn, w
   const stored = withLines(session, [...recentOf(open.state), ...lines], turn.kind === "end" ? undefined : onScreen);
   const version = await c.repo.saveStep(open, stored, turn.kind === "end", writes);
   if (version < 0) return null;
-  if (turn.kind !== "end") return { version, turn, line: said.present };
-  return (await startFresh(c)) ?? current(c);
+  return { version, turn, line: said.present };
 }
 
-/** The kid's current step. Throws if none can be had after a few tries (racing writers or a failing repo). */
-async function current(c: Ctx): Promise<Step> {
+/** A session's day is the New York date of its last activity (spec: the end card stays up until NY midnight). */
+const endedToday = (c: Ctx, s: Session) => nyDay(s.lastActivity) === nyDay(c.now);
+
+/** The end card of the kid's last session if it ended today; its summary is rebuilt from the saved state. */
+async function todaysEndCard(c: Ctx): Promise<Step | null> {
+  const last = await c.repo.lastEnded(c.kidId);
+  if (!last || !endedToday(c, last.state)) return null;
+  return { version: last.version, turn: { kind: "end", summary: summaryOf(last.state, last.state.lastActivity) } };
+}
+
+/** The kid's current step. With `endCard`, a session that ended today shows its end card; without (Play again),
+ * the kid always gets a problem. Throws if none can be had after a few tries (racing writers or a failing repo). */
+async function current(c: Ctx, endCard = true): Promise<Step> {
   for (let i = 0; i < MAX_ATTEMPTS; i++) {
     const open = await c.repo.openSession(c.kidId);
     if (!open) {
-      const fresh = await startFresh(c);
-      if (fresh) return fresh;
+      const step = (endCard ? await todaysEndCard(c) : null) ?? await startFresh(c);
+      if (step) return step;
       continue;
     }
     const { session, turn } = nextTurn(open.state, c.now);
@@ -100,16 +111,28 @@ async function current(c: Ctx): Promise<Step> {
       return { version: open.version, turn, line: lineOf(open.state) ?? await present(c, turn, open.state, open.version) };
     const line = await present(c, turn, open.state, open.version + 1);
     const step = await commit(c, open, session, turn, null, { present: line });
-    if (step) return step;
+    // A session the engine ends here (gone stale) is saved, then the next round gives its end card (only on its own
+    // day, and the same one a reload shows) or a fresh session.
+    if (step && turn.kind !== "end") return step;
   }
   throw new Error(`play: no current turn for kid ${c.kidId} after ${MAX_ATTEMPTS} tries`);
 }
 
+const turnResult = ({ version, turn, line }: Step): TurnResult =>
+  ({ status: 200, version, turn: publicTurn(turn), ...(line ? { line } : {}) });
+
 export async function playTurn(repo: Repo, kidId: string, now: number, seed: () => number,
   speak: Speak = cannedSpeak): Promise<TurnResult> {
   if (!(await repo.loadKid(kidId))) return { status: 404 };
-  const { version, turn, line } = await current({ repo, kidId, now, seed, speak });
-  return { status: 200, version, turn: publicTurn(turn), ...(line ? { line } : {}) };
+  return turnResult(await current({ repo, kidId, now, seed, speak }));
+}
+
+/** Play again: the open session's step if another tablet already started one, otherwise a fresh session.
+ * Never an end card. */
+export async function playAgain(repo: Repo, kidId: string, now: number, seed: () => number,
+  speak: Speak = cannedSpeak): Promise<TurnResult> {
+  if (!(await repo.loadKid(kidId))) return { status: 404 };
+  return turnResult(await current({ repo, kidId, now, seed, speak }, false));
 }
 
 export async function playAnswer(repo: Repo, kidId: string, version: number, given: number, now: number,
