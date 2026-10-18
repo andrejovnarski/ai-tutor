@@ -38,15 +38,26 @@ it("maps feedback to events", () => {
   expect(h.style).toBeUndefined();
 });
 
-it("names a style only when the board draws it (a sum problem, a style with a picture)", () => {
+describe("names a style only when the board draws it", () => {
   const sumProblem = { ...problem, sum: [3, 4] as [number, number] };
+  const onTry2 = (style: ProblemTurn["style"], p: Problem = sumProblem): ProblemTurn => ({ ...turn("practice", p), try: 2, style });
   const wrong = { result: { kind: "wrong" } as const, then: "retry" as const };
   const reveal = { result: { kind: "wrong" } as const, reveal: true };
-  for (const o of [wrong, reveal]) {
-    expect(feedbackPlan(turn("practice", sumProblem), fb({ ...o, style: "ten-frame" }), 2, "5-7", []).style).toBe("ten-frame");
-    expect(feedbackPlan(turn("practice", sumProblem), fb({ ...o, style: "story" }), 2, "5-7", [])).not.toHaveProperty("style");
-    expect(feedbackPlan(turn(), fb({ ...o, style: "ten-frame" }), 2, "5-7", [])).not.toHaveProperty("style");
-  }
+
+  it("retry: the next board draws the chosen style for a sum problem", () => {
+    expect(feedbackPlan(turn("practice", sumProblem), fb({ ...wrong, style: "ten-frame" }), 2, "5-7", []).style).toBe("ten-frame");
+    expect(feedbackPlan(turn("practice", sumProblem), fb({ ...wrong, style: "story" }), 2, "5-7", [])).not.toHaveProperty("style");
+    expect(feedbackPlan(turn(), fb({ ...wrong, style: "ten-frame" }), 2, "5-7", [])).not.toHaveProperty("style");
+  });
+
+  it("reveal: only when the board just answered on was that style's picture", () => {
+    expect(feedbackPlan(onTry2("ten-frame"), fb({ ...reveal, style: "ten-frame" }), 2, "5-7", []).style).toBe("ten-frame");
+    // A wrong check answer reveals on try 1: the board showed the original picture.
+    expect(feedbackPlan(turn("check", sumProblem), fb({ ...reveal, style: "ten-frame" }), 2, "5-7", [])).not.toHaveProperty("style");
+    expect(feedbackPlan(onTry2("story"), fb({ ...reveal, style: "story" }), 2, "5-7", [])).not.toHaveProperty("style");
+    expect(feedbackPlan(onTry2("ten-frame", problem), fb({ ...reveal, style: "ten-frame" }), 2, "5-7", [])).not.toHaveProperty("style");
+    expect(feedbackPlan(onTry2("blocks"), fb({ ...reveal, style: "ten-frame" }), 2, "5-7", [])).not.toHaveProperty("style");
+  });
 });
 
 it("trims kidSaid to 200 chars", () => {

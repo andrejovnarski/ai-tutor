@@ -72,10 +72,16 @@ export function feedbackPlan(
   const mistakeTag = feedback.result.kind === "known-mistake" ? feedback.result.tag : undefined;
   // Nova names a style only when the board draws it, so a line never talks about a picture that is not there.
   const { sum } = turn.problem;
-  const style = feedback.style && sum && styleView(feedback.style, sum) ? feedback.style : undefined;
-  if (feedback.reveal) return { event: "explain", ...b, revealed: true, ...(mistakeTag && { mistakeTag }), ...(style && { style }) };
+  const drawn = feedback.style && sum && styleView(feedback.style, sum) ? feedback.style : undefined;
+  if (feedback.reveal) {
+    // The reveal is about the board just answered on: the style's picture only on a try 2 drawn in it
+    // (a wrong check answer reveals on try 1, with a style that was never drawn).
+    const style = turn.try === 2 && turn.style === drawn ? drawn : undefined;
+    return { event: "explain", ...b, revealed: true, ...(mistakeTag && { mistakeTag }), ...(style && { style }) };
+  }
+  // The retry board (try 2) draws the style picked now.
   if (feedback.then === "retry")
-    return { event: "wrong", ...b, ...(mistakeTag && { mistakeTag }), ...(style && { style }) };
+    return { event: "wrong", ...b, ...(mistakeTag && { mistakeTag }), ...(drawn && { style: drawn }) };
   // A finished placement problem (no retry, no reveal): the hint is a calm move-on to the problem already on screen,
   // so it gets nothing to aim a clue at.
   return { event: "hint", ...b };
