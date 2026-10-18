@@ -21,8 +21,9 @@ dots is hard to follow, and the style adaptation is invisible to the child.
 
 ### Domain
 
-- `Problem` (`src/domain/types.ts`) gains an optional `sum?: [number, number]`: the two addends, with
-  `answer === sum[0] + sum[1]`. The six templates set it; no other template does.
+- `Problem` (`src/domain/types.ts`) gains an optional `sum?: [number, number]`: the two addends in the order the
+  problem says them, except the Count on templates, which put the bigger number first like their own number line
+  (the skill is counting on from the bigger number), with `answer === sum[0] + sum[1]`. The six templates set it; no other template does.
 - New `src/domain/problems/styleView.ts`: `styleView(style: Style, sum: [number, number]): Visual | null`.
 
   | Style | Visual |

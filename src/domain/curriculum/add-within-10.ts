@@ -75,7 +75,7 @@ const countOnBiggerFirst = template("count-on-bigger-first", (rng, lv) => {
     say: `Start at ${a}. Count on ${b}.`,
     show: fade(lv, { kind: "number-line", from: 0, to: 10, marks: [a], jump: { from: a, by: b } }, `${a} + ${b} = ?`),
     answer: s,
-    sum: [a, b],
+    sum: [a, b], // bigger first
     mistakes: plusMinus(s, 1, "off-by-one-counting"),
   };
 });
@@ -88,7 +88,7 @@ const countOnSmallerFirst = template("count-on-smaller-first", (rng, lv) => {
     say: `What is ${a} plus ${b}?`,
     show: fade(lv, { kind: "number-line", from: 0, to: 10, marks: [b], jump: { from: b, by: a } }, `${a} + ${b} = ?`),
     answer: s,
-    sum: [a, b],
+    sum: [b, a], // bigger first, like the number line
     mistakes: plusMinus(s, 1, "off-by-one-counting"),
   };
 });

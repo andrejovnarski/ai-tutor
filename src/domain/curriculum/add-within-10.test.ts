@@ -116,4 +116,24 @@ describe("sum (addends for style views)", () => {
   it.each(WITHOUT_SUM)("%s has no sum", (id) => {
     for (const p of made(id)) expect(p.sum).toBeUndefined();
   });
+
+  it.each(["count-on-bigger-first", "count-on-smaller-first"])("%s puts the bigger addend first, like its number line", (id) => {
+    for (const p of made(id)) {
+      expect(p.sum![0]).toBeGreaterThanOrEqual(p.sum![1]);
+      const show = p.prompt.show;
+      if (show.kind === "number-line") expect(p.sum![0]).toBe(show.jump!.from);
+    }
+  });
+
+  it.each(["add-objects-10", "add-ten-frame-10", "add-facts-5", "add-line-5"])("%s sum follows the spoken order", (id) => {
+    for (const p of made(id)) {
+      const say = p.prompt.say;
+      const nums = id === "add-objects-10" ? [say.match(/^(\d+)/)![1], say.match(/and (\d+) more/)![1]]
+        : id === "add-ten-frame-10" ? null
+        : id === "add-facts-5" ? say.match(/(\d+) plus (\d+)/)!.slice(1)
+        : say.match(/Start at (\d+)\. Jump (\d+)/)!.slice(1);
+      if (nums) expect(p.sum).toEqual(nums.map(Number));
+      else expect(p.sum).toEqual([(p.prompt.show as V<"ten-frames">).first, (p.prompt.show as V<"ten-frames">).second]);
+    }
+  });
 });
