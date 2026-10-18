@@ -116,3 +116,32 @@ test("a signed-out visitor to a play page is sent to sign-in", async ({ page }) 
   await page.goto("/play/00000000-0000-4000-8000-000000000000");
   await expect(page).toHaveURL(/\/sign-in$/);
 });
+
+test("a finished session shows the end card, keeps it on reload, and Play again starts one new session", async ({ page }) => {
+  const parentId = await setUpMia(page);
+  const { data: kid } = await admin().from("kids").select("id").eq("parent_id", parentId).single();
+  const kidId = kid!.id as string;
+  await admin().from("kids").update({ placed: true }).eq("id", kidId);
+  await page.getByRole("link", { name: /Mia/ }).click();
+  await expect(page.getByTestId("say")).toBeVisible();
+
+  // Pretend the session began 25 minutes ago: past both age bands' maximum, so it winds down and ends.
+  const { data: open } = await admin().from("sessions").select("id, state").eq("kid_id", kidId).is("ended_at", null).single();
+  const state = open!.state as { startedAt: number };
+  const { error } = await admin().from("sessions").update({ state: { ...state, startedAt: Date.now() - 25 * 60_000 } }).eq("id", open!.id);
+  if (error) throw error;
+
+  const card = page.getByTestId("end-card");
+  for (let i = 0; i < 10 && !(await card.isVisible()); i++) await answerOnce(page);
+  await expect(card).toBeVisible();
+  const stats = await card.innerText();
+
+  await page.reload();
+  await expect(card).toBeVisible();
+  expect(await card.innerText()).toBe(stats);
+
+  await page.getByRole("button", { name: "Play again" }).click();
+  await expect(page.getByTestId("say")).toBeVisible();
+  const { data: openNow } = await admin().from("sessions").select("id").eq("kid_id", kidId).is("ended_at", null);
+  expect(openNow).toHaveLength(1);
+});
