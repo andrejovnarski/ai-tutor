@@ -65,6 +65,7 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
     const s = stateRef.current;
     if (busy.current || s.phase !== "problem" || s.version === undefined) return;
     busy.current = true;
+    lastPath.current = "turn"; // a Play again that got us here has succeeded; retry must not start another session
     const g = gen.current;
     dispatch({ type: "send" });
     try {
