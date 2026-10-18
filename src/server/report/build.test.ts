@@ -9,7 +9,7 @@ const kid = (o: Partial<KidWeek> = {}): KidWeek => ({
 describe("buildWeeklyReport", () => {
   it("shows the counts, skill names, stuck points and the tip", () => {
     const r = buildWeeklyReport([kid()], "2026-10-04");
-    expect(r.subject).toBe("Your week with Math Friend");
+    expect(r.subject).toBe("Your week with Brightling AI");
     for (const body of [r.text, r.html]) {
       expect(body).toContain("Ann");
       expect(body).toContain("3 sessions");

@@ -11,7 +11,7 @@ const andika = Andika({
 });
 
 export const metadata: Metadata = {
-  title: "Math Friend",
+  title: "Brightling AI",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

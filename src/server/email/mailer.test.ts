@@ -10,7 +10,7 @@ afterEach(() => {
 
 describe("mailpitMailer", () => {
   it("posts the message to Mailpit's send API", async () => {
-    vi.stubEnv("EMAIL_FROM", "Math Friend <hello@localhost>");
+    vi.stubEnv("EMAIL_FROM", "Brightling AI <hello@localhost>");
     vi.stubEnv("MAILPIT_URL", "");
     const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);

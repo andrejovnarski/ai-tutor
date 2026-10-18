@@ -104,7 +104,7 @@ describe("say route", () => {
     const mail = await latestEmailTo(emailA);
     expect(mail.Subject).toBe("Ann said something that worried us");
     expect(mail.Text).toContain("sometimes I want to die.");
-    expect(mail.Text).toContain("Math Friend is not a crisis service. If your child may be in danger, call 911. For a mental health crisis, call or text 988.");
+    expect(mail.Text).toContain("Brightling AI is not a crisis service. If your child may be in danger, call 911. For a mental health crisis, call or text 988.");
   });
 
   it("if the email fails the kid still hears the line, the row is kept unsent, and the retry sends it", async () => {

@@ -22,7 +22,7 @@ it("GrownupFrame shows the strip and back link, or the big title when bare", () 
   const strip = renderToStaticMarkup(<GrownupFrame back={{ href: "/", label: "Back to kids" }}><h1>X</h1></GrownupFrame>);
   expect(strip).toContain("For grown-ups"); expect(strip).toContain('href="/"'); expect(strip).toContain("Back to kids");
   const bare = renderToStaticMarkup(<GrownupFrame bare><h1>X</h1></GrownupFrame>);
-  expect(bare).toContain("Math Friend"); expect(bare).not.toContain("For grown-ups");
+  expect(bare).toContain("Brightling AI"); expect(bare).not.toContain("For grown-ups");
 });
 it("PinField keeps a labelled 4-digit numeric input", () => {
   const html = renderToStaticMarkup(<PinField name="pin" label="New PIN" />);

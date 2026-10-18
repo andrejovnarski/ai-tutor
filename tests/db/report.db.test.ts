@@ -90,7 +90,7 @@ describe("weekly report", () => {
     expect(rows[0].week_start).toBe(WEEK_START);
 
     const mail = await latestEmailTo(email);
-    expect(mail.Subject).toBe("Your week with Math Friend");
+    expect(mail.Subject).toBe("Your week with Brightling AI");
     expect(mail.Text).toContain("Zoe");
     expect(mail.Text).toContain("2 sessions");
     expect(mail.Text).toContain("30 minutes");

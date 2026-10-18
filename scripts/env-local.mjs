@@ -16,7 +16,7 @@ writeFileSync(
     `PARENT_COOKIE_SECRET=${secret}`,
     `CONSENT_GATEWAY=${keep("CONSENT_GATEWAY", "fake")}`,
     `MAILER=${keep("MAILER", "mailpit")}`,
-    `EMAIL_FROM=${keep("EMAIL_FROM", "Math Friend <hello@localhost>")}`,
+    `EMAIL_FROM=${keep("EMAIL_FROM", "Brightling AI <hello@localhost>")}`,
     `APP_ORIGIN=${keep("APP_ORIGIN", "http://localhost:3000")}`,
     `TUTOR_VOICE=${keep("TUTOR_VOICE", "canned")}`,
     `CRON_SECRET=${keep("CRON_SECRET", crypto.randomUUID() + crypto.randomUUID())}`,

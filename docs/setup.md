@@ -39,7 +39,7 @@ Pick a US region everywhere (Supabase, Vercel functions, Azure) so data stays in
 4. In Authentication, Email Templates, set the **Magic Link** template to the same body as `supabase/templates/magic_link.html`:
    ```html
    <h2>Sign in</h2>
-   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Sign in to Adaptive Tutor</a></p>
+   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Sign in to Brightling AI</a></p>
    ```
 
 ### Cautions

@@ -1,4 +1,4 @@
-# Math Friend: brief for privacy review (COPPA)
+# Brightling AI: brief for privacy review (COPPA)
 
 Prepared 2026-10-10 for a COPPA-experienced lawyer, before a pilot with about 10 US families. Written by the product owner; not legal advice. The questions we need answered are at the end.
 

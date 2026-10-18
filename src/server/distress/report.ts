@@ -4,7 +4,7 @@ import { env } from "../env";
 import { getMailer } from "../email/mailer";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const NOTICE = "Math Friend is not a crisis service. If your child may be in danger, call 911. For a mental health crisis, call or text 988.";
+const NOTICE = "Brightling AI is not a crisis service. If your child may be in danger, call 911. For a mental health crisis, call or text 988.";
 
 const db = () =>
   createClient(env.supabaseUrl(), env.supabaseSecretKey(), { auth: { persistSession: false, autoRefreshToken: false } });

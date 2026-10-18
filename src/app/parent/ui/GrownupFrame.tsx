@@ -31,7 +31,7 @@ export function GrownupFrame({
       {bare ? (
         <div className={styles.bareHead}>
           <NovaMark className={styles.novaBig} />
-          <p className={styles.appName}>Math Friend</p>
+          <p className={styles.appName}>Brightling AI</p>
         </div>
       ) : (
         <div className={styles.strip}>

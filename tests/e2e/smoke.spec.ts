@@ -9,6 +9,6 @@ test("home page loads on a tablet with no console errors", async ({ page }) => {
 
   const response = await page.goto("/");
   expect(response?.status()).toBe(200);
-  await expect(page).toHaveTitle("Math Friend");
+  await expect(page).toHaveTitle("Brightling AI");
   expect(errors).toEqual([]);
 });

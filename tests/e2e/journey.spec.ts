@@ -53,7 +53,7 @@ test("parent journey: sign up, PIN, consent, kid, play 5 answers, weekly report 
   });
   expect(res.status()).toBe(200);
 
-  await expect.poll(() => mailCountTo(email, 'subject:"Your week with Math Friend"')).toBe(1);
+  await expect.poll(() => mailCountTo(email, 'subject:"Your week with Brightling AI"')).toBe(1);
   const mail = await latestEmailTo(email);
   expect(mail.Text).toContain("Juno");
   const m = /(\d+) sessions?/.exec(mail.Text);

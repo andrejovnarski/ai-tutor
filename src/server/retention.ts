@@ -80,9 +80,9 @@ export async function runRetention(
           const link = `${env.appOrigin()}/sign-in`;
           await getMailer().send({
             to,
-            subject: "Your Math Friend account will be deleted in 30 days",
-            text: `Your Math Friend account has been inactive for a year, so we will delete it, and your children's progress, in 30 days.\n\nTo keep it, just sign in: ${link}\n\nSigning in keeps your account.`,
-            html: `<p>Your Math Friend account has been inactive for a year, so we will delete it, and your children's progress, in 30 days.</p><p>To keep it, just <a href="${link}">sign in</a>. Signing in keeps your account.</p>`,
+            subject: "Your Brightling AI account will be deleted in 30 days",
+            text: `Your Brightling AI account has been inactive for a year, so we will delete it, and your children's progress, in 30 days.\n\nTo keep it, just sign in: ${link}\n\nSigning in keeps your account.`,
+            html: `<p>Your Brightling AI account has been inactive for a year, so we will delete it, and your children's progress, in 30 days.</p><p>To keep it, just <a href="${link}">sign in</a>. Signing in keeps your account.</p>`,
           });
           // Only for this claim: if the parent signed in meanwhile (claim cleared), nothing is recorded.
           const sent = await db.from("parents").update({ retention_warn_sent_at: new Date().toISOString() })

@@ -44,7 +44,7 @@ function tipFor(kids: KidWeek[]): string {
 
 export function buildWeeklyReport(kids: KidWeek[], weekOf: string): Omit<Mail, "to"> {
   const tip = tipFor(kids);
-  const head = `Your week with Math Friend (week of ${weekOf})`;
+  const head = `Your week with Brightling AI (week of ${weekOf})`;
   const text = [
     head,
     ...kids.flatMap((k) => ["", k.nickname, ...kidLines(k).map((l) => `  ${l}`)]),
@@ -56,5 +56,5 @@ export function buildWeeklyReport(kids: KidWeek[], weekOf: string): Omit<Mail, "
     ...kids.map((k) => `<h2>${esc(k.nickname)}</h2><ul>${kidLines(k).map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`),
     `<p><strong>One tip for home:</strong> ${esc(tip)}</p>`,
   ].join("\n");
-  return { subject: "Your week with Math Friend", text, html };
+  return { subject: "Your week with Brightling AI", text, html };
 }

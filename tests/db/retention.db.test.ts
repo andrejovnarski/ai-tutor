@@ -35,7 +35,7 @@ const DAY = 86_400_000;
 const NOW = new Date();
 const ago = (d: number) => new Date(NOW.getTime() - d * DAY).toISOString();
 const emailOf = (n: string) => `ret-${n}-${run}@test.dev`;
-const SUBJECT = "Your Math Friend account will be deleted in 30 days";
+const SUBJECT = "Your Brightling AI account will be deleted in 30 days";
 
 async function setRow(id: string, patch: Record<string, unknown>) {
   const { error } = await admin().from("parents").update(patch).eq("id", id);
