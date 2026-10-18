@@ -44,6 +44,13 @@ export class SupabaseRepo implements Repo {
     return data ? open(data as SessionRow) : null;
   }
 
+  async lastEnded(kidId: string): Promise<OpenSession | null> {
+    const { data, error } = await this.db.from("sessions").select("id, version, state")
+      .eq("kid_id", kidId).not("ended_at", "is", null).order("ended_at", { ascending: false }).limit(1).maybeSingle();
+    if (error) throw error;
+    return data ? open(data as SessionRow) : null;
+  }
+
   async createSession(kidId: string, state: Session): Promise<OpenSession | null> {
     const { data, error } = await this.db.from("sessions").insert({ kid_id: kidId, state })
       .select("id, version, state").single();

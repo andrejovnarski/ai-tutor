@@ -166,6 +166,20 @@ describe("SupabaseRepo contract", () => {
     expect(await playTurn(repoB, kid, 1000, seed)).toEqual({ status: 404 });
     expect((await admin().from("sessions").select("id").eq("kid_id", kid)).data).toHaveLength(0);
   });
+  it("lastEnded returns the most recently ended session, and null for another family's kid", async () => {
+    const kid = await kidFor(true);
+    const state = startSession(placedKid(firstSkills(3)), 1, 0);
+    expect(await repoA().lastEnded(kid)).toBeNull();
+    const a = (await repoA().createSession(kid, state))!;
+    expect(await repoA().lastEnded(kid)).toBeNull();
+    await repoA().saveStep(a, a.state, true, null);
+    const b = (await repoA().createSession(kid, state))!;
+    await repoA().saveStep(b, b.state, true, null);
+    const last = (await repoA().lastEnded(kid))!;
+    expect(last.id).toBe(b.id);
+    expect(last.version).toBe(b.version + 1);
+    expect(await new SupabaseRepo(B.client).lastEnded(kid)).toBeNull();
+  });
   it("loadKid returns null for an id that is not a uuid", async () => {
     expect(await repoA().loadKid("nope")).toBeNull();
   });

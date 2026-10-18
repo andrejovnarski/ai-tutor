@@ -8,6 +8,8 @@ export interface Repo {
   /** null = not found or not yours. */
   loadKid(kidId: string): Promise<KidState | null>;
   openSession(kidId: string): Promise<OpenSession | null>;
+  /** The kid's most recently ended session; null if none or not yours. */
+  lastEnded(kidId: string): Promise<OpenSession | null>;
   /** null if the kid already has an open session (a lost create race). */
   createSession(kidId: string, state: Session): Promise<OpenSession | null>;
   /** The new version, or -1 if `s.version` is stale or the session already ended (nothing is written then). */
@@ -42,6 +44,11 @@ export class MemoryRepo implements Repo {
 
   async openSession(kidId: string): Promise<OpenSession | null> {
     const s = this.kids.has(kidId) ? this.open(kidId) : undefined;
+    return s ? { id: s.id, version: s.version, state: copy(s.state) } : null;
+  }
+
+  async lastEnded(kidId: string): Promise<OpenSession | null> {
+    const s = this.kids.has(kidId) ? this.sessions.filter((x) => x.kidId === kidId && x.ended).at(-1) : undefined;
     return s ? { id: s.id, version: s.version, state: copy(s.state) } : null;
   }
 

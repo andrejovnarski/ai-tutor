@@ -76,3 +76,17 @@ it("writes rows for the session's own kid, not the kid id in the writes", async 
   expect((await repo.loadKid(kid.kidId))!.skills[st.skillId]!.attempts).toBe(99);
   expect((await repo.loadKid(other.kidId))!.skills[st.skillId]!.attempts).toBe(st.attempts);
 });
+
+it("lastEnded is null with no ended session, then the newest ended one", async () => {
+  const repo = setup();
+  expect(await repo.lastEnded(kid.kidId)).toBeNull();
+  const a = (await repo.createSession(kid.kidId, startSession(kid, 1, 0)))!;
+  expect(await repo.lastEnded(kid.kidId)).toBeNull(); // open, not ended
+  await repo.saveStep(a, a.state, true, null);
+  const b = (await repo.createSession(kid.kidId, startSession(kid, 2, 0)))!;
+  await repo.saveStep(b, { ...b.state, seed: 2 }, true, null);
+  const last = await repo.lastEnded(kid.kidId);
+  expect(last!.id).toBe(b.id);
+  expect(last!.version).toBe(b.version + 1);
+  expect(await repo.lastEnded("nope")).toBeNull();
+});
