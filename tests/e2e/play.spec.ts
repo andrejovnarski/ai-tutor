@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { admin, makeParent } from "../helpers/admin";
+import { SKILLS } from "../../src/domain/curriculum/index";
 import { attempts, setUpMia, unique } from "./helpers";
 
 const choiceButtons = (page: Page) => page.getByTestId("choices").getByRole("button");
@@ -144,4 +145,61 @@ test("a finished session shows the end card, keeps it on reload, and Play again 
   await expect(page.getByTestId("say")).toBeVisible();
   const { data: openNow } = await admin().from("sessions").select("id").eq("kid_id", kidId).is("ended_at", null);
   expect(openNow).toHaveLength(1);
+});
+
+// How each picture kind shows in the DOM (see src/app/play/visuals).
+const KIND_MARK: Record<string, string> = {
+  objects: "[data-group]", "ten-frames": "[data-frame]", "number-line": "[data-tick]",
+  blocks: "[data-cube], [data-rod]", equation: "svg[role=img]", story: "[data-story-text]",
+};
+const SUMS = ["add-within-10.pictures", "add-within-10.within-5", "add-within-10.count-on"];
+
+test("a wrong answer on a sum problem shows the retry picture the server sent, and a reload keeps it", async ({ page }) => {
+  const parentId = await setUpMia(page);
+  const { data: kid } = await admin().from("kids").select("id").eq("parent_id", parentId).single();
+  const kidId = kid!.id as string;
+  await admin().from("kids").update({ placed: true }).eq("id", kidId);
+  // Everything outside the sum skills is mastered, so the sum skills are what she works on.
+  const blocked = new Set(SUMS); // the sum skills and everything that needs them stay unmastered
+  for (const sk of SKILLS) if (sk.needs.some((n) => blocked.has(n))) blocked.add(sk.id);
+  const rows = SKILLS.filter((sk) => !blocked.has(sk.id)).map((sk) => ({
+    kid_id: kidId, skill_id: sk.id, p_known: 0.99, attempts: 10, level: 1, correct_streak: 5, wrong_streak: 0,
+    placed: true, recent_tags: [], mastered_at: new Date().toISOString(),
+  }));
+  const { error } = await admin().from("skill_state").insert(rows);
+  if (error) throw error;
+
+  await page.getByRole("link", { name: /Mia/ }).click();
+  await expect(page.getByTestId("say")).toBeVisible();
+
+  let kind: string | null = null;
+  for (let i = 0; i < 5 && !kind; i++) {
+    const { data: open } = await admin().from("sessions").select("state").eq("kid_id", kidId).is("ended_at", null).single();
+    const pending = (open!.state as { pending: { problem: { answer: number }; skillId: string } }).pending;
+    const right = pending.problem.answer;
+    const before = await page.locator("main").getAttribute("data-version");
+    const reply = page.waitForResponse((r) => /\/api\/kids\/[^/]+\/answer$/.test(r.url()) && r.request().method() === "POST");
+    if (await page.getByTestId("choices").count()) {
+      const tiles = choiceButtons(page);
+      const n = await tiles.count();
+      for (let t = 0; t < n; t++) {
+        if ((await tiles.nth(t).innerText()).trim() !== String(right)) { await tiles.nth(t).click(); break; }
+      }
+    } else {
+      for (const d of String(right + 1)) await page.getByRole("button", { name: d, exact: true }).click();
+      await page.getByRole("button", { name: "OK" }).click();
+    }
+    const body = await (await reply).json();
+    await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
+    // A retry of a sum skill carries the picture; any other problem (or a prerequisite check) just moves on.
+    if (SUMS.includes(pending.skillId) && body.next?.try === 2) {
+      expect(body.next.prompt.show).toBeTruthy();
+      kind = body.next.prompt.show.kind as string;
+    }
+  }
+  expect(kind, "a sum retry within 5 problems").not.toBeNull();
+  const mark = page.getByTestId("board").locator(KIND_MARK[kind!]!).first();
+  await expect(mark).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("board").locator(KIND_MARK[kind!]!).first()).toBeVisible();
 });
