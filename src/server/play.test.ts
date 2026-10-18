@@ -106,7 +106,7 @@ it.each([
 
 it("an open session abandoned yesterday closes quietly and starts fresh", async () => {
   const repo = setup();
-  await playTurn(repo, kid.kidId, TODAY - 18 * HOUR, seed); // 20:00 EDT yesterday, never answered
+  await playTurn(repo, kid.kidId, TODAY - 18 * HOUR, seed); // 16:00 EDT yesterday, never answered
   const t = ok(await playTurn(repo, kid.kidId, TODAY, seed));
   expect(t.turn.kind).toBe("problem");
   expect(repo.sessions).toHaveLength(2);
@@ -114,13 +114,35 @@ it("an open session abandoned yesterday closes quietly and starts fresh", async 
   expect(openSessions(repo)).toHaveLength(1);
 });
 
-it("an open session abandoned earlier today shows its end card", async () => {
+it("an open session abandoned earlier today after an answer shows its end card", async () => {
+  const repo = setup();
+  const t0 = ok(await playTurn(repo, kid.kidId, TODAY, seed));
+  await playAnswer(repo, kid.kidId, t0.version, pendingAnswer(repo), TODAY + MIN, seed);
+  const t = ok(await playTurn(repo, kid.kidId, TODAY + 2 * HOUR, seed));
+  expect(t.turn.kind).toBe("end");
+  if (t.turn.kind === "end") expect(t.turn.summary.problems).toBe(1);
+  expect(openSessions(repo)).toHaveLength(0);
+  expect(await playTurn(repo, kid.kidId, TODAY + 3 * HOUR, seed)).toEqual(t);
+});
+
+it("an open session abandoned earlier today with no answers never shows an end card", async () => {
   const repo = setup();
   await playTurn(repo, kid.kidId, TODAY, seed);
   const t = ok(await playTurn(repo, kid.kidId, TODAY + 2 * HOUR, seed));
-  expect(t.turn.kind).toBe("end");
-  expect(openSessions(repo)).toHaveLength(0);
-  expect(await playTurn(repo, kid.kidId, TODAY + 3 * HOUR, seed)).toEqual(t);
+  expect(t.turn.kind).toBe("problem");
+  expect(repo.sessions).toHaveLength(2);
+  expect(repo.sessions[0]!.ended).toBe(true);
+  expect(openSessions(repo)).toHaveLength(1);
+});
+
+it("with no open session, a session ended today with no answers starts fresh", async () => {
+  const repo = setup();
+  await playTurn(repo, kid.kidId, TODAY, seed);
+  repo.sessions[0]!.ended = true;
+  const t = ok(await playTurn(repo, kid.kidId, TODAY + MIN, seed));
+  expect(t.turn.kind).toBe("problem");
+  expect(repo.sessions).toHaveLength(2);
+  expect(openSessions(repo)).toHaveLength(1);
 });
 
 it("play again starts exactly one session, also when two tablets race", async () => {

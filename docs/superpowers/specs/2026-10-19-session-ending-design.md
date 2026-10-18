@@ -27,7 +27,8 @@ reaches them. Practice feels endless and the session length (10–15 or 15–20 
    last answer). With no open session, read the child's most recent ended session: if its day is today, return its
    end turn (summary rebuilt from its state) with its version; otherwise start a fresh session. With an open session
    that the engine now ends (for example abandoned and gone stale), save the end; show the end card only if its day
-   is today, otherwise start fresh, so yesterday's half-finished session never says "Great work today!".
+   is today, otherwise start fresh, so yesterday's half-finished session never says "Great work today!". A session with no answered problems never
+   shows an end card; opening play starts fresh instead.
 3. **Play again.** New `playAgain(repo, kidId, now, seed, ...)`: if an open session exists, return its current step
    (another tablet already started one); otherwise start a fresh session. Play again never returns an end card: an
    open session that the engine ends is saved and replaced by a fresh one. The `one_open_session` unique index means

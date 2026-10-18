@@ -86,10 +86,11 @@ async function commit(c: Ctx, open: OpenSession, session: Session, turn: Turn, w
 /** A session's day is the New York date of its last activity (spec: the end card stays up until NY midnight). */
 const endedToday = (c: Ctx, s: Session) => nyDay(s.lastActivity) === nyDay(c.now);
 
-/** The end card of the kid's last session if it ended today; its summary is rebuilt from the saved state. */
+/** The end card of the kid's last session if it ended today and had answered problems (an empty one never says
+ * "Great work today!"); its summary is rebuilt from the saved state. */
 async function todaysEndCard(c: Ctx): Promise<Step | null> {
   const last = await c.repo.lastEnded(c.kidId);
-  if (!last || !endedToday(c, last.state)) return null;
+  if (!last || !endedToday(c, last.state) || last.state.problems === 0) return null;
   return { version: last.version, turn: { kind: "end", summary: summaryOf(last.state, last.state.lastActivity) } };
 }
 
