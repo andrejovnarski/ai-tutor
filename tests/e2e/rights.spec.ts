@@ -22,7 +22,7 @@ test("view, export, delete a kid, then delete the account", async ({ page }) => 
   }
   await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
 
-  // The kid page shows the session in plain words, with no ids; the export is JSON with the nickname.
+  // The kid page shows the session in plain words, with no ids; the export is indented JSON with a guide on top.
   await page.goto("/parent");
   await page.getByRole("link", { name: "Mia" }).click();
   await expect(page.getByRole("heading", { name: /Mia's week/ })).toBeVisible();
@@ -37,7 +37,7 @@ test("view, export, delete a kid, then delete the account", async ({ page }) => 
   await page.getByRole("link", { name: /Download everything we store about Mia/ }).click();
   const file = await download;
   expect(file.suggestedFilename()).toBe("Mia-data.json");
-  expect(await readFile((await file.path())!, "utf8")).toContain('"nickname":"Mia"');
+  expect(await readFile((await file.path())!, "utf8")).toMatch(/^\{\n  "about": \{[\s\S]*"nickname": "Mia"/);
 
   // A wrong name is refused; the right name removes Mia.
   await page.getByLabel(/Type Mia to confirm/).fill("mia");
