@@ -18,6 +18,23 @@ describe("EndCard", () => {
     expect(html).toMatch(/<button[^>]*>Play again<\/button>/);
     expect(html).toMatch(/<a[^>]*href="\/"[^>]*>Back to kids<\/a>/);
   });
+  it("without rewards renders exactly as before (no strip)", () => {
+    expect(html).not.toContain("rewards-strip");
+    expect(html).toBe(renderToStaticMarkup(<EndCard summary={{ problems: 7, firstTryCorrect: 5 }} rewards={undefined} onPlayAgain={() => {}} />));
+    // The card as it was before rewards existed, with CSS-module hashes normalised.
+    expect(html.replace(/_([a-zA-Z]+)_[0-9a-z]+/g, "$1")).toBe(
+      '<section class="endCard" data-testid="end-card" aria-labelledby="end-title"><h1 id="end-title" class="endTitle">Great work today!</h1>'
+      + '<div class="endStats"><p class="endStat"><span class="endNumber">7</span> problems</p><p class="endStat"><span class="endNumber">5</span> right on the first try</p></div>'
+      + '<div class="endActions"><button type="button" class="endButton">Play again</button><a class="endLink" href="/">Back to kids</a></div></section>',
+    );
+  });
+  it("with rewards shows the strip after the counts", () => {
+    const rewards = { xp: 60, levelBefore: 1, levelAfter: 1, cubesBefore: 0, cubesAfter: 1, newStickers: ["first-game"],
+      week: { days: [false, true, false, false, false, false, false], played: 1, goalMet: false } };
+    const withR = renderToStaticMarkup(<EndCard summary={{ problems: 7, firstTryCorrect: 5 }} rewards={rewards} onPlayAgain={() => {}} />);
+    expect(withR).toContain('data-testid="rewards-strip"');
+    expect(text(withR)).toMatch(/right on the first try.*\+60.*Play again/);
+  });
   it("uses the singular for one problem", () => {
     const one = text(renderToStaticMarkup(<EndCard summary={{ problems: 1, firstTryCorrect: 1 }} onPlayAgain={() => {}} />));
     expect(one).toContain("1 problem");

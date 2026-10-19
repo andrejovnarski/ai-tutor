@@ -142,6 +142,17 @@ describe("playReducer", () => {
     expect(playReducer({ phase: "loading" }, { type: "loaded", body: { version: 1, turn: { kind: "end", summary } as never } }))
       .toMatchObject({ phase: "ended", summary });
   });
+  it("an end turn with rewards puts them on state; without, rewards is undefined", () => {
+    const summary = { problems: 2, firstTryCorrect: 1 } as never;
+    const rewards = { xp: 40, levelBefore: 1, levelAfter: 1, cubesBefore: 0, cubesAfter: 0, newStickers: [],
+      week: { days: [true, false, false, false, false, false, false], played: 1, goalMet: false } };
+    const loaded = playReducer({ phase: "loading" }, { type: "loaded", body: { version: 1, turn: { kind: "end", summary, rewards } as never } });
+    expect(loaded.rewards).toEqual(rewards);
+    const answeredEnd = playReducer(base, { type: "answered", body: answered({ next: { kind: "end", summary, rewards } as never, nextLine: undefined }) });
+    expect(answeredEnd.rewards).toEqual(rewards);
+    expect(playReducer({ phase: "loading" }, { type: "loaded", body: { version: 1, turn: { kind: "end", summary } as never } }).rewards).toBeUndefined();
+    expect(playReducer(base, { type: "answered", body: answered({ next: { kind: "end", summary } as never, nextLine: undefined }) }).rewards).toBeUndefined();
+  });
   it("send only from problem; retrying and offline keep the turn", () => {
     expect(playReducer({ phase: "problem", version: 1 }, { type: "send" }).phase).toBe("sending");
     for (const phase of ["sending", "retrying", "offline", "loading", "ended"] as const) {

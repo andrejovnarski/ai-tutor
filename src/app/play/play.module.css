@@ -117,10 +117,12 @@
 .endArea {
   grid-row: 2 / 4;
   display: flex;
-  align-items: center;
   justify-content: center;
   padding: 0 16px 24px;
   min-height: 0;
+  /* A tall card (rewards on a phone) scrolls instead of being cut off; "safe" keeps its top reachable. */
+  overflow-y: auto;
+  align-items: safe center;
 }
 
 .endCard {
@@ -153,6 +155,18 @@
   flex-direction: column;
   align-items: center;
   font-size: var(--text-s);
+}
+
+/* With rewards: the counts beside the rewards strip (stacked on narrow screens). */
+.endBody {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+.endBody .endStats {
+  flex-direction: column;
+  gap: 16px;
 }
 
 .endNumber {
@@ -553,6 +567,8 @@
   .endCard { padding: 24px 20px; gap: 20px; width: 100%; box-sizing: border-box; }
   .endTitle { font-size: 32px; }
   .endStats { gap: 24px; }
+  .endBody { flex-direction: column; gap: 20px; align-self: stretch; }
+  .endBody .endStats { flex-direction: row; justify-content: center; }
   .endActions { flex-direction: column; align-self: stretch; gap: 12px; }
   .endButton, .endLink { min-height: 72px; }
 }
