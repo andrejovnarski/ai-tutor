@@ -115,7 +115,7 @@ Nothing new. The existing Nova line on a mastered skill stays as it is.
 - **Child page:** a "Rewards" section between "this week" and "Progress", in the exercise-book style: level and rod,
   the week streak ("Week goal met 4 weeks in a row" or, at 0, "Week goal: 3 days a week"), and the sticker chart as
   a list with dates and plain words ("Make 10 — mastered in practice, Oct 14").
-- **Weekly email:** one line, e.g. "Mia reached level 5, earned 2 stickers, and has met her week goal 4 weeks in a
+- **Weekly email:** one line, e.g. "Mia reached level 5, earned 2 stickers, and met the week goal 4 weeks in a
   row." Each part appears only if it is true for that week. With nothing to say, the line is left out.
 
 ## Architecture
