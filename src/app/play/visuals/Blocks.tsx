@@ -76,5 +76,8 @@ export function Blocks({ v }: { v: Extract<Visual, { kind: "blocks" }> }) {
     }
     x += GAPG;
   });
-  return <Svg label={describeVisual(v)}>{out}</Svg>;
+  // Rods stand ten cubes high; loose cubes (and a broken rod's outline) stack at most five.
+  const tall = plans.some((p) => p.rods > 0) ? 10 * c : 5 * c + 5;
+  const box = { x0: (W - total) / 2 - 5, y0: base - tall, x1: (W + total) / 2, y1: base };
+  return <Svg label={describeVisual(v)} box={box}>{out}</Svg>;
 }

@@ -3,7 +3,7 @@
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { admin } from "../helpers/admin";
-import { parentId, requestLink, signIn, unique } from "./helpers";
+import { hideDevBadge, parentId, requestLink, signIn, unique } from "./helpers";
 
 // The brief asked for the 40-character "Alexandria Maximiliana Wolfeschlegelstei" (the input's maxLength), but the
 // server (parseKidProfile) and the database (kids_nickname_check) both cap a nickname at 20. So the stress case is
@@ -26,6 +26,7 @@ for (const size of SIZES) {
     test.setTimeout(120_000);
     mkdirSync("test-results/grownup", { recursive: true });
     await page.setViewportSize({ width: size.width, height: size.height });
+    await hideDevBadge(page);
     const shot = async (screen: string) => {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow, `${size.name} ${screen} scrolls sideways`).toBeLessThanOrEqual(0);

@@ -1,5 +1,5 @@
 import type { Icon, Visual } from "@/domain/types";
-import { Svg, Cross, layoutGroups, H } from "./common";
+import { Svg, Cross, layoutGroups, slotsBox, H } from "./common";
 import { ICONS } from "./icons";
 import { describeVisual } from "./describe";
 
@@ -37,7 +37,7 @@ export function Objects({ v }: { v: Extract<Visual, { kind: "objects" }> }) {
   const n0 = v.groups[0] ?? 0;
   const k = Math.min(v.crossedOut ?? 0, n0);
   return (
-    <Svg label={describeVisual(v)}>
+    <Svg label={describeVisual(v)} box={slotsBox(layoutGroups(v.groups, 20, H - 20))}>
       <IconRows icon={v.icon} groups={v.groups} top={20} bottom={H - 20} crossed={(s) => s.group === 0 && s.index >= n0 - k} />
     </Svg>
   );

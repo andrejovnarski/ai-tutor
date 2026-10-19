@@ -3,10 +3,31 @@ import type { ReactNode } from "react";
 export const W = 800;
 export const H = 380;
 
-export function Svg({ label, children }: { label: string; children: ReactNode }) {
+const r1 = (n: number) => Math.round(n * 10) / 10;
+
+/** What a picture actually covers, in the W x H drawing space. */
+export type Box = { x0: number; y0: number; x1: number; y1: number };
+
+// The viewBox crops to the drawing plus a margin, so the picture fills the board instead of shrinking with the empty
+// canvas around it. The crop is never shorter than MIN_H, so three apples don't grow to fill a whole tablet.
+const PAD = 24;
+const MIN_H = 200;
+const MIN_W = 240;
+
+export function cropTo(b: Box): string {
+  let x = b.x0 - PAD;
+  let y = b.y0 - PAD;
+  let w = b.x1 - b.x0 + 2 * PAD;
+  let h = b.y1 - b.y0 + 2 * PAD;
+  if (h < MIN_H) { y -= (MIN_H - h) / 2; h = MIN_H; }
+  if (w < MIN_W) { x -= (MIN_W - w) / 2; w = MIN_W; }
+  return [x, y, w, h].map(r1).join(" ");
+}
+
+export function Svg({ label, box, children }: { label: string; box?: Box; children: ReactNode }) {
   return (
     <svg
-      viewBox={`0 0 ${W} ${H}`}
+      viewBox={box ? cropTo(box) : `0 0 ${W} ${H}`}
       width="100%"
       height="100%"
       preserveAspectRatio="xMidYMid meet"
@@ -17,8 +38,6 @@ export function Svg({ label, children }: { label: string; children: ReactNode })
     </svg>
   );
 }
-
-const r1 = (n: number) => Math.round(n * 10) / 10;
 
 // A chalk "×" over a box centred on (cx, cy) with half-size h. Counted by data-cross on the group.
 export function Cross({ cx, cy, h }: { cx: number; cy: number; h: number }) {
@@ -31,7 +50,18 @@ export function Cross({ cx, cy, h }: { cx: number; cy: number; h: number }) {
   );
 }
 
-export type Slot = { cx: number; cy: number; s: number; group: number; index: number; flat: number };
+/** The box around icon slots (each icon stays inside ±s/2 of its centre). */
+export function slotsBox(slots: Slot[]): Box | undefined {
+  if (!slots.length) return undefined;
+  return {
+    x0: Math.min(...slots.map((s) => s.cx - s.s / 2)),
+    y0: Math.min(...slots.map((s) => s.cy - s.s / 2)),
+    x1: Math.max(...slots.map((s) => s.cx + s.s / 2)),
+    y1: Math.max(...slots.map((s) => s.cy + s.s / 2)),
+  };
+}
+
+export type Slot ={ cx: number; cy: number; s: number; group: number; index: number; flat: number };
 
 // Lay groups out left to right, each wrapping at 5 per row, centred in the band top..bottom.
 export function layoutGroups(groups: number[], top: number, bottom: number): Slot[] {

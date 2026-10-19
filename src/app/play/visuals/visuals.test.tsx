@@ -15,11 +15,10 @@ const num = (tag: string, a: string) => {
 // Asserts every positioned element is inside the viewBox; returns how many things were checked.
 function assertInside(html: string): number {
   const vb = html.match(/viewBox="([\d.\s-]+)"/)![1]!.split(/\s+/).map(Number);
-  const W = vb[2]!;
-  const H = vb[3]!;
+  const [X, Y, W, H] = vb as [number, number, number, number];
   let checked = 0;
-  const inX = (x: number) => { expect(x).toBeGreaterThanOrEqual(0); expect(x).toBeLessThanOrEqual(W); checked++; };
-  const inY = (y: number) => { expect(y).toBeGreaterThanOrEqual(0); expect(y).toBeLessThanOrEqual(H); checked++; };
+  const inX = (x: number) => { expect(x).toBeGreaterThanOrEqual(X); expect(x).toBeLessThanOrEqual(X + W); checked++; };
+  const inY = (y: number) => { expect(y).toBeGreaterThanOrEqual(Y); expect(y).toBeLessThanOrEqual(Y + H); checked++; };
   for (const m of html.matchAll(/<(rect|circle|ellipse|text|line|path)\b[^>]*>/g)) {
     const t = m[0];
     const k = m[1];
@@ -38,13 +37,30 @@ function assertInside(html: string): number {
     } else if (k === "line") {
       inX(num(t, "x1")!); inX(num(t, "x2")!); inY(num(t, "y1")!); inY(num(t, "y2")!);
     } else {
-      const d = t.match(/\sd="([^"]*)"/)![1]!;
+      // A curve's control point (Q cx cy x y) is not on the curve; only its end points are drawn.
+      const d = t.match(/\sd="([^"]*)"/)![1]!.replace(/Q\s*-?[\d.]+\s+-?[\d.]+/g, "L");
       const ns = d.match(/-?[\d.]+/g)!.map(Number);
       for (let i = 0; i + 1 < ns.length; i += 2) { inX(ns[i]!); inY(ns[i + 1]!); }
     }
   }
   return checked;
 }
+
+describe("crop", () => {
+  const box = (html: string) => html.match(/viewBox="([\d.\s-]+)"/)![1]!.split(/\s+/).map(Number);
+  it("crops a picture to what it draws, so it fills the board", () => {
+    const [, , w, h] = box(render({ kind: "ten-frames", first: 3, second: 0 }));
+    expect(w).toBeLessThan(400); // one frame is 300 wide, not the 800 canvas
+    expect(h).toBe(200); // 120 tall plus margins, raised to the minimum height
+  });
+  it("never crops shorter than 200, so a few apples stay apple-sized", () => {
+    expect(box(render({ kind: "objects", icon: "apple", groups: [2] }))[3]).toBe(200);
+  });
+  it("a 0..100 line labels at 30 so the numbers stay readable when the line is scaled down", () => {
+    const html = render({ kind: "number-line", from: 0, to: 100, marks: [] });
+    expect([...html.matchAll(/<text data-label="\d+"[^>]*font-size="(\d+)"/g)].map((m) => m[1])).toContain("30");
+  });
+});
 
 describe("every visual", () => {
   const all: V[] = [
@@ -183,7 +199,7 @@ describe("number-line", () => {
     expect(describeVisual(v)).not.toContain("47");
     expect(describeVisual(v)).toContain("7");
     expect(count(html, "data-tick")).toBe(21);
-    expect(html).toContain('viewBox="0 0 800 380"');
+    expect(html).toContain('viewBox="-11 99.2 822 228.8"'); // cropped to the line, its labels and the jump
     assertInside(html);
   });
   it("uses a minus sign for backward jumps", () => {

@@ -34,8 +34,9 @@ export function TenFrames({ v }: { v: Extract<Visual, { kind: "ten-frames" }> })
       );
     }
   }
+  const box = { x0, y0, x1: x0 + nf * FW + (nf - 1) * FGAP, y1: y0 + FH };
   return (
-    <Svg label={describeVisual(v)}>
+    <Svg label={describeVisual(v)} box={box}>
       {Array.from({ length: nf }, (_, f) => {
         const fx = x0 + f * (FW + FGAP);
         return (

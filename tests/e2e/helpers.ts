@@ -75,3 +75,14 @@ export const attempts = async (parentId: string) => {
   const { count } = await admin().from("attempts").select("*", { count: "exact", head: true }).eq("kid_id", kid!.id);
   return count ?? 0;
 };
+
+/** Against `next dev`, its badge sits over the bottom-left tile on a phone. It is not part of the app: hide it. */
+export async function hideDevBadge(page: Page) {
+  await page.addInitScript(() => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const s = document.createElement("style");
+      s.textContent = "nextjs-portal { display: none !important; }";
+      document.head.append(s);
+    });
+  });
+}

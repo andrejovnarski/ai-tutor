@@ -6,6 +6,17 @@ import styles from "./play.module.css";
 
 const KEYS: PadKey[] = ["1", "2", "3", "4", "5", "del", "6", "7", "8", "9", "0", "ok"];
 
+// A drawn backspace key, in the same ink stroke as the tile borders.
+function DeleteIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 40 28" width="40" height="28" fill="none" stroke="currentColor"
+      strokeWidth="3" strokeLinejoin="round" strokeLinecap="round">
+      <path d="M13 2 H36 a2 2 0 0 1 2 2 V24 a2 2 0 0 1 -2 2 H13 L2 14 Z" />
+      <path d="M19 9 L29 19 M29 9 L19 19" />
+    </svg>
+  );
+}
+
 export function NumberPad({ locked, onAnswer }: { locked: boolean; onAnswer: (given: number) => void }) {
   const [entry, setEntry] = useState("");
 
@@ -32,7 +43,7 @@ export function NumberPad({ locked, onAnswer }: { locked: boolean; onAnswer: (gi
             disabled={locked || (k === "ok" && entry === "")}
             onClick={() => press(k)}
           >
-            {k === "del" ? "⌫" : k === "ok" ? "OK" : k}
+            {k === "del" ? <DeleteIcon /> : k === "ok" ? "OK" : k}
           </button>
         ))}
       </div>

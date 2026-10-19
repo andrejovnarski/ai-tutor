@@ -91,7 +91,7 @@ describe("NumberPad", () => {
   it("has 12 buttons with an accessible Delete", () => {
     expect(buttons(html)).toHaveLength(12);
     expect(html).toContain('aria-label="Delete"');
-    expect(html).toContain("⌫");
+    expect(html).toMatch(/data-key="del"[^>]*><svg aria-hidden="true"/); // a drawn icon, not a text glyph
   });
   it("keeps OK disabled while the entry is empty", () => {
     const ok = buttons(html).find((b) => b.includes('data-key="ok"'))!;

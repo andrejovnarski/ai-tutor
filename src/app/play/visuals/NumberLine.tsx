@@ -1,5 +1,5 @@
 import type { Visual } from "@/domain/types";
-import { Svg, W } from "./common";
+import { Svg, W, type Box } from "./common";
 import { describeVisual, labelStep } from "./describe";
 
 const SIDE = 40;
@@ -13,12 +13,13 @@ export function NumberLine({ v }: { v: Extract<Visual, { kind: "number-line" }> 
   const labelEvery = labelStep(v.from, v.to);
   // Two-digit labels need a visible gap: about 1.1 em of digits inside each label pitch, less 10 units.
   const pitch = ((W - 2 * SIDE) / span) * labelEvery;
-  const labelSize = span <= 20 ? Math.min(28, Math.floor((pitch - 10) / 1.1)) : 22;
+  const labelSize = span <= 20 ? Math.min(28, Math.floor((pitch - 10) / 1.1)) : 30;
   const ticks: number[] = [];
   for (let n = Math.ceil(v.from / minor) * minor; n <= v.to; n += minor) ticks.push(n);
 
   const j = v.jump;
   let jump = null;
+  let top = LINE_Y - 16; // a mark's ring
   if (j && j.by !== 0) {
     const a = x(j.from);
     const b = x(j.from + j.by);
@@ -26,6 +27,7 @@ export function NumberLine({ v }: { v: Extract<Visual, { kind: "number-line" }> 
     const peak = LINE_Y - 30 - h;
     const ctl = LINE_Y - 30 - 2 * h;
     const dir = b >= a ? 1 : -1;
+    top = peak - 12 - 28;
     jump = (
       <g data-jump="true">
         <path d={`M ${a} ${LINE_Y - 30} Q ${r1((a + b) / 2)} ${ctl} ${b} ${LINE_Y - 30}`} fill="none" stroke="var(--counter-yellow)" strokeWidth="5" strokeLinecap="round" />
@@ -36,8 +38,11 @@ export function NumberLine({ v }: { v: Extract<Visual, { kind: "number-line" }> 
       </g>
     );
   }
+  // Labels are centred on their tick: half of the widest label's digits overhangs each end.
+  const half = (String(Math.max(Math.abs(v.from), Math.abs(v.to))).length * 0.6 * labelSize) / 2;
+  const box: Box = { x0: SIDE - half, y0: top, x1: W - SIDE + half, y1: LINE_Y + 48 + 6 };
   return (
-    <Svg label={describeVisual(v)}>
+    <Svg label={describeVisual(v)} box={box}>
       <line x1={SIDE} y1={LINE_Y} x2={W - SIDE} y2={LINE_Y} stroke="var(--chalk)" strokeWidth="4" strokeLinecap="round" />
       {ticks.map((n) => {
         const major = n % labelEvery === 0;
