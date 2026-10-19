@@ -1,0 +1,502 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T01:29:10.467Z",
+  "title": "Design System: Brightling AI",
+  "extensions": {
+    "colorMeta": {
+      "felt": {
+        "role": "primary",
+        "displayName": "Classroom Felt",
+        "canonical": "#2e6b5e",
+        "tonalRamp": [
+          "oklch(15% 0.060 177.3)",
+          "oklch(25% 0.067 177.3)",
+          "oklch(35% 0.067 177.3)",
+          "oklch(45% 0.067 177.3)",
+          "oklch(55% 0.067 177.3)",
+          "oklch(70% 0.067 177.3)",
+          "oklch(85% 0.067 177.3)",
+          "oklch(95% 0.030 177.3)"
+        ]
+      },
+      "felt-deep": {
+        "role": "primary",
+        "displayName": "Deep Felt",
+        "canonical": "#23544a",
+        "tonalRamp": [
+          "oklch(15% 0.056 178.0)",
+          "oklch(25% 0.056 178.0)",
+          "oklch(35% 0.056 178.0)",
+          "oklch(45% 0.056 178.0)",
+          "oklch(55% 0.056 178.0)",
+          "oklch(70% 0.056 178.0)",
+          "oklch(85% 0.056 178.0)",
+          "oklch(95% 0.030 178.0)"
+        ]
+      },
+      "counter-yellow": {
+        "role": "secondary",
+        "displayName": "Counter Yellow",
+        "canonical": "#f6c531",
+        "tonalRamp": [
+          "oklch(15% 0.060 88.8)",
+          "oklch(25% 0.100 88.8)",
+          "oklch(35% 0.140 88.8)",
+          "oklch(45% 0.160 88.8)",
+          "oklch(55% 0.160 88.8)",
+          "oklch(70% 0.160 88.8)",
+          "oklch(85% 0.120 88.8)",
+          "oklch(95% 0.030 88.8)"
+        ]
+      },
+      "cube-blue": {
+        "role": "secondary",
+        "displayName": "Cube Blue",
+        "canonical": "#3b7dd8",
+        "tonalRamp": [
+          "oklch(15% 0.060 257.2)",
+          "oklch(25% 0.100 257.2)",
+          "oklch(35% 0.140 257.2)",
+          "oklch(45% 0.155 257.2)",
+          "oklch(55% 0.155 257.2)",
+          "oklch(70% 0.155 257.2)",
+          "oklch(85% 0.120 257.2)",
+          "oklch(95% 0.030 257.2)"
+        ]
+      },
+      "counter-red": {
+        "role": "tertiary",
+        "displayName": "Counter Red",
+        "canonical": "#e4413b",
+        "tonalRamp": [
+          "oklch(15% 0.060 27.0)",
+          "oklch(25% 0.100 27.0)",
+          "oklch(35% 0.140 27.0)",
+          "oklch(45% 0.200 27.0)",
+          "oklch(55% 0.200 27.0)",
+          "oklch(70% 0.200 27.0)",
+          "oklch(85% 0.120 27.0)",
+          "oklch(95% 0.030 27.0)"
+        ]
+      },
+      "cube-green": {
+        "role": "tertiary",
+        "displayName": "Cube Green",
+        "canonical": "#4c9a52",
+        "tonalRamp": [
+          "oklch(15% 0.060 145.3)",
+          "oklch(25% 0.100 145.3)",
+          "oklch(35% 0.131 145.3)",
+          "oklch(45% 0.131 145.3)",
+          "oklch(55% 0.131 145.3)",
+          "oklch(70% 0.131 145.3)",
+          "oklch(85% 0.120 145.3)",
+          "oklch(95% 0.030 145.3)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Classroom Ink",
+        "canonical": "#1e2b28",
+        "tonalRamp": [
+          "oklch(15% 0.019 179.1)",
+          "oklch(25% 0.019 179.1)",
+          "oklch(35% 0.019 179.1)",
+          "oklch(45% 0.019 179.1)",
+          "oklch(55% 0.019 179.1)",
+          "oklch(70% 0.019 179.1)",
+          "oklch(85% 0.019 179.1)",
+          "oklch(95% 0.019 179.1)"
+        ]
+      },
+      "chalk": {
+        "role": "neutral",
+        "displayName": "Chalk",
+        "canonical": "#f4f7f2",
+        "tonalRamp": [
+          "oklch(15% 0.007 132.4)",
+          "oklch(25% 0.007 132.4)",
+          "oklch(35% 0.007 132.4)",
+          "oklch(45% 0.007 132.4)",
+          "oklch(55% 0.007 132.4)",
+          "oklch(70% 0.007 132.4)",
+          "oklch(85% 0.007 132.4)",
+          "oklch(95% 0.007 132.4)"
+        ]
+      },
+      "tray": {
+        "role": "neutral",
+        "displayName": "Answer Tray",
+        "canonical": "#fbfaf5",
+        "tonalRamp": [
+          "oklch(15% 0.007 97.3)",
+          "oklch(25% 0.007 97.3)",
+          "oklch(35% 0.007 97.3)",
+          "oklch(45% 0.007 97.3)",
+          "oklch(55% 0.007 97.3)",
+          "oklch(70% 0.007 97.3)",
+          "oklch(85% 0.007 97.3)",
+          "oklch(95% 0.007 97.3)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Exercise-Book Paper",
+        "canonical": "#f6f8f5",
+        "tonalRamp": [
+          "oklch(15% 0.004 134.8)",
+          "oklch(25% 0.004 134.8)",
+          "oklch(35% 0.004 134.8)",
+          "oklch(45% 0.004 134.8)",
+          "oklch(55% 0.004 134.8)",
+          "oklch(70% 0.004 134.8)",
+          "oklch(85% 0.004 134.8)",
+          "oklch(95% 0.004 134.8)"
+        ]
+      },
+      "grid": {
+        "role": "neutral",
+        "displayName": "Grid Line",
+        "canonical": "#dbe6ee",
+        "tonalRamp": [
+          "oklch(15% 0.016 239.1)",
+          "oklch(25% 0.016 239.1)",
+          "oklch(35% 0.016 239.1)",
+          "oklch(45% 0.016 239.1)",
+          "oklch(55% 0.016 239.1)",
+          "oklch(70% 0.016 239.1)",
+          "oklch(85% 0.016 239.1)",
+          "oklch(95% 0.016 239.1)"
+        ]
+      },
+      "ink-quiet": {
+        "role": "neutral",
+        "displayName": "Quiet Ink",
+        "canonical": "#4d5c58",
+        "tonalRamp": [
+          "oklch(15% 0.020 177.5)",
+          "oklch(25% 0.020 177.5)",
+          "oklch(35% 0.020 177.5)",
+          "oklch(45% 0.020 177.5)",
+          "oklch(55% 0.020 177.5)",
+          "oklch(70% 0.020 177.5)",
+          "oklch(85% 0.020 177.5)",
+          "oklch(95% 0.020 177.5)"
+        ]
+      },
+      "link": {
+        "role": "neutral",
+        "displayName": "Link Blue",
+        "canonical": "#2a64b8",
+        "tonalRamp": [
+          "oklch(15% 0.060 258.1)",
+          "oklch(25% 0.100 258.1)",
+          "oklch(35% 0.140 258.1)",
+          "oklch(45% 0.146 258.1)",
+          "oklch(55% 0.146 258.1)",
+          "oklch(70% 0.146 258.1)",
+          "oklch(85% 0.120 258.1)",
+          "oklch(95% 0.030 258.1)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger Red",
+        "canonical": "#c3332d",
+        "tonalRamp": [
+          "oklch(15% 0.060 27.5)",
+          "oklch(25% 0.100 27.5)",
+          "oklch(35% 0.140 27.5)",
+          "oklch(45% 0.182 27.5)",
+          "oklch(55% 0.182 27.5)",
+          "oklch(70% 0.182 27.5)",
+          "oklch(85% 0.120 27.5)",
+          "oklch(95% 0.030 27.5)"
+        ]
+      },
+      "danger-deep": {
+        "role": "neutral",
+        "displayName": "Danger Edge",
+        "canonical": "#8f2420",
+        "tonalRamp": [
+          "oklch(15% 0.060 27.2)",
+          "oklch(25% 0.100 27.2)",
+          "oklch(35% 0.140 27.2)",
+          "oklch(45% 0.143 27.2)",
+          "oklch(55% 0.143 27.2)",
+          "oklch(70% 0.143 27.2)",
+          "oklch(85% 0.120 27.2)",
+          "oklch(95% 0.030 27.2)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "kid-display": {
+        "displayName": "Kid Display",
+        "purpose": "Big numbers read across the room: end-card totals, pad entry."
+      },
+      "kid-headline": {
+        "displayName": "Kid Headline",
+        "purpose": "Picker title, end-card title, digits on tiles and keys."
+      },
+      "kid-title": {
+        "displayName": "Kid Title",
+        "purpose": "Problem prompt, Nova's bubble, kid buttons."
+      },
+      "kid-body": {
+        "displayName": "Kid Body",
+        "purpose": "Notices and strips; the smallest text a child reads."
+      },
+      "grownup-display": {
+        "displayName": "Grownup Display",
+        "purpose": "App name on sign-in and check-your-email."
+      },
+      "grownup-headline": {
+        "displayName": "Grownup Headline",
+        "purpose": "Grown-up page h1."
+      },
+      "grownup-title": {
+        "displayName": "Grownup Title",
+        "purpose": "Grown-up h2 and kid names on cards."
+      },
+      "grownup-body": {
+        "displayName": "Grownup Body",
+        "purpose": "All grown-up reading text."
+      },
+      "grownup-label": {
+        "displayName": "Grownup Label",
+        "purpose": "Secondary text in Quiet Ink, strip links."
+      }
+    },
+    "shadows": [
+      {
+        "name": "tile-edge",
+        "value": "0 6px 0 var(--felt-deep)",
+        "purpose": "Kid surfaces resting on the felt (picker cards; 8px on the end card)."
+      },
+      {
+        "name": "button-edge",
+        "value": "0 3px 0 var(--felt-deep)",
+        "purpose": "Grown-up buttons; removed on press."
+      },
+      {
+        "name": "selected-edge",
+        "value": "0 3px 0 var(--ink)",
+        "purpose": "Selected avatar tile."
+      },
+      {
+        "name": "board-well",
+        "value": "inset 0 4px 18px rgb(0 0 0 / 0.28)",
+        "purpose": "Sinks the felt board into its frame. Board only."
+      },
+      {
+        "name": "card-lip",
+        "value": "0 1px 0 rgba(30, 43, 40, 0.15)",
+        "purpose": "Index cards on grid paper."
+      },
+      {
+        "name": "sticky-lift",
+        "value": "2px 3px 0 rgba(30, 43, 40, 0.25)",
+        "purpose": "Sticky draft note, with -1.2deg rotation."
+      },
+      {
+        "name": "listening-pulse",
+        "value": "0 0 0 12px rgb(228 65 59 / 0)",
+        "purpose": "Mic listening pulse keyframe end (1s ease-in-out infinite)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "press-drop",
+        "value": "translateY(3px), edge removed",
+        "purpose": "Grown-up button press; disabled under reduced motion."
+      },
+      {
+        "name": "press-scale",
+        "value": "scale(0.97)",
+        "purpose": "Kid tiles, keys and picker cards on press."
+      },
+      {
+        "name": "nova-hop",
+        "value": "400ms ease-out, translateY(-24px) at 40%",
+        "purpose": "Nova hops once when speaking."
+      },
+      {
+        "name": "antenna-blink",
+        "value": "400ms steps(2, end)",
+        "purpose": "Nova's antenna light blinks with the hop."
+      },
+      {
+        "name": "mic-pulse",
+        "value": "1s ease-in-out infinite",
+        "purpose": "Mic listening ring; still yellow ring under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "portrait",
+        "value": "(orientation: portrait)"
+      },
+      {
+        "name": "grownup-min",
+        "value": "320px"
+      },
+      {
+        "name": "grownup-column",
+        "value": "560px"
+      },
+      {
+        "name": "ipad-portrait",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Answer Tile",
+      "kind": "button",
+      "refersTo": "answer-tile",
+      "description": "Kid answer choice and number-pad key: chunky tray tile with a thick ink border.",
+      "html": "<button class=\"ds-tile\">7</button>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-tile{min-width:88px;min-height:88px;font-family:Andika,system-ui,sans-serif;font-size:40px;color:var(--ink);background:var(--tray);border:3px solid var(--ink);border-radius:16px;cursor:pointer;touch-action:manipulation}.ds-tile:active{transform:scale(.97)}.ds-tile:focus-visible{outline:3px solid var(--ink);outline-offset:2px}.ds-tile:disabled{opacity:.45;cursor:default}"
+    },
+    {
+      "name": "Kid Primary Button",
+      "kind": "button",
+      "refersTo": "kid-button-primary",
+      "description": "End-card 'Play again': felt with chalk text, 88 px tall.",
+      "html": "<button class=\"ds-kid-btn\">Play again</button>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-kid-btn{display:inline-flex;align-items:center;justify-content:center;min-height:88px;padding:0 32px;font-family:Andika,system-ui,sans-serif;font-size:28px;color:var(--chalk);background:var(--felt);border:3px solid var(--felt-deep);border-radius:20px;cursor:pointer}.ds-kid-btn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}"
+    },
+    {
+      "name": "Kid Secondary Button",
+      "kind": "button",
+      "refersTo": "kid-button-secondary",
+      "description": "End-card 'All done': outlined in ink on tray.",
+      "html": "<a class=\"ds-kid-link\" href=\"#\">All done</a>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-kid-link{display:inline-flex;align-items:center;justify-content:center;min-height:88px;padding:0 32px;font-family:Andika,system-ui,sans-serif;font-size:28px;color:var(--ink);background:var(--tray);border:3px solid var(--ink);border-radius:20px;text-decoration:none}.ds-kid-link:focus-visible{outline:3px solid var(--ink);outline-offset:3px}"
+    },
+    {
+      "name": "Mic",
+      "kind": "button",
+      "refersTo": "mic",
+      "description": "Speech button; turns counter red and pulses while listening.",
+      "html": "<button class=\"ds-mic\" aria-label=\"Talk\"><svg width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v3\"/></svg></button>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-mic{width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;color:var(--chalk);background:var(--felt);border:3px solid var(--ink);border-radius:50%;cursor:pointer}.ds-mic:hover{background:var(--counter-red);animation:ds-pulse 1s ease-in-out infinite}.ds-mic:focus-visible{outline:3px solid var(--ink);outline-offset:2px}@keyframes ds-pulse{0%,100%{box-shadow:0 0 0 0 rgb(228 65 59/.55)}50%{box-shadow:0 0 0 12px rgb(228 65 59/0)}}@media (prefers-reduced-motion:reduce){.ds-mic:hover{animation:none;box-shadow:0 0 0 6px var(--counter-yellow)}}"
+    },
+    {
+      "name": "Picker Kid Card",
+      "kind": "card",
+      "refersTo": "picker-kid-card",
+      "description": "'Who's playing?' card: tray tile on felt with a solid edge and felt avatar circle.",
+      "html": "<div class=\"ds-felt\"><a class=\"ds-kidcard\" href=\"#\"><span class=\"ds-avatar\">🦊</span>Mia</a></div>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-felt{background:var(--felt);padding:32px;display:flex;justify-content:center}.ds-kidcard{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:176px;padding:24px 24px 20px;border-radius:28px;background:var(--tray);color:var(--ink);font-family:Andika,system-ui,sans-serif;font-size:28px;text-decoration:none;box-shadow:0 6px 0 var(--felt-deep)}.ds-kidcard:active{transform:scale(.97)}.ds-kidcard:focus-visible{outline:3px solid var(--chalk);outline-offset:4px}.ds-avatar{display:flex;align-items:center;justify-content:center;width:112px;height:112px;border-radius:50%;background:var(--felt);font-size:64px;line-height:1}"
+    },
+    {
+      "name": "Grown-up Button",
+      "kind": "button",
+      "refersTo": "grownup-button",
+      "description": "Main grown-up action: felt with a 3 px felt-deep edge that drops on press.",
+      "html": "<button class=\"ds-btn\">Add a child</button>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 20px;border:0;border-radius:12px;background:var(--felt);color:var(--chalk);font-family:'Atkinson Hyperlegible',system-ui,sans-serif;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 var(--felt-deep)}.ds-btn:active{transform:translateY(3px);box-shadow:none}.ds-btn:focus-visible{outline:3px solid var(--link);outline-offset:2px}"
+    },
+    {
+      "name": "Grown-up Danger Button",
+      "kind": "button",
+      "refersTo": "grownup-button-danger",
+      "description": "Final destructive step only.",
+      "html": "<button class=\"ds-btn-danger\">Delete account</button>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-btn-danger{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 20px;border:0;border-radius:12px;background:var(--danger);color:var(--chalk);font-family:'Atkinson Hyperlegible',system-ui,sans-serif;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #8f2420}.ds-btn-danger:active{transform:translateY(3px);box-shadow:none}.ds-btn-danger:focus-visible{outline:3px solid var(--link);outline-offset:2px}"
+    },
+    {
+      "name": "Grown-up Input",
+      "kind": "input",
+      "refersTo": "grownup-input",
+      "description": "Text field with bold label above, 2 px ink border.",
+      "html": "<label class=\"ds-field\">Child's nickname<input class=\"ds-input\" value=\"Mia\"></label>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-field{display:flex;flex-direction:column;gap:6px;font-family:'Atkinson Hyperlegible',system-ui,sans-serif;font-weight:700;color:var(--ink);font-size:17px;max-width:360px}.ds-input{min-height:44px;padding:8px 12px;border:2px solid var(--ink);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-weight:400}.ds-input:focus-visible{outline:3px solid var(--link);outline-offset:2px}"
+    },
+    {
+      "name": "Index Card with Cubes",
+      "kind": "card",
+      "refersTo": "index-card",
+      "description": "Grown-up kid card on grid paper: coloured left tab, name, and the week as maths cubes.",
+      "html": "<div class=\"ds-paper\"><a class=\"ds-card\" href=\"#\"><span class=\"ds-name\">Mia</span><span class=\"ds-cubes\"><i class=\"ds-cube on\"></i><i class=\"ds-cube on\"></i><i class=\"ds-cube\"></i><i class=\"ds-cube on\"></i><i class=\"ds-cube\"></i><i class=\"ds-cube\"></i><i class=\"ds-cube\"></i></span></a></div>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-paper{background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px;padding:24px}.ds-card{display:block;position:relative;max-width:360px;padding:12px 16px 12px 26px;background:#fff;border:1px solid var(--grid);border-radius:6px;box-shadow:0 1px 0 rgba(30,43,40,.15);color:var(--ink);text-decoration:none}.ds-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:10px;border-radius:6px 0 0 6px;background:var(--felt)}.ds-card:focus-visible{outline:3px solid var(--link);outline-offset:2px}.ds-name{display:block;font-family:Andika,sans-serif;font-weight:700;font-size:21px;margin-bottom:6px}.ds-cubes{display:inline-flex;gap:3px}.ds-cube{width:16px;height:16px;border:2px solid var(--ink);border-radius:3px;background:#fff;box-sizing:border-box}.ds-cube.on{background:var(--cube-blue)}"
+    },
+    {
+      "name": "Grown-up Strip",
+      "kind": "nav",
+      "refersTo": "grownup-strip",
+      "description": "Felt top strip: small Nova, 'For grown-ups', one back link.",
+      "html": "<nav class=\"ds-strip\"><span class=\"ds-strip-title\">For grown-ups</span><a class=\"ds-strip-link\" href=\"#\">Back to kids</a></nav>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-strip{display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 20px;background:var(--felt);color:var(--chalk)}.ds-strip-title{font-family:Andika,sans-serif;font-weight:700;font-size:17px}.ds-strip-link{margin-left:auto;display:inline-flex;align-items:center;min-height:44px;color:var(--chalk);font-family:'Atkinson Hyperlegible',system-ui,sans-serif;font-size:15px}.ds-strip-link:focus-visible{outline:3px solid var(--chalk);outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Math Classroom",
+    "overview": "Brightling is one real early-years classroom drawn as two rooms. The child stands at the **felt board**: deep green felt with a faint nap, chalk-white type, and the same counters, cubes and ten-frames a teacher would stick on it. The grown-up sits at the teacher's desk with the **squared exercise book**: grid paper, index cards with coloured tabs, a sticky note for drafts, and a row of maths cubes as the one bold element. Both rooms use the same felt green, ink and counter colours, so the product feels like a single place.\n\nThe kid side is big, calm and tactile. There is one board, one tray of answers and one character (Nova), and nothing competes with the maths. The board is the most important thing on screen. Pieces are chunky, with thick ink borders, a solid drop edge and targets of 88 px or more, because small hands tap them on a tablet. The grown-up side is quiet and easy to read: a single column at most 560 px wide, Atkinson Hyperlegible body text, and plenty of white space, because parents read consent and privacy text here.\n\nIt deliberately avoids the **gamey arcade look** (glossy candy colours, coins, streak flames, confetti storms, loot-box rewards) and **cartoon clutter** (busy mascots or background scenes competing with the board).",
+    "keyCharacteristics": [
+      "Real classroom materials (felt, chalk, squared paper, index cards, counters, cubes) instead of digital chrome.",
+      "Flat colour throughout. Depth comes from solid drop edges and one inset board shadow, never from soft floating shadows.",
+      "Chunky, tactile controls: 3 px ink borders, 88 px kid targets, and buttons whose edge drops when pressed.",
+      "Two type voices: Andika (built for early readers) for anything a child reads and for all headings, Atkinson Hyperlegible for grown-up body text.",
+      "Restrained motion: a button press, Nova's hop and antenna blink, and the listening pulse on the mic. All of it is turned off under reduced motion."
+    ],
+    "rules": [
+      {
+        "name": "The Counters Are for Counting Rule",
+        "body": "Red, yellow, blue and green are the colours of the physical maths pieces. On the kid side they belong to the maths pictures and to Nova's two small lights, with one exception: the mic turns red while it listens. They are never used for decoration or backgrounds, and red is never used for a wrong answer.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Felt Rule",
+        "body": "There is a single green. A screen never adds a second brand hue. New states reuse felt, felt-deep, ink or a counter colour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Twenty-Two Floor Rule",
+        "body": "No text a child is meant to read is smaller than 22 px. Chrome meant for grown-ups on kid screens (\"Done\", \"Grown-ups\") sits at 18 px and is visibly quieter.",
+        "section": "typography"
+      },
+      {
+        "name": "The Andika Heads Rule",
+        "body": "Every heading in both worlds is set in Andika. Atkinson is only ever body text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Fill the Board Rule",
+        "body": "A maths picture is cropped to what it draws (plus a 24-unit margin, never shorter than 200 units), so it fills the board instead of shrinking with an empty canvas. It is capped at 960 × 440 px so a big tablet doesn't blow three apples up past hand size.",
+        "section": "layout"
+      },
+      {
+        "name": "The Board Owns the Middle Rule",
+        "body": "On the play screen, nothing is placed over the board. Notices, \"heard\" strips and \"Did you say 12?\" sit at the board's foot, in the flow, so the prompt stays visible.",
+        "section": "layout"
+      },
+      {
+        "name": "The Solid Edge Rule",
+        "body": "If something can be pressed, it has a hard, unblurred bottom edge in a deeper shade, and pressing it removes that edge. Never use a blurred drop shadow as an affordance.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** build every new piece from classroom materials (felt, chalk, tray, squared paper, index cards, counters, cubes) and name its tokens after them.",
+      "**Do** keep kid touch targets at 88 px or more on a tablet (64 px or more on a phone) and grown-up targets at 44 px or more.",
+      "**Do** crop every new maths picture to its drawing with the `box` prop of `Svg`, so it fills the board.",
+      "**Do** give anything pressable a hard drop edge in felt-deep or ink, and remove it on press.",
+      "**Do** set kid-readable text at 22 px or larger in Andika, and keep grown-up body text at 17 px Atkinson Hyperlegible, with lines under 70 characters.",
+      "**Do** show focus as a 3 px solid outline: chalk on felt, ink on tray, Link Blue on paper.",
+      "**Do** wrap every animation in a `prefers-reduced-motion` fallback (a still state, not just \"no animation\" when the state carries meaning).",
+      "**Do** keep text contrast at 4.5:1 or above. Check any new pairing; chalk on felt is 5.75:1."
+    ],
+    "donts": [
+      "**Don't** add a gamey arcade look: no glossy candy colours, coins, streak flames, confetti storms or loot-box style rewards.",
+      "**Don't** add cartoon clutter: no extra mascots, background scenes or decorative illustrations next to the board. Nova is the only character.",
+      "**Don't** use counter red to mark a wrong answer, or use counter colours as decoration.",
+      "**Don't** introduce a second green, gradients, glassmorphism, or soft blurred drop shadows as affordances.",
+      "**Don't** put notices or overlays on top of the board. They sit at its foot, in the flow.",
+      "**Don't** use Atkinson Hyperlegible for headings, or bring it into kid screens."
+    ]
+  }
+}
