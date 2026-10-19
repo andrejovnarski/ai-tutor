@@ -254,3 +254,6 @@
 .dataLinks { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0 0 12px; }
 .dataLinks a { display: inline-flex; align-items: center; min-height: 44px; }
 .dataLinks a.dangerLink { color: var(--danger); }
+
+.rewardLine { display: flex; align-items: center; gap: 12px; margin: 0 0 8px; }
+.stickerRow { display: flex; align-items: center; gap: 12px; }

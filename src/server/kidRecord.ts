@@ -24,7 +24,7 @@ const TZ = "America/New_York";
 const dateTime = new Intl.DateTimeFormat("en-US", {
   timeZone: TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
 });
-const monthDay = new Intl.DateTimeFormat("en-US", { timeZone: TZ, month: "short", day: "numeric" });
+export const monthDay = new Intl.DateTimeFormat("en-US", { timeZone: TZ, month: "short", day: "numeric" });
 
 const nameOf = (id: string) => { try { return getSkill(id).name; } catch { return id; } };
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
