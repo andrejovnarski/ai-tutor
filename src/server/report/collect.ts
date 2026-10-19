@@ -6,7 +6,10 @@ import { MISTAKE_TAGS, type MistakeTag } from "../../domain/types";
 import { nyDay } from "../nyDay";
 import { kidStateFromRows, type KidRow, type SkillRow } from "../persist/rows";
 import { TAG_LABEL } from "./tips";
-import type { KidWeek } from "./build";
+import { progress } from "../../domain/rewards/progress";
+import { env } from "../env";
+import { loadRewardRows } from "../rewards";
+import { rewardsLine, type KidWeek } from "./build";
 
 type A = { session_id: string; mistake_tag: MistakeTag | null; time_ms: number; at: string };
 type Timed = Pick<A, "session_id" | "time_ms" | "at">;
@@ -65,6 +68,23 @@ export function nyMidnightDaysAgo(now: Date, daysBack: number): Date {
   throw new Error(`no New York midnight for ${want}`);
 }
 
+/** The week's rewards sentence; undefined when rewards are off, nothing happened, or loading failed. */
+async function rewardsFor(db: SupabaseClient, kidId: string, nickname: string, from: Date, to: Date): Promise<string | undefined> {
+  if (env.rewards() !== "on") return undefined;
+  try {
+    const { sessions, masteredAt } = await loadRewardRows(db, kidId);
+    const upTo = (t: number) => ({
+      sessions: sessions.filter((s) => s.lastActivity < t),
+      masteredAt: Object.fromEntries(Object.entries(masteredAt).filter(([, at]) => at < t)),
+    });
+    const [b, a] = [from.getTime(), to.getTime()].map((t) => { const u = upTo(t); return progress(u.sessions, u.masteredAt, t); });
+    return rewardsLine(nickname, b!, a!) ?? undefined;
+  } catch {
+    console.error("rewards failed for kid", kidId); // the id only: no nickname, no error object
+    return undefined;
+  }
+}
+
 export async function collectKid(
   db: SupabaseClient, k: KidRow & { nickname: string }, from: Date, to: Date,
 ): Promise<{ week: KidWeek; playedDays: string[] }> {
@@ -77,6 +97,7 @@ export async function collectKid(
     .map((r) => nameOf(r.skill_id))
     .filter((n): n is string => n !== null);
   const current = frontier(kidStateFromRows(k, rows, []));
+  const rewards = await rewardsFor(db, k.id, k.nickname, from, to);
   return {
     week: {
       nickname: k.nickname,
@@ -85,6 +106,7 @@ export async function collectKid(
       mastered,
       currentSkill: current ? nameOf(current) : null,
       stuck: stuckOf(attempts),
+      ...(rewards ? { rewards } : {}),
     },
     playedDays: [...new Set(attempts.map((a) => nyDate.format(new Date(a.at))))].sort(),
   };

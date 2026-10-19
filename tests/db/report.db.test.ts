@@ -105,6 +105,34 @@ describe("weekly report", () => {
     expect(await mailCount(email)).toBe(1);
   });
 
+  it("adds one rewards line when REWARDS=on, and none when off", async () => {
+    const r = await makeParent(emailOf("r"), { consent: true });
+    const kid = await seedKid(r.userId, "Rae");
+    const lastActivity = Date.parse(day(8));
+    const { data: sess, error } = await admin().from("sessions").insert({
+      kid_id: kid, started_at: day(8), ended_at: day(8, 20),
+      state: { problems: 4, firstTryCorrect: 2, mastered: [], lastActivity },
+    }).select().single();
+    expect(error).toBeNull();
+    const { error: ae } = await admin().from("attempts").insert({
+      kid_id: kid, session_id: sess!.id, skill_id: "add-within-10.count-on", template_id: "t", seed: 1, level: 1, answer: 3,
+      result: "correct", mistake_tag: null, style: null, time_ms: 60_000, at: day(8), try: 1, mode: "practice",
+    });
+    expect(ae).toBeNull();
+    vi.stubEnv("REWARDS", "on");
+    try {
+      await sendWeeklyReports(SUNDAY_5PM);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(await reportRows(r.userId)).toHaveLength(1);
+    const mail = await latestEmailTo(emailOf("r"));
+    expect(mail.Text).toMatch(/Rae earned \d+ stickers?\./);
+    expect(mail.Text).not.toMatch(/undefined|NaN|null/);
+    // Rewards off (the default): the earlier mails carry no rewards line.
+    expect((await latestEmailTo(emailOf("a"))).Text).not.toMatch(/ earned \d+ sticker/);
+  });
+
   it("retries after a failed send in a later hour that Sunday, then stays idempotent", async () => {
     const f = await makeParent(emailOf("f"), { consent: true });
     await seedKid(f.userId, "Fay");
