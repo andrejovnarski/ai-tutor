@@ -11,13 +11,21 @@ type SessionRow = {
 };
 type SkillRow = { skill_id: string; mastered_at: string };
 
-/** Reads only the fields rewards need (never attempts or nicknames) with the caller's client, so RLS applies. Throws on a query error. */
-export async function loadRewardRows(db: SupabaseClient, kidId: string): Promise<RewardRows> {
+/** Rewards are extra: a read slower than this is dropped rather than holding up the page. */
+const TIMEOUT_MS = 1500;
+
+/**
+ * Reads only the fields rewards need (never attempts or nicknames) with the caller's client, so RLS applies.
+ * Throws on a query error, including a read that takes longer than `timeoutMs`.
+ */
+export async function loadRewardRows(db: SupabaseClient, kidId: string, timeoutMs = TIMEOUT_MS): Promise<RewardRows> {
   const [s, k] = await Promise.all([
     db.from("sessions")
       .select("started_at, ended_at, problems:state->problems, firstTryCorrect:state->firstTryCorrect, mastered:state->mastered, lastActivity:state->lastActivity")
-      .eq("kid_id", kidId).not("ended_at", "is", null),
-    db.from("skill_state").select("skill_id, mastered_at").eq("kid_id", kidId).not("mastered_at", "is", null),
+      .eq("kid_id", kidId).not("ended_at", "is", null)
+      .abortSignal(AbortSignal.timeout(timeoutMs)),
+    db.from("skill_state").select("skill_id, mastered_at").eq("kid_id", kidId).not("mastered_at", "is", null)
+      .abortSignal(AbortSignal.timeout(timeoutMs)),
   ]);
   if (s.error) throw s.error;
   if (k.error) throw k.error;
@@ -37,19 +45,19 @@ export async function loadRewardRows(db: SupabaseClient, kidId: string): Promise
 }
 
 async function guarded<T>(
-  db: SupabaseClient, kidId: string, f: (rows: RewardRows) => T,
+  db: SupabaseClient, kidId: string, f: (rows: RewardRows) => T, timeoutMs?: number,
 ): Promise<T | null> {
   if (env.rewards() === "off") return null;
   try {
-    return f(await loadRewardRows(db, kidId));
+    return f(await loadRewardRows(db, kidId, timeoutMs));
   } catch {
     console.error("rewards failed for kid", kidId); // the id only: no error object, it may echo row data
     return null;
   }
 }
 
-export const kidProgress = (db: SupabaseClient, kidId: string, now: number): Promise<Progress | null> =>
-  guarded(db, kidId, (r) => progress(r.sessions, r.masteredAt, now));
+export const kidProgress = (db: SupabaseClient, kidId: string, now: number, timeoutMs?: number): Promise<Progress | null> =>
+  guarded(db, kidId, (r) => progress(r.sessions, r.masteredAt, now), timeoutMs);
 
-export const kidEndRewards = (db: SupabaseClient, kidId: string, now: number): Promise<EndRewards | null> =>
-  guarded(db, kidId, (r) => endRewards(r.sessions, r.masteredAt, now));
+export const kidEndRewards = (db: SupabaseClient, kidId: string, now: number, timeoutMs?: number): Promise<EndRewards | null> =>
+  guarded(db, kidId, (r) => endRewards(r.sessions, r.masteredAt, now), timeoutMs);

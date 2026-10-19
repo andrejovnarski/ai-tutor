@@ -138,8 +138,11 @@ describe("MiniRewards", () => {
   const html = renderToStaticMarkup(<MiniRewards progress={progress([], {}, Date.UTC(2026, 9, 19, 16))} />);
   it("shows the level, a small rod and seven week dots", () => {
     expect(text(html)).toContain("Lv 1");
-    expect(html).toContain('aria-label="0 of 10 cubes"');
     expect((html.match(/data-day=/g) ?? []).length).toBe(7);
+  });
+  it("hides the rod and dots from assistive tech so the card reads as name and level", () => {
+    expect(html).toMatch(/class="[^"]*miniArt[^"]*" aria-hidden="true"/);
+    expect(html).toContain("0 of 10 cubes"); // still drawn, just not announced
   });
   it("level text is kid-sized and the cards keep their widths", () => {
     const css = readFileSync(new URL("../picker.module.css", import.meta.url), "utf8");

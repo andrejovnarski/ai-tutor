@@ -25,8 +25,7 @@ export default async function KidPage({
   const data = await exportKid(supabase, kidId);
   if (!data) notFound();
   const { kid } = data;
-  const week = await kidWeek(supabase, kidId, new Date());
-  const progress = await kidProgress(supabase, kidId, Date.now());
+  const [week, progress] = await Promise.all([kidWeek(supabase, kidId, new Date()), kidProgress(supabase, kidId, Date.now())]);
   const record = kidRecord(data);
   return (
     <GrownupFrame back={{ href: "/parent", label: "Your kids" }}>

@@ -5,18 +5,16 @@ import { Rod } from "../../rewards/Rod";
 import { StickerArt } from "../../rewards/StickerArt";
 import styles from "./grownup.module.css";
 
-const times = (id: string) => {
-  const n = id.split(":")[1] ?? "";
-  return n === "1" ? "1 time" : `${n} times`;
-};
+const count = (id: string) => id.split(":")[1] ?? "";
 
-function why(s: Sticker): string {
+/** The plain-words reason after a sticker's label on the child page. */
+export function stickerReason(s: Sticker): string {
   switch (s.kind) {
     case "skill": return "mastered in practice";
     case "topic": return "every skill in the topic";
     case "first": return "first finished game";
-    case "weeks": return `week goal met ${times(s.id)}`;
-    case "tries": return `tried again ${times(s.id)}`;
+    case "weeks": return count(s.id) === "1" ? "week goal met 1 time" : `week goal met ${count(s.id)} times`;
+    case "tries": return count(s.id) === "1" ? "kept going on 1 tricky problem" : `kept going on ${count(s.id)} tricky problems`;
   }
 }
 
@@ -41,7 +39,7 @@ export function RewardsSection({ nickname, progress }: { nickname: string; progr
           {stickers.map(({ id, at, sticker }) => (
             <li key={id} className={styles.stickerRow}>
               <StickerArt art={sticker.art} size={36} />
-              <span>{`${sticker.label} — ${why(sticker)}, ${monthDay.format(new Date(at))}`}</span>
+              <span>{`${sticker.label} — ${stickerReason(sticker)}, ${monthDay.format(new Date(at))}`}</span>
             </li>
           ))}
         </ul>

@@ -85,6 +85,7 @@ async function rewardsFor(db: SupabaseClient, kidId: string, nickname: string, f
   }
 }
 
+/** One kid's week, shared by the email and the child page. No rewards line: only the email has one (`collectWeek`). */
 export async function collectKid(
   db: SupabaseClient, k: KidRow & { nickname: string }, from: Date, to: Date,
 ): Promise<{ week: KidWeek; playedDays: string[] }> {
@@ -97,7 +98,6 @@ export async function collectKid(
     .map((r) => nameOf(r.skill_id))
     .filter((n): n is string => n !== null);
   const current = frontier(kidStateFromRows(k, rows, []));
-  const rewards = await rewardsFor(db, k.id, k.nickname, from, to);
   return {
     week: {
       nickname: k.nickname,
@@ -106,7 +106,6 @@ export async function collectKid(
       mastered,
       currentSkill: current ? nameOf(current) : null,
       stuck: stuckOf(attempts),
-      ...(rewards ? { rewards } : {}),
     },
     playedDays: [...new Set(attempts.map((a) => nyDate.format(new Date(a.at))))].sort(),
   };
@@ -117,6 +116,10 @@ export async function collectWeek(db: SupabaseClient, parentId: string, from: Da
     .eq("parent_id", parentId).order("created_at");
   if (error) throw error;
   const weeks: KidWeek[] = [];
-  for (const k of kids as (KidRow & { nickname: string })[]) weeks.push((await collectKid(db, k, from, to)).week);
+  for (const k of kids as (KidRow & { nickname: string })[]) {
+    const { week } = await collectKid(db, k, from, to);
+    const rewards = await rewardsFor(db, k.id, k.nickname, from, to);
+    weeks.push(rewards ? { ...week, rewards } : week);
+  }
   return weeks;
 }

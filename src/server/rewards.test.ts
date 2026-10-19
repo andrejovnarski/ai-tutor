@@ -4,7 +4,7 @@ import { endRewards } from "../domain/rewards/progress";
 
 vi.mock("server-only", () => ({}));
 const { env } = await import("./env");
-const { kidEndRewards, loadRewardRows } = await import("./rewards");
+const { kidEndRewards, kidProgress, loadRewardRows } = await import("./rewards");
 const { withRewards } = await import("./playApi");
 
 const KID = "kid-123";
@@ -19,11 +19,26 @@ function fake(tables: Record<string, { data: unknown; error: unknown }>) {
   const from = vi.fn((t: string) => {
     const q: Record<string, unknown> = {};
     const chain = () => q;
-    q.select = chain; q.eq = chain; q.not = chain;
+    q.select = chain; q.eq = chain; q.not = chain; q.abortSignal = chain;
     q.then = (ok: (v: unknown) => unknown) => ok(tables[t]);
     return q;
   });
   return { db: { from } as unknown as SupabaseClient, from };
+}
+/** A fake client whose queries never answer, except that, like supabase-js, an aborted one resolves with an error. */
+function hanging() {
+  const signals: AbortSignal[] = [];
+  const from = vi.fn(() => {
+    let signal: AbortSignal | undefined;
+    const q: Record<string, unknown> = {};
+    const chain = () => q;
+    q.select = chain; q.eq = chain; q.not = chain;
+    q.abortSignal = (s: AbortSignal) => { signal = s; signals.push(s); return q; };
+    q.then = (ok: (v: unknown) => unknown) =>
+      signal?.addEventListener("abort", () => ok({ data: null, error: { message: "AbortError: aborted" } }));
+    return q;
+  });
+  return { db: { from } as unknown as SupabaseClient, signals };
 }
 const ok = { sessions: { data: [sessionRow], error: null }, skill_state: { data: [], error: null } };
 
@@ -58,7 +73,40 @@ describe("kidEndRewards", () => {
   });
 });
 
+describe("slow reads", () => {
+  it("a query that never answers times out: kidProgress and kidEndRewards give null", async () => {
+    vi.stubEnv("REWARDS", "on");
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { db, signals } = hanging();
+    const started = Date.now();
+    expect(await kidProgress(db, KID, T, 30)).toBeNull();
+    expect(await kidEndRewards(db, KID, T, 30)).toBeNull();
+    expect(Date.now() - started).toBeLessThan(1000);
+    expect(signals).toHaveLength(4); // both queries, both calls
+    expect(err).toHaveBeenCalledTimes(2);
+  });
+
+  it("the default timeout is 1.5 seconds", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    const { db } = fake(ok);
+    await loadRewardRows(db, KID);
+    expect(timeout).toHaveBeenCalledTimes(2);
+    expect(timeout).toHaveBeenCalledWith(1500);
+  });
+});
+
 describe("loadRewardRows", () => {
+  it("lastActivity falls back to endedAt, then startedAt", async () => {
+    const started = new Date(T - 600_000).toISOString();
+    const { db } = fake({ ...ok, sessions: { data: [
+      { ...sessionRow, lastActivity: null },
+      { ...sessionRow, ended_at: null, lastActivity: undefined },
+      { ...sessionRow, lastActivity: "soon" },
+    ], error: null } });
+    const r = await loadRewardRows(db, KID);
+    expect(r.sessions.map((s) => s.lastActivity)).toEqual([T, Date.parse(started), T]);
+  });
+
   it("maps names and converts timestamps to ms", async () => {
     const { db } = fake({ ...ok, skill_state: { data: [{ skill_id: "a", mastered_at: new Date(T).toISOString() }], error: null } });
     const r = await loadRewardRows(db, KID);

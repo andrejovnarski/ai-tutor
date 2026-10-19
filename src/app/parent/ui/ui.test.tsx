@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { vi } from "vitest";
 import type { Progress } from "@/domain/rewards/progress";
-import { RewardsSection } from "./RewardsSection";
+import { RewardsSection, stickerReason } from "./RewardsSection";
 import { Cubes } from "./Cubes";
 import { GrownupFrame } from "./GrownupFrame";
 import { IndexCard } from "./IndexCard";
@@ -68,6 +68,14 @@ describe("RewardsSection", () => {
   it("says 1 time, not 1 times", () => {
     const html = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({ stickers: [{ id: "weeks:1", at: Date.UTC(2026, 9, 5, 15) }] })} />);
     expect(html).toContain("week goal met 1 time,");
+  });
+  it("kept-trying stickers count tricky problems, 1 without a plural", () => {
+    const html = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({
+      stickers: [{ id: "tries:10", at: Date.UTC(2026, 9, 5, 15) }],
+    })} />);
+    expect(html).toContain("kept going on 10 tricky problems, Oct 5");
+    expect(html).not.toContain("tried again");
+    expect(stickerReason({ id: "tries:1", kind: "tries", label: "", art: "pencil" })).toBe("kept going on 1 tricky problem");
   });
   it("streak 0 and 1 and empty chart", () => {
     const zero = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({})} />);
