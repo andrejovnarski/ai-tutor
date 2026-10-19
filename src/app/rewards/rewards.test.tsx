@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
-import type { EndRewards } from "@/domain/rewards/progress";
+import { progress, type EndRewards } from "@/domain/rewards/progress";
+import { MiniRewards } from "../MiniRewards";
 import { RewardsStrip } from "../play/RewardsStrip";
 import { Rod } from "./Rod";
 import { WeekDots } from "./WeekDots";
@@ -130,5 +131,20 @@ describe("end card layout guards", () => {
     const label = rule(css("./rewards.module.css"), ".stickerLabel");
     expect(label).toMatch(/overflow-wrap:\s*break-word/);
     expect(label).not.toContain("anywhere");
+  });
+});
+
+describe("MiniRewards", () => {
+  const html = renderToStaticMarkup(<MiniRewards progress={progress([], {}, Date.UTC(2026, 9, 19, 16))} />);
+  it("shows the level, a small rod and seven week dots", () => {
+    expect(text(html)).toContain("Lv 1");
+    expect(html).toContain('aria-label="0 of 10 cubes"');
+    expect((html.match(/data-day=/g) ?? []).length).toBe(7);
+  });
+  it("level text is kid-sized and the cards keep their widths", () => {
+    const css = readFileSync(new URL("../picker.module.css", import.meta.url), "utf8");
+    expect(css).toMatch(/\.level \{[^}]*var\(--text-s\)/);
+    expect(css).toMatch(/\.kid \{[^}]*width:\s*216px/);
+    expect(css).toMatch(/\.kid \{ width: 156px/);
   });
 });

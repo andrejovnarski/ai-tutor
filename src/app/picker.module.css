@@ -75,6 +75,27 @@
   line-height: 1;
 }
 
+.mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.level {
+  font-size: var(--text-s);
+  font-weight: 700;
+}
+
+/* The small rod and week are wider than the card's inside, so they shrink together. */
+.miniArt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  zoom: 0.85;
+}
+
 .add {
   display: inline-flex;
   align-items: center;
@@ -113,5 +134,6 @@
   .picker { gap: 24px; padding: 56px 16px 32px; }
   .kids { gap: 16px; }
   .kid { width: 156px; padding: 16px 12px 14px; font-size: var(--text-s); }
+  .miniArt { zoom: 0.7; }
   .avatar { width: 88px; height: 88px; font-size: 48px; }
 }
