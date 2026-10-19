@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import type { StickerArt as Art } from "@/domain/rewards/stickers";
 
 // Drawn in a 100 x 100 box on a tray disc, in the maths-picture family: counters with felt-deep strokes, cube-blue
-// cubes, ink outlines (the disc is tray, so lines are ink rather than chalk).
+// cubes, ink outlines (the disc is tray, so lines are ink rather than chalk). Counter red and yellow are for counting:
+// only the maths stickers use them; the others are ink, chalk, tray and felt with cube blue as the one accent.
 const INK = "var(--ink)";
 
 function Star() {
@@ -11,7 +12,7 @@ function Star() {
     const r = i % 2 ? 13 : 31;
     return `${(50 + r * Math.cos(a)).toFixed(1)},${(52 + r * Math.sin(a)).toFixed(1)}`;
   }).join(" ");
-  return <polygon points={pts} fill="var(--counter-yellow)" stroke={INK} strokeWidth="3" strokeLinejoin="round" />;
+  return <polygon points={pts} fill="var(--cube-blue)" stroke={INK} strokeWidth="3" strokeLinejoin="round" />;
 }
 
 function Counter({ cx, cy, r, color }: { cx: number; cy: number; r: number; color: "red" | "yellow" }) {
@@ -81,7 +82,7 @@ function Calendar() {
       <line x1="36" y1="18" x2="36" y2="29" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
       <line x1="64" y1="18" x2="64" y2="29" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
       {dots.map((d, i) => (
-        <circle key={i} cx={d.x} cy={d.y} r="4.5" fill={d.on ? "var(--counter-yellow)" : "none"} stroke={INK} strokeWidth="1.8" />
+        <circle key={i} cx={d.x} cy={d.y} r="4.5" fill={d.on ? "var(--cube-blue)" : "none"} stroke={INK} strokeWidth="1.8" />
       ))}
     </>
   );
@@ -90,8 +91,8 @@ function Calendar() {
 function Pencil() {
   return (
     <g transform="rotate(-40 50 50)" strokeLinejoin="round">
-      <rect x="16" y="43" width="9" height="14" rx="3" fill="var(--counter-red)" stroke={INK} strokeWidth="2.5" />
-      <rect x="25" y="43" width="42" height="14" fill="var(--counter-yellow)" stroke={INK} strokeWidth="2.5" />
+      <rect x="16" y="43" width="9" height="14" rx="3" fill="var(--felt)" stroke={INK} strokeWidth="2.5" />
+      <rect x="25" y="43" width="42" height="14" fill="var(--cube-blue)" stroke={INK} strokeWidth="2.5" />
       <line x1="25" y1="50" x2="67" y2="50" stroke={INK} strokeWidth="1.2" strokeOpacity="0.5" />
       <polygon points="67,43 84,50 67,57" fill="var(--tray)" stroke={INK} strokeWidth="2.5" />
       <polygon points="78.5,47.7 84,50 78.5,52.3" fill={INK} stroke={INK} strokeWidth="1.5" />

@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import type { EndRewards } from "@/domain/rewards/progress";
 import { RewardsStrip } from "../play/RewardsStrip";
 import { Rod } from "./Rod";
@@ -104,5 +105,30 @@ describe("StickerArt", () => {
       expect(html).toContain('width="72"');
       expect(html).toContain(`data-art="${art}"`);
     }
+  });
+});
+
+describe("StickerArt colours", () => {
+  it("only maths stickers use counter colours", () => {
+    for (const art of ["star", "pencil", "calendar"] as const) {
+      expect(renderToStaticMarkup(<StickerArt art={art} size={72} />)).not.toContain("--counter-");
+    }
+  });
+});
+
+describe("end card layout guards", () => {
+  const css = (f: string) => readFileSync(new URL(f, import.meta.url), "utf8");
+  const rule = (src: string, sel: string) => src.match(new RegExp(`\\${sel} \\{([^}]*)\\}`))?.[1] ?? "";
+  it("the counts-and-strip row wraps instead of scrolling sideways", () => {
+    expect(rule(css("../play/play.module.css"), ".endBody")).toMatch(/flex-wrap:\s*wrap/);
+    expect(rule(css("./rewards.module.css"), ".stickerRow")).toMatch(/flex-wrap:\s*wrap/);
+  });
+  it("safe centring keeps a plain centre fallback before it", () => {
+    expect(rule(css("../play/play.module.css"), ".endArea")).toMatch(/align-items:\s*center;[^]*align-items:\s*safe center;/);
+  });
+  it("sticker labels break only an overlong word", () => {
+    const label = rule(css("./rewards.module.css"), ".stickerLabel");
+    expect(label).toMatch(/overflow-wrap:\s*break-word/);
+    expect(label).not.toContain("anywhere");
   });
 });

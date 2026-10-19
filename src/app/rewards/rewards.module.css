@@ -99,6 +99,8 @@
 
 .stickerRow {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 16px;
 }
@@ -127,7 +129,8 @@
   line-height: 1.3;
 }
 
-.stickerLabel { overflow-wrap: anywhere; }
+/* Break only a word too long for the line, with a hyphen where the language allows. */
+.stickerLabel { overflow-wrap: break-word; hyphens: auto; }
 
 .weekRow {
   display: flex;

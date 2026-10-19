@@ -122,6 +122,7 @@
   min-height: 0;
   /* A tall card (rewards on a phone) scrolls instead of being cut off; "safe" keeps its top reachable. */
   overflow-y: auto;
+  align-items: center; /* fallback where "safe" is not understood (Safari 16) */
   align-items: safe center;
 }
 
@@ -160,8 +161,10 @@
 /* With rewards: the counts beside the rewards strip (stacked on narrow screens). */
 .endBody {
   display: flex;
+  flex-wrap: wrap; /* the strip drops under the counts when the card is too narrow for both, never scrolling sideways */
+  justify-content: center;
   align-items: center;
-  gap: 48px;
+  gap: 24px 48px;
 }
 
 .endBody .endStats {
