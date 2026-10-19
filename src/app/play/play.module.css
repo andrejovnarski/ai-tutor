@@ -172,6 +172,13 @@
   gap: 16px;
 }
 
+/* Between a phone and a tablet in portrait the strip wraps under the counts while they still stand in a column, and
+   on a short screen the buttons fall below it: put the counts in a row above the strip instead, as on a phone. */
+@media (min-width: 601px) and (max-width: 820px) {
+  .endBody { flex-direction: column; gap: 20px; }
+  .endBody .endStats { flex-direction: row; gap: 48px; }
+}
+
 .endNumber {
   font-size: var(--text-xl);
   font-weight: 700;

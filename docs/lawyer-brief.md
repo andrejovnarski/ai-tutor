@@ -98,8 +98,9 @@ Each vendor is meant to be under a data processing agreement that forbids traini
 7. **Reviewing a child's data.** The child's page shows progress and sessions in plain words, not every stored field. The complete record is the download link on the same page. Is the download enough to meet the parent's right to review what we collected?
 8. **Pilot terms.** Do we need terms of service or a pilot agreement with the families?
 9. **Anything else** we should do before the first family signs up.
+10. **Notice changes and earlier consent.** The 2026-10-19 draft adds one line about rewards (cubes, levels and stickers). They are worked out from answers we already keep, so the change adds no new data and no new vendor. Do families who consented to an earlier version need to consent again? Rewards stay off (`REWARDS` unset) until you answer.
 
-## Attached: the privacy notice (draft 2026-10-10)
+## Attached: the privacy notice (draft 2026-10-19)
 
 The notice is shown in the app at `/parent/privacy`. It opens with "We keep only what the tutor needs to teach your child. We never sell data, show ads, or use trackers." Then:
 
@@ -107,6 +108,7 @@ The notice is shown in the app at `/parent/privacy`. It opens with "We keep only
 - Nickname, grade and avatar.
 - Answers to practice problems, how well each skill is going, and how your child likes to learn.
 - If your child says something that worries us, the line they said, for 30 days.
+- Rewards (cubes, levels and stickers) are worked out from your child's answers. We don't keep anything extra for them.
 
 **What we never keep**
 - Last name, photo, school, birthday, location, audio, or any other free-speech text.

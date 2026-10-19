@@ -1,5 +1,5 @@
-// Screenshots of every grown-up screen at tablet and phone size, saved to test-results/grownup/ (git-ignored).
-// Also checks that no screen scrolls sideways.
+// Screenshots of every grown-up screen at tablet, phone and big-tablet sizes, saved to test-results/grownup/ (git-ignored).
+// Also checks that no screen scrolls sideways. With REWARDS=on, Mia finishes a session so her page shows Rewards.
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { admin } from "../helpers/admin";
@@ -12,6 +12,8 @@ const LONG = "W".repeat(20);
 const SIZES = [
   { name: "tablet", width: 1024, height: 768 },
   { name: "phone", width: 390, height: 844 },
+  { name: "portrait", width: 768, height: 1024 },
+  { name: "pro", width: 1366, height: 1024 },
 ];
 
 async function addKidWith(page: Page, name: string, avatar: string) {
@@ -79,22 +81,35 @@ for (const size of SIZES) {
       .insert({ parent_id: await parentId(email), nickname: LONG, grade: "K", age_band: "5-7", avatar: "owl" });
     if (error) throw error;
 
-    // Answer one problem as Mia.
+    // Mia finishes a session: it began 25 minutes ago, so it winds down after an answer or two.
+    const { data: mia } = await admin().from("kids").select("id").eq("parent_id", await parentId(email)).eq("nickname", "Mia").single();
+    await admin().from("kids").update({ placed: true }).eq("id", mia!.id);
     await page.goto("/");
     await page.getByRole("link", { name: /Mia/ }).click();
     await expect(page.getByTestId("say")).toBeVisible();
-    const before = await page.locator("main").getAttribute("data-version");
-    if (await page.getByTestId("choices").count()) await page.getByTestId("choices").getByRole("button").first().click();
-    else {
-      await page.getByRole("button", { name: "1", exact: true }).click();
-      await page.getByRole("button", { name: "OK" }).click();
+    const { data: open } = await admin().from("sessions").select("id, state").eq("kid_id", mia!.id).is("ended_at", null).single();
+    await admin().from("sessions")
+      .update({ state: { ...(open!.state as object), startedAt: Date.now() - 25 * 60_000 } }).eq("id", open!.id);
+    const card = page.getByTestId("end-card");
+    for (let i = 0; i < 12 && !(await card.isVisible()); i++) {
+      await expect(page.getByTestId("say").or(card)).toBeVisible();
+      if (await card.isVisible()) break;
+      const before = await page.locator("main").getAttribute("data-version");
+      if (await page.getByTestId("choices").count()) await page.getByTestId("choices").getByRole("button").first().click();
+      else {
+        await page.getByRole("button", { name: "1", exact: true }).click();
+        await page.getByRole("button", { name: "OK" }).click();
+      }
+      await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
     }
-    await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
+    await expect(card).toBeVisible();
 
     await page.goto("/parent");
     await shot("11-your-kids");
     await page.getByRole("link", { name: /Mia/ }).first().click();
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Mia");
+    await expect(page.getByRole("heading", { name: "Rewards" })).toBeVisible();
+    await expect(page.getByText(/First game/)).toBeVisible();
     await shot("12-mia-progress-and-sessions");
 
     await page.goto("/parent");

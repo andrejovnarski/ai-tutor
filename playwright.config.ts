@@ -15,7 +15,8 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     // Speech on with the fake recogniser and voice: the mic shows on every problem and every line asks for audio.
-    env: { SPEECH: "fake", SPEECH_TOKEN_SECRET: "e2e-secret" },
+    // Rewards on: the end card, picker and child page show them.
+    env: { SPEECH: "fake", SPEECH_TOKEN_SECRET: "e2e-secret", REWARDS: "on" },
   },
   use: { baseURL: "http://localhost:3000" },
   projects: [

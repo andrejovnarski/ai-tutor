@@ -1,4 +1,4 @@
-export const PRIVACY_NOTICE_VERSION = "2026-10-10-draft";
+export const PRIVACY_NOTICE_VERSION = "2026-10-19-draft";
 
 export const DRAFT_BANNER = "Draft — pending legal review.";
 
@@ -14,6 +14,7 @@ export const NOTICE_SECTIONS: NoticeSection[] = [
       "Nickname, grade and avatar.",
       "Answers to practice problems, how well each skill is going, and how your child likes to learn.",
       "If your child says something that worries us, the line they said, for 30 days.",
+      "Rewards (cubes, levels and stickers) are worked out from your child's answers. We don't keep anything extra for them.",
     ],
   },
   {

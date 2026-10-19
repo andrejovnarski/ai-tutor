@@ -1,5 +1,6 @@
 // Screenshots of the kid screens at tablet sizes (and a phone, for reference), saved to test-results/kid/ (git-ignored).
-// Also checks that no screen scrolls sideways or down.
+// Also checks that no screen scrolls sideways or down. With REWARDS=on the end card carries the rewards strip and the
+// picker cards their level, rod and week.
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { admin } from "../helpers/admin";
@@ -10,6 +11,9 @@ const SIZES = [
   { name: "portrait", width: 768, height: 1024 },
   { name: "pro", width: 1366, height: 1024 },
   { name: "phone", width: 390, height: 844 },
+  // Between the narrow layout (600 px and under) and a tablet: the end card's strip and the picker cards at the seam.
+  { name: "small", width: 600, height: 960 },
+  { name: "mid", width: 640, height: 900 },
 ];
 
 async function addKids(page: Page) {
@@ -100,7 +104,16 @@ for (const size of SIZES) {
       await answerWith(page, (await pending(ids.Mia!)).state.pending.problem.answer);
     }
     await expect(card).toBeVisible();
+    await expect(page.getByTestId("rewards-strip")).toBeVisible();
+    // The card's area scrolls rather than cut a tall card off; at these sizes the whole card fits.
+    const cardOver = await card.evaluate((el) => el.parentElement!.scrollHeight - el.parentElement!.clientHeight);
+    expect.soft(cardOver, `${size.name} end card scrolls inside its area`).toBeLessThanOrEqual(0);
     await shot("6-end-card");
+
+    // Back on the picker, Mia's card shows the level her session earned.
+    await page.getByRole("link", { name: "Back to kids" }).click();
+    await expect(page.getByRole("link", { name: /Mia/ })).toContainText(/Lv \d+/);
+    await shot("6b-picker-levels", { scrolls: true });
 
     // Theo (grade 2) and Alexandrina (grade 4): the number pad, if their problems use it.
     for (const name of ["Theo", "Alexandrina"] as const) {
