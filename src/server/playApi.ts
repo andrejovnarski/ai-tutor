@@ -1,7 +1,10 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { SupabaseRepo } from "./persist/supabaseRepo";
 import type { Speak } from "./play";
+import type { PublicTurn } from "./publicTurn";
+import { kidEndRewards } from "./rewards";
 import { touchActivity } from "./retention";
 import { createServerSupabase } from "./supabase";
 import { clipFor } from "./speech/clips";
@@ -85,4 +88,11 @@ export async function nicknameOrNull(repo: SupabaseRepo, kidId: string): Promise
     console.warn("nickname lookup failed; using the default name");
     return null;
   }
+}
+
+/** An end turn with the session's rewards attached; any other turn, or a failed or disabled lookup, comes back unchanged. */
+export async function withRewards(turn: PublicTurn, db: SupabaseClient, kidId: string): Promise<PublicTurn> {
+  if (turn.kind !== "end") return turn;
+  const rewards = await kidEndRewards(db, kidId, Date.now());
+  return rewards ? { ...turn, rewards } : turn;
 }

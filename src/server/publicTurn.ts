@@ -1,5 +1,6 @@
 import { styleView } from "../domain/problems/styleView";
 import type { Turn } from "../domain/session/types";
+import type { EndRewards } from "../domain/rewards/progress";
 import type { Visual } from "../domain/types";
 
 type ProblemTurn = Extract<Turn, { kind: "problem" }>;
@@ -17,7 +18,7 @@ export type PublicTurn =
     kind: "problem"; mode: ProblemTurn["mode"]; try: 1 | 2;
     prompt: ProblemTurn["problem"]["prompt"]; input: ProblemTurn["problem"]["input"]; choices?: number[];
   }
-  | Extract<Turn, { kind: "end" }>;
+  | (Extract<Turn, { kind: "end" }> & { rewards?: EndRewards });
 
 export function publicTurn(t: Turn): PublicTurn {
   if (t.kind === "end") return t;

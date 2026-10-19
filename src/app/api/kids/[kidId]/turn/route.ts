@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { playTurn } from "@/server/play";
-import { forKid, nicknameOrNull, notFound, novaSpeak, parentRepo, seed, tryAgain } from "@/server/playApi";
+import { forKid, nicknameOrNull, notFound, novaSpeak, parentRepo, seed, tryAgain, withRewards } from "@/server/playApi";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ kidId: string }> }) {
   const { kidId } = await params;
@@ -13,5 +13,5 @@ export async function POST(_req: Request, { params }: { params: Promise<{ kidId:
     return tryAgain("turn", err);
   }
   if (r.status === 404) return notFound();
-  return NextResponse.json({ version: r.version, turn: r.turn, ...(r.line ? { line: forKid(r.line, nickname, kidId) } : {}) });
+  return NextResponse.json({ version: r.version, turn: await withRewards(r.turn, repo.client, kidId), ...(r.line ? { line: forKid(r.line, nickname, kidId) } : {}) });
 }

@@ -14,6 +14,11 @@ const open = (r: SessionRow): OpenSession => ({ id: r.id, version: r.version, st
 export class SupabaseRepo implements Repo {
   constructor(private readonly db: SupabaseClient) {}
 
+  /** The caller's client (RLS applies), for reads that sit beside the repo. */
+  get client(): SupabaseClient {
+    return this.db;
+  }
+
   async loadKid(kidId: string): Promise<KidState | null> {
     const kid = await this.db.from("kids").select("id, grade, age_band, placed").eq("id", kidId).maybeSingle();
     // A malformed id can match no kid.
