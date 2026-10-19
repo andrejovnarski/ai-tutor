@@ -2,7 +2,35 @@
 
 Review date: October 19, 2026
 
-This document turns the code review into a practical improvement roadmap. It describes the current behavior, why each change matters, the proposed behavior, and how to decide whether the work is complete. It is a planning document; the changes described here have not been implemented.
+This document turns the code review into a practical improvement roadmap. It describes the original findings, why each change matters, the proposed behavior, and how to decide whether the work is complete. Some improvements have since been implemented; the status audit below takes precedence over historical descriptions.
+
+## Implementation status audit — October 19, 2026
+
+Statuses reflect the current source code and test coverage. “Implemented” means the code is present; it does not establish that real-child playtests or every original acceptance criterion have been completed.
+
+| Roadmap item | Status | Evidence and remaining work |
+| --- | --- | --- |
+| §3 Clear session endings | Implemented | `src/server/play.ts` returns the end turn, restores a same-day summary, and exposes explicit `playAgain`. The client calls `/play-again`. Unit tests cover reloads, day boundaries, duplicate answers, racing requests, and offline retry. Database and browser regression tests are also present. |
+| §4 Teaching styles on the board | Initial scope implemented; broader support outstanding | `src/domain/problems/styleView.ts` and `src/server/publicTurn.ts` switch retry visuals for six simple-sum templates within 10. Supported representations are counters, ten-frames, number lines, and blocks. Stored retries restore the same visual. Story, Make 10, Missing number, subtraction, and other curriculum templates still use their original pictures. This meets the explicitly scoped first slice in the newer style-on-board spec. |
+| §5 Placement by skill branch | Outstanding | `src/domain/kid/placement.ts` still searches one ordered list and marks the prefix below `lo` as known through placement. Branch-specific probes and the proposed distinction in parent-facing confidence labels are not implemented. |
+| §6 Audience and curriculum alignment | Copy changes implemented | `src/app/about.ts` defines K–2 foundations messaging and welcomes older children. Sign-in lists the actual curriculum clusters; add-child shows the grade-coverage hint; page metadata uses the updated description. Whether the experience feels appropriate to older children still needs observation. |
+| §7 Child-requested help | Outstanding | The play screen has answer and speech controls but no explicit Help me action or assisted-answer model. Automatic support after an incorrect attempt already exists. |
+| §8 Interactive math objects | Outstanding | Math visuals are SVG renderers, without the proposed counter manipulation, tap-to-place, reset, or undo flow. |
+| §9 Personal progress journey | Outstanding | The completion card shows problem counts and first-try correctness. It does not show a skill journey, a specific learned milestone, or a next-visit preview. |
+| §10 Delayed mastery checks | Outstanding | `reviewTarget` selects the oldest mastered skill for the existing review cadence. There are no elapsed-time due intervals or separate retention indicators. |
+| §11 Actionable parent reports | Partially covered by existing functionality | Weekly emails already include named skills, plain-language stuck points, and a home tip. The tip is selected across the family, not separately for every child. Placement estimates, assisted success, and retained knowledge are not clearly distinguished; assistance and retention models are still outstanding. |
+| §12 Observed child pilot | Not verified | The repository includes browser tests and a temporary automated rehearsal, but these do not establish that 3–5 children were observed. No completed observation record was found in the reviewed documentation. |
+
+### Audit verification
+
+- `npm test -- --reporter=dot`: **69 test files passed; 1,142 tests passed.**
+- `npm run typecheck`: **passed.**
+- Database and browser regression tests were inspected but not executed during this audit.
+- No live speech-provider calls or real-child playtests were performed.
+
+### Next outstanding work
+
+The first implementation milestone now has its three scoped changes in code: session endings, simple-addition visual adaptation, and audience copy. Confirm the browser and database checks and observe the pilot before treating the full learning experience as validated. Branch-aware placement remains the largest unchanged adaptation concern. Use pilot findings to prioritize requested help, interactive objects, and progress feedback.
 
 ## 1. Overall assessment
 
@@ -37,7 +65,9 @@ These priorities are recommendations, not a commitment to implement every featur
 
 ## 3. Improvement: give sessions a clear ending
 
-### Current behavior
+Status: **Implemented.** See the audit above and `docs/superpowers/specs/2026-10-19-session-ending-design.md`.
+
+### Original behavior
 
 The domain engine can end a session and generate a summary. The client also has an end card, but the server's `commit` function immediately starts a fresh session when the engine returns an end turn. That replaces the end turn before it reaches the normal client flow.
 
@@ -74,7 +104,9 @@ Define reload and multi-tab behavior explicitly. A repeated answer request must 
 
 ## 4. Improvement: make teaching-style changes visible
 
-### Current behavior
+Status: **Initial simple-addition scope implemented.** Broader curriculum coverage remains outstanding. See `docs/superpowers/specs/2026-10-19-style-on-board-design.md`.
+
+### Original behavior
 
 The engine selects an explanation style after a wrong answer. That style is passed into the tutor's wording plan, but the board renders the visual stored in the original problem. Tutor output supports visual cues, but the board does not use those cues to switch representations.
 
@@ -113,6 +145,8 @@ Do not rely on AI to invent visual quantities or arithmetic. Some templates may 
 
 ## 5. Improvement: place children by skill branch
 
+Status: **Outstanding.**
+
 ### Current behavior
 
 Placement performs a binary search over the ordered curriculum list. At completion, it marks skills below the inferred boundary as mastered by placement. This assumes knowledge approximately follows a single ordered progression.
@@ -149,6 +183,8 @@ The exact probe count and confidence rules require design and simulation. Avoid 
 
 ## 6. Improvement: align audience and curriculum
 
+Status: **Copy changes implemented; audience fit still needs playtesting.**
+
 ### Current situation
 
 The design targets ages 5–7 and 8–11, while the implemented curriculum focuses on K–2 number sense, addition, subtraction, place value, and word problems. That can serve older children needing foundational practice, but it does not provide the full math curriculum typically implied by the wider age range.
@@ -165,6 +201,8 @@ Initially describe the product around early math foundations and children who ne
 - Curriculum expansion follows evidence of demand and a reviewed prerequisite plan.
 
 ## 7. New feature: child-requested help
+
+Status: **Outstanding.**
 
 ### Purpose
 
@@ -194,6 +232,8 @@ Let children ask for support before submitting an incorrect answer. The current 
 
 ## 8. New feature: interactive math objects
 
+Status: **Outstanding.**
+
 ### Purpose
 
 Allow children to act on mathematical representations rather than only inspect pictures and submit numbers.
@@ -219,6 +259,8 @@ Start with one skill and one interaction. Making ten is a useful candidate becau
 
 ## 9. New feature: a personal progress journey
 
+Status: **Outstanding.**
+
 ### Purpose
 
 Give children a simple view of what they have learned and what comes next.
@@ -240,6 +282,8 @@ Give children a simple view of what they have learned and what comes next.
 
 ## 10. New feature: delayed mastery checks
 
+Status: **Outstanding.** Existing oldest-first review is present, but the proposed time-based refinement is not.
+
 ### Current behavior
 
 The engine already reviews mastered skills approximately every fifth problem and selects the least recently seen eligible skill. This proposal refines that behavior rather than adding review from scratch.
@@ -260,6 +304,8 @@ The engine already reviews mastered skills approximately every fifth problem and
 - Simulations cover returning after inactivity and forgetting previously demonstrated skills.
 
 ## 11. Refinement: make existing parent reports more actionable
+
+Status: **Partially covered by existing reports.** See the audit for remaining distinctions and home-tip limitations.
 
 The application already has weekly reporting and parent progress screens. Improve those before adding another dashboard.
 
