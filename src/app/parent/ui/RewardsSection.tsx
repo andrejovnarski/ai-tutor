@@ -5,15 +5,18 @@ import { Rod } from "../../rewards/Rod";
 import { StickerArt } from "../../rewards/StickerArt";
 import styles from "./grownup.module.css";
 
-const countOf = (id: string) => id.split(":")[1] ?? "";
+const times = (id: string) => {
+  const n = id.split(":")[1] ?? "";
+  return n === "1" ? "1 time" : `${n} times`;
+};
 
 function why(s: Sticker): string {
   switch (s.kind) {
     case "skill": return "mastered in practice";
     case "topic": return "every skill in the topic";
     case "first": return "first finished game";
-    case "weeks": return `week goal met ${countOf(s.id)} times`;
-    case "tries": return `tried again ${countOf(s.id)} times`;
+    case "weeks": return `week goal met ${times(s.id)}`;
+    case "tries": return `tried again ${times(s.id)}`;
   }
 }
 

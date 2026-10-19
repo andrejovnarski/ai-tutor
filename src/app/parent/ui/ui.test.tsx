@@ -65,6 +65,10 @@ describe("RewardsSection", () => {
     expect(html).toContain("week goal met 4 times, Oct 17");
     expect(html.match(/<li /g)).toHaveLength(2);
   });
+  it("says 1 time, not 1 times", () => {
+    const html = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({ stickers: [{ id: "weeks:1", at: Date.UTC(2026, 9, 5, 15) }] })} />);
+    expect(html).toContain("week goal met 1 time,");
+  });
   it("streak 0 and 1 and empty chart", () => {
     const zero = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({})} />);
     expect(zero).toContain("Week goal: 3 days a week"); expect(zero).toContain("No stickers yet. They show up as Mia plays.");
