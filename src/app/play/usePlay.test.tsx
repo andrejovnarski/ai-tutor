@@ -92,6 +92,22 @@ describe("usePlay help", () => {
   beforeEach(() => { rt.slots = []; rt.i = 0; rt.effects = []; rt.dirty = false; });
   const helped = { version: 2, feedback: { result: { kind: "helped" }, then: "retry", reveal: false },
     next: { ...problemBody.turn, try: 2, help: 1 }, line: { say: "Count together.", tone: "calm" } };
+  it.each(["help", "answer"] as const)("tracks %s while retrying and clears it after recovery", async (request) => {
+    const h = mount([json(200, problemBody)]);
+    await h.settle();
+    h.net.down = true;
+    void (request === "help" ? h.api.help() : h.api.answer(5));
+    await Promise.resolve();
+    rt.i = 0; rt.effects = [];
+    const pending = usePlay("kid1");
+    expect(pending.state).toMatchObject({ phase: "retrying", request });
+    await h.settle();
+    h.net.down = false;
+    h.api.retry();
+    await h.settle();
+    expect(h.api.state.phase).toBe("problem");
+    expect(h.api.state.request).toBeUndefined();
+  });
   it("posts only the version and applies the helped answer body", async () => {
     const h = mount([json(200, problemBody), json(200, helped)]);
     await h.settle();

@@ -135,6 +135,15 @@ describe("Help me next to Nova", () => {
   it.each(["sending", "retrying", "offline"] as const)("is disabled while %s", (phase) => {
     expect(screen(0, phase)).toMatch(/<button[^>]*data-testid="help"[^>]*disabled=""[^>]*>Help me<\/button>/);
   });
+  it.each(["help", "answer"] as const)("uses the %s retry notice while a problem is on screen", (request) => {
+    screen(0, "retrying");
+    play.state.request = request;
+    const html = renderToStaticMarkup(<PlayScreen kidId="kid1" ageBand="5-7" />);
+    const notice = text(html.match(/<div[^>]*data-testid="connection-notice"[^>]*>(.*?)<\/div>/)![1]!);
+    expect(notice).toBe(request === "answer"
+      ? "Trying to reach Nova… your answer is saved when it gets through."
+      : "Trying to reach Nova…");
+  });
   it("is absent at help 2, without a problem, and on the end card", () => {
     expect(screen(2)).not.toContain('data-testid="help"');
     play.state = { phase: "loading" };

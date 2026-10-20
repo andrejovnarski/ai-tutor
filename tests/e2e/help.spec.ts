@@ -22,7 +22,12 @@ test("Help me gives a hint, keeps both help levels on reload, then lets Mia fini
   const answerNumber = new RegExp(`(^|[^\\d-])${answer}(?!\\d)`);
 
   const hintResponse = page.waitForResponse((r) => r.url().endsWith(`/kids/${kidId}/help`) && r.request().method() === "POST");
-  await help.click();
+  // Reach Help with the keyboard, including after reload.
+  for (let tabs = 0; tabs < 30 && !(await help.evaluate((el) => el === document.activeElement)); tabs++) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(help).toBeFocused();
+  await page.keyboard.press("Enter");
   const hint = await (await hintResponse).json();
   expect(hint.next.help).toBe(1);
   await expect(bubble).not.toHaveText(originalLine);
@@ -31,6 +36,7 @@ test("Help me gives a hint, keeps both help levels on reload, then lets Mia fini
   await expect(help).toBeEnabled();
   await expect(page.getByTestId("say")).toHaveText(prompt);
   await expect(page.getByTestId("board").getByRole("img")).toBeVisible();
+  await expect(help).toBeFocused();
   const hintLine = await bubble.innerText();
   const hintPicture = await page.getByTestId("board").getByRole("img").getAttribute("aria-label");
   await page.reload();
@@ -38,8 +44,13 @@ test("Help me gives a hint, keeps both help levels on reload, then lets Mia fini
   await expect(help).toBeEnabled();
   await expect(page.getByTestId("board").getByRole("img")).toHaveAttribute("aria-label", hintPicture!);
 
-  await help.click();
+  for (let tabs = 0; tabs < 30 && !(await help.evaluate((el) => el === document.activeElement)); tabs++) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(help).toBeFocused();
+  await page.keyboard.press("Enter");
   await expect(help).toHaveCount(0);
+  await expect(page.getByTestId("tray").getByRole("button").first()).toBeFocused();
   await expect(bubble).toContainText(answerNumber);
   await expect(page.getByTestId("say")).toHaveText(prompt);
   const demoLine = await bubble.innerText();

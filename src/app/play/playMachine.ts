@@ -25,6 +25,8 @@ export type PlayState = {
   rewards?: Rewards;
   /** 1..4 while phase is "retrying". */
   attempt?: number;
+  /** The submission being sent or retried; absent for a turn load. */
+  request?: "answer" | "help";
   /** True only when the last 200 answer was correct. */
   correct?: boolean;
 };
@@ -42,7 +44,7 @@ export type StepBody = { version: number; turn: PublicTurn; line?: TutorLine };
 export type PlayEvent =
   | { type: "load" }
   | { type: "loaded"; body: StepBody }
-  | { type: "send" }
+  | { type: "send"; request?: "answer" | "help" }
   | { type: "answered"; body: AnswerBody }
   | { type: "conflict"; body: StepBody }
   | { type: "retrying"; attempt: number }
@@ -58,7 +60,7 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
     case "load":
       return { phase: "loading" };
     case "send":
-      return state.phase === "problem" ? { ...state, phase: "sending", attempt: undefined } : state;
+      return state.phase === "problem" ? { ...state, phase: "sending", attempt: undefined, request: ev.request ?? "answer" } : state;
     case "loaded":
     case "conflict": {
       const { version, turn, line } = ev.body;

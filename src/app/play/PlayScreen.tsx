@@ -81,9 +81,11 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
   }, [state.phase]);
 
   // The tray is remounted per problem. If focus was in the tray (keyboard or switch user), put it on the first
-  // button of the new problem; never take focus on load or from elsewhere.
+  // button of the new problem. Help restores its own focus, falling back to the tray when Help disappears.
   const tray = useRef<HTMLElement>(null);
   const trayFocus = useRef(false);
+  const helpButton = useRef<HTMLButtonElement>(null);
+  const helpFocus = useRef(false);
   useEffect(() => {
     const down = (e: PointerEvent) => { if (!tray.current?.contains(e.target as Node)) trayFocus.current = false; };
     document.addEventListener("pointerdown", down);
@@ -91,13 +93,20 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
   }, []);
   useEffect(() => {
     const el = tray.current;
-    if (state.phase !== "problem" || !trayFocus.current || !el || el.contains(document.activeElement)) return;
+    if (state.phase !== "problem") return;
+    if (helpFocus.current) {
+      helpFocus.current = false;
+      const target = helpButton.current ?? el?.querySelector<HTMLButtonElement>("button:not(:disabled)");
+      target?.focus();
+      return;
+    }
+    if (!trayFocus.current || !el || el.contains(document.activeElement)) return;
     el.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
   }, [state.phase, state.version]);
 
   const ended = state.phase === "ended" && state.summary;
   const notice = state.phase === "retrying" || state.phase === "offline"
-    ? <ConnectionNotice offline={state.phase === "offline"} answering={!!problem} onRetry={retry} />
+    ? <ConnectionNotice offline={state.phase === "offline"} answering={state.request === "answer"} onRetry={retry} />
     : null;
 
   return (
@@ -122,8 +131,12 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
         )}
         <div className={styles.topActions}>
           {problem && problem.help < 2 ? (
-            <button type="button" className={styles.helpButton} data-testid="help" disabled={state.phase !== "problem"}
-              onClick={() => { if (speech) voice.cancel(); void help(); }}>Help me</button>
+            <button ref={helpButton} type="button" className={styles.helpButton} data-testid="help" disabled={state.phase !== "problem"}
+              onClick={() => {
+                helpFocus.current = document.activeElement === helpButton.current;
+                if (speech) voice.cancel();
+                void help();
+              }}>Help me</button>
           ) : null}
           {/* the end card has its own Back to kids */}
           {ended ? null : <Link href="/" className={styles.done}>I&apos;m done for now</Link>}
