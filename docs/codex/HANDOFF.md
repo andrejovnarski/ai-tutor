@@ -24,6 +24,8 @@ back under the task. The owner (Andrej) has the final say on everything.
    If a task seems to need that, stop and say so in the report.
 8. If something is unclear, make the smallest sensible choice and list it under
    "Choices I made" in the report rather than stopping.
+9. **Never remove or weaken an existing test** (assertion, threshold, check) to make your change pass. If a
+   test conflicts with the task, stop and say so under "Open questions".
 
 ## Rules for Claude
 
@@ -40,21 +42,7 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T12 — Progress lines, part 2: end card and e2e
-- **Branch:** `codex/progress-lines` (checked out; T11 committed — end turns carry `progress: { today, next }`)
-- **Goal:** the end card shows the two lines.
-- **Read first:** spec section "Client"; `DESIGN.md`; plan `docs/superpowers/plans/2026-10-20-progress-lines.md`
-  — do **Task 2 (T12)** steps 1–5 exactly, with Review Focus items 3 and 4.
-- **Also write** the e2e (reload keeps the lines) and the kid-shots no-clip guard for `progress-today` /
-  `progress-next` (Claude runs them — you can't). Reuse the `SLACK` pattern already in `kid-shots.spec.ts`.
-- **Don't:** touch `src/domain` or `src/server`. No new deps.
-- **Acceptance:** new unit tests pass; `npm run typecheck`, `npm test` green. Claude runs e2e and checks screenshots.
-
-#### Codex report
-- Files changed:
-- Test results:
-- Choices I made:
-- Open questions:
+_None — waiting for the next task._
 
 <!-- Template:
 ### T1 — <title>
@@ -87,3 +75,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T9 — Help me: parent page, download text, lawyer line | `codex/help-me` | f4a3c89 | First try. unit 1289, db 134, e2e 63. Final review: nothing serious, 2 small fixes → T10 |
 | T10 — Help me review fixes (focus, retry notice) | `codex/help-me` | 94acc5c | First try. unit 1293, e2e 63 ×2 |
 | T11 — Progress lines: counters, summary, words | `codex/progress-lines` | 9f911b0 | Asked before touching 2 out-of-scope fixtures (OK given). unit 1324, db 134 |
+| T12 — Progress lines: end card + e2e | `codex/progress-lines` | edea2f4 | 1 fix round: had deleted the end-card fit check (Claude restored it; card overflowed 79 px on phone) → tightened spacing. unit 1331, e2e 64 |
