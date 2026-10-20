@@ -38,7 +38,7 @@ function kidLines(k: KidWeek): string[] {
   if (k.sessions === 0) return ["No sessions this week."];
   return [
     `${plural(k.sessions, "session", "sessions")}, ${plural(k.minutes, "minute", "minutes")}`,
-    `Mastered this week: ${k.mastered.length ? k.mastered.join(", ") : "nothing new yet"}`,
+    `Learned this week: ${k.mastered.length ? k.mastered.join(", ") : "nothing new yet"}`,
     `Working on now: ${k.currentSkill ?? "everything so far is mastered"}`,
     `Stuck points: ${k.stuck.length ? k.stuck.join("; ") : "none this week"}`,
     ...(k.rewards ? [k.rewards] : []),

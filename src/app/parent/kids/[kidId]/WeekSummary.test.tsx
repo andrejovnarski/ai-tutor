@@ -7,7 +7,7 @@ it("shows sessions, minutes, day cubes, mastered cubes and the current skill", (
   const html = text(renderToStaticMarkup(<WeekSummary nickname="Mia" week={base} playedDays={["2026-10-05","2026-10-06","2026-10-08","2026-10-10"]} />));
   expect(html).toContain("4 sessions, 38 minutes");
   expect(html).toContain('aria-label="Played 4 of the last 7 days"');
-  expect(html).toContain("Mastered: Counting to 20, Adding within 5");
+  expect(html).toContain("Learned: Counting to 20, Adding within 5");
   expect(html).toContain("Working on <b>Adding within 10</b>. Tricky part: counting on from the bigger number.");
 });
 it("uses singular forms", () => {
@@ -21,7 +21,7 @@ it("shows the empty week sentence and no cubes when nothing was played", () => {
 });
 it("omits the mastered line when nothing new, and the tricky part when nothing is stuck", () => {
   const html = text(renderToStaticMarkup(<WeekSummary nickname="Mia" week={{ ...base, mastered: [], stuck: [] }} playedDays={["2026-10-10"]} />));
-  expect(html).not.toContain("Mastered:"); expect(html).not.toContain("Tricky part");
+  expect(html).not.toContain("Learned:"); expect(html).not.toContain("Tricky part");
   expect(html).toContain("Working on <b>Adding within 10</b>.");
 });
 it("says everything is mastered when currentSkill is null", () => {

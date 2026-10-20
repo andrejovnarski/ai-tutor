@@ -39,6 +39,7 @@ describe("exportFile", () => {
       expect(typeof parsed.about[key]).toBe("string");
     }
     expect(parsed.about.file).toContain("Mia");
+    expect(parsed.about.skill_state).toContain("check_due is when the next recall is due. remembered_at is when Mia last remembered the skill.");
     expect(parsed.about.attempts).toContain("Every answer Mia gave");
   });
 });

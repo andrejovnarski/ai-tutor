@@ -16,11 +16,12 @@ it.each([0, 1, 2])("shows the session help count with the right plural, hiding z
   vi.mocked(exportKid).mockResolvedValue({
     kid: { id: "k1", nickname: "Mia", grade: "K", age_band: "5-7", avatar: "fox", placed: true, created_at: "2026-10-01T00:00:00Z" },
     skill_state: [], style_stats: [], distress_flags: [],
-    sessions: [{ id: "s1", started_at: "2026-10-18T20:00:00Z", state: { problems: 1, firstTryCorrect: 0 } }],
+    sessions: [{ id: "s1", started_at: "2026-10-18T20:00:00Z", state: { problems: 1, firstTryCorrect: 0, mastered: ["add-subtract-within-100.add"] } }],
     attempts: Array.from({ length: helped }, () => ({ session_id: "s1", result: "helped", answer: null, time_ms: 1_000, at: "2026-10-18T20:00:10Z" })),
   });
   const html = renderToStaticMarkup(await KidPage({ params: Promise.resolve({ kidId: "k1" }), searchParams: Promise.resolve({}) }));
   expect(html).toContain("1 problem, 0 right first time");
+  expect(html).toContain("Learned: Add without regrouping");
   if (helped === 0) {
     expect(html).not.toContain("Asked for help");
   } else {

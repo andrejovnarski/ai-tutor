@@ -16,6 +16,7 @@ describe("buildWeeklyReport", () => {
       expect(body).toContain("3 sessions");
       expect(body).toContain("42 minutes");
       expect(body).toContain("Add within 10");
+      expect(body).toContain("Learned this week: Add within 10");
       expect(body).toContain("Subtract within 10");
       expect(body).toContain(TAG_LABEL["off-by-ten"]);
       expect(body).toContain(TIP_FOR_TAG["off-by-ten"]!);

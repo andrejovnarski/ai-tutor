@@ -1,4 +1,6 @@
 import "server-only";
+import { isMastered } from "../domain/kid/bkt";
+import type { SkillState } from "../domain/kid/types";
 import { getSkill } from "../domain/curriculum";
 import type { MistakeTag } from "../domain/types";
 import type { KidExport } from "./rights";
@@ -16,6 +18,7 @@ export type KidRecord = { skills: SkillLine[]; sessions: SessionLine[]; flags: F
 type SkillStateRow = {
   skill_id: string; attempts: number; level: number; last_seen: string | null;
   recent_tags: (MistakeTag | null)[]; mastered_at: string | null;
+  p_known: number; placed: boolean; remembered_at: string | null;
 };
 type SessionRow = { id: string; started_at: string; state: { problems?: number; firstTryCorrect?: number; mastered?: string[] } };
 type AttemptRow = { result: string; session_id: string; time_ms: number; at: string };
@@ -31,11 +34,16 @@ const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}
 const newestFirst = (a: string | null, b: string | null) => (b ? Date.parse(b) : 0) - (a ? Date.parse(a) : 0);
 
 function skillLine(r: SkillStateRow): SkillLine {
-  if (r.mastered_at) return { name: nameOf(r.skill_id), status: `Mastered ${monthDay.format(new Date(r.mastered_at))}`, tricky: null };
+  const mastered = isMastered({ pKnown: r.p_known, attempts: r.attempts, placed: r.placed } as SkillState);
+  if (mastered) {
+    const learned = r.placed ? "Knew at start" : r.mastered_at ? `Learned ${monthDay.format(new Date(r.mastered_at))}` : "Learned";
+    const recall = r.remembered_at ? `remembered ${monthDay.format(new Date(r.remembered_at))}` : "not checked yet";
+    return { name: nameOf(r.skill_id), status: `${learned} · ${recall}`, tricky: null };
+  }
   const tag = r.recent_tags.findLast((t) => t !== null);
   return {
     name: nameOf(r.skill_id),
-    status: r.attempts > 0 ? `Learning, level ${r.level}` : "Not started yet",
+    status: r.mastered_at ? "Practicing again" : r.attempts > 0 ? `Learning, level ${r.level}` : "Not started yet",
     tricky: tag ? TAG_LABEL[tag] : null,
   };
 }

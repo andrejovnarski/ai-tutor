@@ -148,6 +148,20 @@ describe("Play against Supabase", () => {
 });
 
 describe("SupabaseRepo contract", () => {
+  it("save_step round-trips recall fields on insert and update", async () => {
+    const kid = await kidFor(true);
+    const repo = repoA();
+    const state = startSession((await repo.loadKid(kid))!, 1, 0);
+    const open = (await repo.createSession(kid, state))!;
+    const skill = Object.values(state.kid.skills).find((s) => !s.placed)!;
+    const saved = { ...skill, checkStep: 2 as const, checkDue: Date.parse("2026-10-23T20:00:00Z"), rememberedAt: Date.parse("2026-10-20T20:00:00Z") };
+    const writes = { kidId: kid, attempts: [], skillStates: [saved], styleStats: [] };
+    expect(await repo.saveStep(open, state, false, writes)).toBe(1);
+    expect((await repo.loadKid(kid))!.skills[skill.skillId]).toEqual(saved);
+    const updated = { ...saved, checkDue: saved.checkDue + 1000, rememberedAt: saved.rememberedAt + 1000 };
+    expect(await repo.saveStep({ ...open, version: 1 }, state, false, { ...writes, skillStates: [updated] })).toBe(2);
+    expect((await repo.loadKid(kid))!.skills[skill.skillId]).toEqual(updated);
+  });
   it("createSession returns null when the kid already has an open session", async () => {
     const kid = await kidFor(true);
     const state = startSession(placedKid(firstSkills(3)), 1, 0);

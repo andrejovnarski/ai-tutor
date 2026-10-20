@@ -23,17 +23,17 @@ const attempt = (sessionId: string, at: string, timeMs: number) => ({
 const empty = { skill_state: [], attempts: [], sessions: [], distress_flags: [] };
 
 describe("kidRecord skills", () => {
-  it("names each skill and says mastered (with the New York date), learning (with level) or not started", () => {
+  it("names each skill and says learned (with the New York date), learning (with level) or not started", () => {
     const { skills } = kidRecord({
       ...empty,
       skill_state: [
-        skill({ skill_id: "add-subtract-within-100.add-regroup", mastered_at: "2026-10-13T02:00:00Z" }), // Oct 12 in NY
+        skill({ skill_id: "add-subtract-within-100.add-regroup", p_known: 0.98, attempts: 5, mastered_at: "2026-10-13T02:00:00Z" }), // Oct 12 in NY
         skill({ skill_id: "add-subtract-within-100.tens", level: 2 }),
         skill({ skill_id: "add-subtract-within-100.add", attempts: 0, last_seen: null }),
       ],
     });
     expect(skills).toEqual([
-      { name: "Add with regrouping", status: "Mastered Oct 12", tricky: null },
+      { name: "Add with regrouping", status: "Learned Oct 12 · not checked yet", tricky: null },
       { name: "Add and subtract tens", status: "Learning, level 2", tricky: null },
       { name: "Add without regrouping", status: "Not started yet", tricky: null },
     ]);
@@ -55,7 +55,7 @@ describe("kidRecord skills", () => {
       ...empty,
       skill_state: [
         skill({ recent_tags: ["forgot-the-ten", null, "off-by-one-counting", null] }),
-        skill({ skill_id: "add-subtract-within-100.tens", recent_tags: ["off-by-ten"], mastered_at: "2026-10-18T20:00:00Z" }),
+        skill({ skill_id: "add-subtract-within-100.tens", recent_tags: ["off-by-ten"], p_known: 0.98, attempts: 5, mastered_at: "2026-10-18T20:00:00Z" }),
       ],
     });
     expect(skills[0]!.tricky).toBe("Counting one too many or too few");
@@ -145,5 +145,27 @@ describe("kidRecord", () => {
     }));
     expect(out).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
     expect(out).not.toMatch(/seed|p_known|kid_id|session_id|template/);
+  });
+});
+
+
+describe("recall skill status", () => {
+  const status = (over: Record<string, unknown>) => kidRecord({ ...empty, skill_state: [skill(over)] }).skills[0]!.status;
+  it.each([
+    [{ p_known: 0.98, attempts: 5, mastered_at: "2026-10-13T02:00:00Z" }, "Learned Oct 12 · not checked yet"],
+    [{ p_known: 0.98, attempts: 5, mastered_at: "2026-10-13T02:00:00Z", remembered_at: "2026-10-20T02:00:00Z" }, "Learned Oct 12 · remembered Oct 19"],
+    [{ p_known: 0.98, attempts: 0, placed: true }, "Knew at start · not checked yet"],
+    [{ p_known: 0.98, attempts: 0, placed: true, remembered_at: "2026-10-20T02:00:00Z" }, "Knew at start · remembered Oct 19"],
+    [{ p_known: 0.4, mastered_at: "2026-10-13T02:00:00Z", remembered_at: "2026-10-14T20:00:00Z" }, "Practicing again"],
+    [{ p_known: 0.98, attempts: 4 }, "Learning, level 2"],
+    [{ attempts: 0 }, "Not started yet"],
+  ])("formats %j", (row, expected) => { expect(status(row)).toBe(expected); });
+
+  it("keeps placement wording after forgetting and re-learning", () => {
+    const row = { placed: true, p_known: 0.98, attempts: 0, mastered_at: "2026-10-13T02:00:00Z" };
+    expect(status(row)).toBe("Knew at start · not checked yet");
+    expect(status({ ...row, p_known: 0.4, attempts: 2 })).toBe("Practicing again");
+    expect(status({ ...row, p_known: 0.98, attempts: 8 })).toBe("Knew at start · not checked yet");
+    expect(status({ ...row, p_known: 0.98, attempts: 8, remembered_at: "2026-10-20T02:00:00Z" })).toBe("Knew at start · remembered Oct 19");
   });
 });
