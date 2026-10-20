@@ -21,7 +21,7 @@ to reach it, and a guess pollutes the mastery evidence.
 
 ## Child experience
 
-- A large **Help me** button sits with the answer tray on every problem. Calm styling per `DESIGN.md`: no red,
+- A large **Help me** button sits at the end of Nova's speech row on every problem (on screens ≤ 720 px wide: on the top row with "I'm done for now"). Owner ruling 2026-10-20, after the tray had no room for an 88 px target. Calm styling per `DESIGN.md`: no red,
   no warning colours, no sad imagery, no counter of how often help was used. It is a real `<button>` with an
   accessible name "Help me", reachable by Tab, activated by Enter/Space.
 - **Help 1** (tap before answering, i.e. on try 1): Nova says a strategy hint that never states the answer,

@@ -40,15 +40,22 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T9 — Help me, part 4: parents, download text, lawyer line
-- **Branch:** `codex/help-me` (checked out; T6–T8 committed)
-- **Goal:** parents see "Asked for help N times" per session on the child page; the data download explains
-  `helped`; the lawyer brief gets one line.
-- **Read first:** spec section "Parents"; plan `docs/superpowers/plans/2026-10-20-help-me.md` — do
-  **Task 4 (T9)** steps 1–4 exactly. Copy: `Asked for help 2 times` (and `Asked for help 1 time` for one —
-  match the plural style already used on that page); nothing shown when 0.
-- **Don't:** touch kid screens, server play code or the weekly email. No new deps.
-- **Acceptance:** new tests pass; `npm run typecheck`, `npm test` green. Claude runs db + e2e and the final review.
+### T10 — Help me: review fixes (focus, retry notice)
+- **Branch:** `codex/help-me` (checked out; T6–T9 committed)
+- **From the final review** — two small fixes, nothing else:
+  1. **Keyboard focus is lost after Help.** `src/app/play/PlayScreen.tsx` (~lines 92–96 restore focus only if
+     it was in the tray; Help me is in the header). Pressing Enter on Help me disables it while sending (Chrome
+     blurs it), and at Help 2 the button is removed, so focus lands on `<body>`. Fix: if focus was on Help me
+     when the help request started, after the response move focus back to Help me, or — if it's gone
+     (help 2) — to the tray's first button (same target the existing restore uses). Unit test in
+     `screen.test.tsx` or `usePlay.test.tsx` style, whichever can observe focus; if neither can, add a check to
+     `tests/e2e/help.spec.ts` (keyboard: Tab to Help me, Enter, focus ends on Help me; Enter again, focus ends
+     in the tray) and say so.
+  2. **Retry notice wording.** `src/app/play/ConnectionNotice.tsx:14` says "your answer is saved when it gets
+     through" while a *help* request is retrying. Track which request is retrying (state from
+     `submit("help")` vs `submit("answer")`) and drop that sentence for help. Unit test both texts.
+- **Don't:** change anything else. No new deps.
+- **Acceptance:** `npm run typecheck`, `npm test` green; Claude runs e2e.
 
 #### Codex report
 - Files changed:
@@ -84,3 +91,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T6 — Help me: engine `help()` + sims | `codex/help-me` | c90eb59 | First try. unit 1251 green |
 | T7 — Help me: migration, `/help` route, help line | `codex/help-me` | ccfe5f4 | Stopped at out-of-scope fixture (Claude fixed). unit 1271, db 134, e2e 62 |
 | T8 — Help me button + e2e | `codex/help-me` | 0fd8693 | 2 fix rounds (48px in tray → 88px next to Nova; phone bubble clipped → own row ≤720px). e2e 63 |
+| T9 — Help me: parent page, download text, lawyer line | `codex/help-me` | f4a3c89 | First try. unit 1289, db 134, e2e 63. Final review: nothing serious, 2 small fixes → T10 |
