@@ -32,7 +32,7 @@ On the end card, under "Great work today!" and above the stats/rewards strip:
 
 | Case | Line |
 |---|---|
-| Frontier skill is the skill named in a "practised" Today line | `Next time: more {skill}` |
+| Frontier skill is the skill named in a "practiced" Today line | `Next time: more {skill}` |
 | Frontier skill exists (otherwise) | `Next time: {skill}` |
 | No frontier (everything mastered) | `Next time: a mix of your skills` |
 | Session had no answered problems | no line |
@@ -65,10 +65,10 @@ All other skills use `name`.
 ## Data
 
 - `Session` gains `recovered: number` (problems solved on try 2 that were not after Help 2) and
-  `practised: Record<string, number>` (first tries served per skill in practice, review, check and wind-down,
+  `practiced: Record<string, number>` (first tries served per skill in practice, review, check and wind-down,
   newest skill last in insertion order for tie-breaks). Missing in old saved sessions → `0` / `{}`.
 - `SessionSummary` gains `today: Today | null` and `next: Next | null`:
-  - `type Today = { kind: "learned" | "practised"; skillId: string } | { kind: "kept-going" | "placement" }`
+  - `type Today = { kind: "learned" | "practiced"; skillId: string } | { kind: "kept-going" | "placement" }`
   - `type Next = { kind: "skill" | "more"; skillId: string } | { kind: "mix" }`
   built in `summaryOf()`.
 - One pure function owns the words: `progressLines(summary): { today: string | null; next: string | null }` in
@@ -95,8 +95,8 @@ Stepping-stone path, parent-page or email copies of these lines, voicing them, r
 ## Testing
 
 - `summaryOf` / `progressLines` unit tests: every row of both tables; Help 2 copy not counted; old session
-  without the new fields; tie-break on practised; kidName fallback.
-- Engine: `recovered` and `practised` counted in `answer()`/`help()` for each mode.
+  without the new fields; tie-break on practiced; kidName fallback.
+- Engine: `recovered` and `practiced` counted in `answer()`/`help()` for each mode.
 - End card render test for both lines, either line missing, both missing.
 - e2e: finish a session (existing rewards/session-ending helpers) → both lines visible; reload → same lines.
 
