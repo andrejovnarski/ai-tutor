@@ -51,9 +51,22 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 #### Codex report
 - Files changed:
+  - `src/domain/types.ts`; curriculum `add-subtract-within-100.ts`, `add-subtract-within-20.ts`, `place-value.ts`, `subtract-within-10.ts`: optional kidName and all eight verbatim names.
+  - `src/domain/session/types.ts`, `engine.ts`, `engine.test.ts`; new `progressLines.ts`, `progressLines.test.ts`: counters, summary selection, exact copy, and regression coverage.
+  - `src/server/publicTurn.ts`, `publicTurn.test.ts`: end-turn progress text; summary omits today/next ids.
+  - `src/app/play/screen.test.tsx`, `src/app/api/kids/[kidId]/help/route.test.ts`: authorized fixture-only progress additions.
+  - `docs/codex/HANDOFF.md`: this report.
 - Test results:
+  - Tests written first: initial targeted run failed as expected (3 files failed; 14 tests failed, 36 passed).
+  - `npm run typecheck`: `> tsc --noEmit` — exit 0.
+  - `npm test`: `Test Files  82 passed (82)`; `Tests  1324 passed (1324)` — exit 0.
+  - `git diff --check`: clean. DB/e2e suites not run, per instructions.
 - Choices I made:
-- Open questions:
+  - Move a skill's practiced key to the end whenever served, so equal counts select the most recently served skill, including after JSON reload.
+  - Recognize completed placement-only sessions using existing count/windDown/check state; no additional persisted field or migration.
+  - Updated only the two src/app fixtures explicitly authorized in the follow-up; no application behavior/UI changes there.
+  - Left all changes uncommitted; no git writes. Pre-existing untracked `.superpowers/` left untouched.
+- Open questions: None. T12 UI work remains out of scope.
 
 <!-- Template:
 ### T1 — <title>
