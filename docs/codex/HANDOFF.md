@@ -40,7 +40,20 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-_None — waiting for the next task._
+### T11 — Progress lines, part 1: counters, summary, words
+- **Branch:** `codex/progress-lines` (already checked out, from `main`; T12 follows on the same branch)
+- **Goal:** the end turn carries two kid-word lines, `progress.today` and `progress.next`.
+- **Read first:** spec `docs/superpowers/specs/2026-10-20-progress-lines-design.md` and plan
+  `docs/superpowers/plans/2026-10-20-progress-lines.md` — do **Task 1 (T11)** exactly, steps 1–5, with the
+  Global Constraints (exact copy, verbatim kidName table) and Review Focus items 1, 2, 3 and 5.
+- **Don't:** touch `src/app` (T12). Fix only type fallout elsewhere (list it under Choices). No new deps.
+- **Acceptance:** new tests pass; `npm run typecheck`, `npm test` green.
+
+#### Codex report
+- Files changed:
+- Test results:
+- Choices I made:
+- Open questions:
 
 <!-- Template:
 ### T1 — <title>
