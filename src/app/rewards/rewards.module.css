@@ -189,7 +189,7 @@
   animation: boatSail 600ms ease-in-out var(--sail-delay, 0ms) both;
 }
 @keyframes flagRise {
-  from { transform: scaleY(0.3); }
+  from { transform: scaleY(0); }
   to { transform: scaleY(1); }
 }
 @keyframes boatSail {
