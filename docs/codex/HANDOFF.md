@@ -42,32 +42,22 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T22 — Grown-up Logbook: tokens and all pages restyled
-- **Branch:** `codex/grownup-logbook` (you are on it)
-- **Goal:** every grown-up page (sign-in, check email, privacy, consent, PIN set/unlock, your kids, add child,
-  child page, account) uses the calm Logbook look: pale sky page, white strip, white cards with thin ink border
-  and hard ink edge, orange buttons with ink text, blue links and focus rings. No felt green, no squared paper.
-- **Context:** plan `docs/superpowers/plans/2026-10-21-grownup-logbook.md` **Task 1** (read Global Constraints and
-  Review Focus); spec `docs/superpowers/specs/2026-10-21-grownup-logbook-design.md` "Look". Mockup option A in
-  `.superpowers/brainstorm/1592744-1792531617/content/grownup-look.html` (read as text). Parts:
-  `src/app/parent/ui/*`. Kid tokens already exist in `src/app/play/tokens.css`.
+### T23 — Grown-up Logbook: map, shells, sun dots
+- **Branch:** `codex/grownup-logbook` (T22 committed; you are on it)
+- **Goal:** the child page opens with a "{nickname}'s islands" card showing the island map; each card on "Your
+  kids" has a mini map; the level rod shows shells and the week marks are sun dots.
+- **Context:** plan `docs/superpowers/plans/2026-10-21-grownup-logbook.md` **Task 2** (Interfaces: new
+  `IslandsCard`); spec "Child page and your kids". Reuse `src/app/rewards/IslandMap.tsx` and `Rod` (`look="shell"`)
+  as the kid side does (`src/app/MiniRewards.tsx`, `src/app/page.tsx` for loading progress per kid with
+  `Promise.all`).
 - **Do:**
-  1. Failing tests first (plan Task 1 Step 1).
-  2. Add the three tokens; restyle `grownup.module.css` and the parts; drop the felt tab on the consent page's card.
-  3. Every press move / transition gets a still `prefers-reduced-motion` state.
-- **Don't:** no map, shells or sun dots yet (T23); no copy or flow changes; don't touch the weekly email or
-  sticker art; no new dependencies. Rule 9 — replacing an assertion's old token with the new one is fine, list it.
-- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs e2e + grown-up shots.
-
-#### Codex report
-- Files changed: `src/app/play/tokens.css`, `src/app/play/tokens.test.ts`; `src/app/parent/ui/grownup.module.css`, `GrownupFrame.tsx`, `IndexCard.tsx`, `ui.test.tsx`; `src/app/parent/consent/page.tsx`, `src/app/parent/page.tsx`; this handoff.
-- Test results:
-  - Tests first: `npm test -- tokens ui` → `Tests 13 failed | 45 passed (58)`; after implementation → `Test Files 4 passed (4)`, `Tests 58 passed (58)`.
-  - `npm run typecheck` → `tsc --noEmit`, exit 0 (no errors).
-  - `npm test` → `Test Files 87 passed (87)`, `Tests 1436 passed (1436)`.
-  - `git diff --check` → clean. No db/e2e runs, network, git writes or port 3000 access. Existing `.impeccable/config.json` and `.superpowers/` changes left alone.
-- Choices I made: kept `IndexCard.color` accepted but ignored; replaced its old colour-presence assertion with no-tab/no-colour assertions, and updated old PIN/link and strip/chalk focus assertions to `--pp-link` as authorized. Used a still decorative SVG sea wave on bare pages, and hard-line PIN dividers instead of a gradient. Linked cards share the button press treatment and reduced-motion still state. Shared CSS restyles every listed page; maps, shells and sun dots remain for T23.
-- Open questions: none. Claude still needs to run e2e and grown-up screenshots for visual review.
+  1. Failing tests first (plan Task 2 Step 1).
+  2. `src/app/parent/ui/IslandsCard.tsx`; child page shows it first when `progress` exists.
+  3. `RewardsSection` rod → shells; `Cubes` marks drawn as round sun dots (same role, label, counts, "+N",
+     `data-cube` kept).
+  4. Your kids page: `kidProgress` per kid, mini map in an `aria-hidden` wrapper; renders fine when null.
+- **Don't:** no domain/server changes beyond calling `kidProgress`; no copy changes; rule 9.
+- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs db + e2e + shots.
 
 <!-- Template:
 ### T1 — <title>
