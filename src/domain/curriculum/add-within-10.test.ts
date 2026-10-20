@@ -75,7 +75,7 @@ it.each(["make-ten-frame", "make-ten-bond"])("%s: answer + a = 10, tagged mistak
     const a = sayNumbers(p.prompt.say)[0]!;
     expect(p.answer + a).toBe(10);
     if (a > 1) expect(p.mistakes).toContainEqual({ answer: 10, tag: "gave-total" }); // a = 1: 10 is answer + 1
-    if (id === "make-ten-frame") expect(p.prompt.show).toEqual({ kind: "ten-frames", first: a, second: 0 });
+    if (id === "make-ten-frame") expect(p.prompt.show).toEqual({ kind: "ten-frames", first: a, second: 0, fill: true });
     else if (lv < 3) expect(p.prompt.show).toEqual({ kind: "objects", icon: expect.any(String), groups: [a] });
     else expect(p.prompt.show).toEqual({ kind: "equation", text: `${a} + ? = 10` });
   }));
@@ -136,4 +136,10 @@ describe("sum (addends for style views)", () => {
       else expect(p.sum).toEqual([(p.prompt.show as V<"ten-frames">).first, (p.prompt.show as V<"ten-frames">).second]);
     }
   });
+});
+
+it("only make-ten-frame enables filling across all levels and seeds", () => {
+  for (const id of ["make-ten-frame", "make-ten-bond", "add-ten-frame-10", "add-objects-10", "add-facts-5", "add-line-5", "count-on-bigger-first", "count-on-smaller-first", "missing-addend", "missing-first"]) {
+    each(id, (p) => expect("fill" in p.prompt.show ? p.prompt.show.fill : undefined).toBe(id === "make-ten-frame" ? true : undefined));
+  }
 });

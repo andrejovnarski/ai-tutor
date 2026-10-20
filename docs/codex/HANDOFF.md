@@ -42,33 +42,27 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T15 — Recall checks: e2e
-- **Branch:** `codex/recall-checks` (T13, T14 committed; you are on it)
-- **Goal:** one Playwright test proves a due skill gets a two-problem recall in real play and the parent page
-  then says `remembered`.
-- **Context:** plan `docs/superpowers/plans/2026-10-20-recall-checks.md` **Task 3**. Copy patterns from
-  `tests/e2e/play.spec.ts` (test at ~line 157: `setUpMia`, `admin()` seeding of `skill_state`, reading the open
-  session's `state.pending.problem.answer` to answer right, tiles vs number pad) and `tests/e2e/rewards.spec.ts`
-  (finishing a session).
-- **Do:** create `tests/e2e/recall.spec.ts`:
-  1. `setUpMia`, mark kid `placed: true`. Seed `skill_state` rows for the first few K skills in curriculum order
-     as mastered (`p_known 0.99, attempts 10, placed false`) with `check_due` = `new Date(Date.UTC(9999,0,1))` (not
-     due), except ONE target skill: mastered the same way, `mastered_at`/`last_seen`/`check_due` = 2 days ago.
-     Leave later skills unseeded so there is a frontier to practice.
-  2. Play, answering right each time (from `state.pending`), until `attempts` (via `admin()`) has two rows
-     `mode = 'recall'` for the target skill, both `result = 'correct'`, `try = 1`. Cap the loop (e.g. 12 problems)
-     and fail clearly if not reached. Recall comes at the 5th problem (review slot).
-  3. Leave play ("I'm done for now" or however other specs reach the parent page), open Mia's parent kid page,
-     expect that skill's row text to contain `remembered`.
-- **Don't:** don't change app code or other specs. You cannot run e2e (no network/port) — write it carefully;
-  Claude runs it. Don't remove or weaken tests (rule 9).
+### T16 — Fill the frame: flag and interactive ten-frame
+- **Branch:** `codex/fill-frame` (Claude made it; you are on it)
+- **Goal:** on "Make 10" frame problems the child can tap empty cells to add counters (undo, start over) as a
+  counting tool; answering with tiles is unchanged.
+- **Context:** spec `docs/superpowers/specs/2026-10-20-fill-the-frame-design.md`; plan
+  `docs/superpowers/plans/2026-10-20-fill-the-frame.md` **Task 1** — read both, plus `DESIGN.md` for the colour
+  token and button look. Files: `src/domain/types.ts`, `src/domain/curriculum/add-within-10.ts`,
+  `src/app/play/visuals/{TenFrames,Visual}.tsx`, `src/app/play/{Board,PlayScreen}.tsx`,
+  `src/app/play/{tokens.css,play.module.css}`.
+- **Do:** plan Task 1 Steps 1–4 (tests first, watch them fail, then implement). Exact accessible names and
+  interfaces from the plan. Cover Review Focus 1, 2, 3, 5.
+- **Don't:** no engine/grading/API/database/tutor change; don't show any count; don't save/log/send taps
+  (COPPA); no e2e (that is T17). Don't remove or weaken tests (rule 9) — if an existing visual/render test
+  breaks, stop and ask.
 - **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count.
 
 #### Codex report
-- Files changed: `tests/e2e/recall.spec.ts` (new recall flow test); `docs/codex/HANDOFF.md` (this report). No app code or other specs changed. No git writes; port 3000 untouched.
-- Test results: `npm run typecheck` → `tsc --noEmit`, exit 0. `npm test` → `Test Files 82 passed (82)`; `Tests 1373 passed (1373)`, exit 0. E2e and db tests not run, as instructed; Claude must run the new spec.
-- Choices I made: seeded the first three K skills in curriculum order, with the first (`Count to 10`) as the sole due target; other seeded skills use the year-9999 due date. Capped play at 12 problems, checked exactly two target recall rows with `result: correct` and `try: 1`, then used “I'm done for now” and checked `remembered` in that skill's parent-page row.
-- Open questions: None.
+- Files changed: `src/domain/types.ts`, `src/domain/curriculum/add-within-10.ts`, `src/domain/curriculum/add-within-10.test.ts`, `src/app/play/visuals/TenFrames.tsx`, new `src/app/play/visuals/TenFrames.test.tsx`, `src/app/play/visuals/Visual.tsx`, `src/app/play/Board.tsx`, `src/app/play/PlayScreen.tsx`, `src/app/play/tokens.css`, `src/app/play/play.module.css`, and this report.
+- Test results: tests first demonstrated 6 expected failures; final `npm run typecheck` → `tsc --noEmit` (exit 0); final `npm test` → `Test Files 83 passed (83)`, `Tests 1382 passed (1382)`. Covers ordered additions, undo, clearing, locking, full-frame focus, retry reset, changed-frame reset, passive visuals, and template flags. No git writes, port 3000 activity, db tests, or e2e tests.
+- Choices I made: native HTML grid buttons for the interactive frame; existing SVG rendering retained for passive frames. Added counters use blue (`--counter-added: #3b7dd8`); reserved reset-button space avoids layout shifts. Used a Node-only hook/render harness following `usePlay.test.tsx`, without new dependencies. Per Claude's explicit ruling, strengthened the existing make-ten-frame exact-object assertion to also require `fill: true`, preserving every other field and check. Taps remain local React state with no count display or persistence.
+- Open questions: none. Browser hit-area and clipping checks remain T17, as planned.
 
 <!-- Template:
 ### T1 — <title>
@@ -105,3 +99,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T13 — Recall checks: model, engine, sims | `codex/recall-checks` | (this commit) | 1 ruling round (old review tests kept via testkit `checkDue` far future; pair BKT per-answer guess; both-wrong cap 0.9). unit 1365; db red until T14 migration (missing columns, expected) |
 | T14 — Recall checks: migration, rows, parent words | `codex/recall-checks` | (this commit) | First try. Claude fixes: `coalesce(check_step,0)` in save_step (old payloads), testkit not-due date → year 9999 (Postgres range), null mastered_at guard, "recall" in download mode list. unit 1373, db 135, e2e 64 |
 | T15 — Recall checks: e2e | `codex/recall-checks` | (this commit) | First try; passed on first run. e2e 65 |
+| T16 — Fill the frame: flag + interactive ten-frame | `codex/fill-frame` | (this commit) | Stopped once to ask about tightening an exact-object test (allowed: adds `fill: true`). Claude added `data-frame` marker. unit 1382, e2e 65 |

@@ -104,7 +104,7 @@ const makeTenFrame = template("make-ten-frame", (rng, lv) => {
   const a = between(rng, MAKE_TEN_START[lv]);
   return {
     say: `${plural(a, "dot", "dots")}. How many more make 10?`,
-    show: { kind: "ten-frames", first: a, second: 0 },
+    show: { kind: "ten-frames", first: a, second: 0, fill: true },
     answer: 10 - a,
     mistakes: makeTenMistakes(a),
   };

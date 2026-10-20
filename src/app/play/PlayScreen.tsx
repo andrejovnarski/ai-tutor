@@ -149,7 +149,7 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
       ) : (
         <>
           <section className={styles.board} data-testid="board" aria-label="Felt board">
-            {problem ? <Board problem={problem} /> : null}
+            {problem ? <Board key={state.version} problem={problem} locked={state.phase !== "problem"} /> : null}
             {speech && problem ? <MicStrip mic={voice.mic} onYes={voice.yes} onNo={voice.no} /> : null}
             {notice}
           </section>

@@ -1,3 +1,6 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import styles from "../play.module.css";
 import type { Visual } from "@/domain/types";
 import { Svg, Cross, W, H } from "./common";
 import { describeVisual } from "./describe";
@@ -7,7 +10,62 @@ const FW = CELL * 5;
 const FH = CELL * 2;
 const FGAP = 40;
 
-export function TenFrames({ v }: { v: Extract<Visual, { kind: "ten-frames" }> }) {
+type Props = { v: Extract<Visual, { kind: "ten-frames" }>; locked?: boolean };
+
+export function TenFrames({ v, locked }: Props) {
+  if (v.fill === true && v.first + v.second <= 10) {
+    return <FillFrame key={`${v.first}:${v.second}`} v={v} locked={locked} />;
+  }
+  return <StaticFrames v={v} />;
+}
+
+function FillFrame({ v, locked }: Props) {
+  const filled = v.first + v.second;
+  const [added, setAdded] = useState(0);
+  const controls = useRef<Array<HTMLButtonElement | null>>([]);
+  const focusCell = useRef<number | null>(null);
+  useEffect(() => {
+    if (focusCell.current === null) return;
+    controls.current[focusCell.current]?.focus();
+    focusCell.current = null;
+  }, [added]);
+  const change = (next: number) => {
+    if (locked) return;
+    focusCell.current = filled + next < 10 ? filled + next : 9;
+    setAdded(next);
+  };
+  return (
+    <div className={styles.fillFrame}>
+      <div role="img" aria-label={describeVisual(v)} className={styles.srOnly} />
+      <div className={styles.frameGrid} data-frame="true">
+        {Array.from({ length: 10 }, (_, i) => {
+          if (i < filled) return (
+            <span key={i} className={styles.frameCell} aria-hidden="true">
+              <span className={styles.frameCounter} data-counter={i < v.first ? "red" : "yellow"}
+                style={{ background: i < v.first ? "var(--counter-red)" : "var(--counter-yellow)" }} />
+              {i >= filled - Math.min(v.crossedOut ?? 0, filled) ? <span className={styles.frameCross}>×</span> : null}
+            </span>
+          );
+          const yours = i < filled + added;
+          return (
+            <button key={i} type="button" className={styles.frameCell} disabled={locked}
+              ref={(el) => { controls.current[i] = el; }}
+              aria-label={yours ? "Your counter, take it back" : "Empty space, add a counter"}
+              data-empty={yours ? undefined : "true"}
+              onClick={() => change(yours ? added - 1 : added + 1)}>
+              {yours ? <span className={styles.frameCounter} data-counter="added" /> : <span className={styles.frameEmpty} />}
+            </button>
+          );
+        })}
+      </div>
+      <div className={styles.frameActions}>
+        {added > 0 ? <button type="button" className={styles.frameReset} disabled={locked} onClick={() => change(0)}>Start over</button> : null}
+      </div>
+    </div>
+  );
+}
+
+function StaticFrames({ v }: Props) {
   const filled = v.first + v.second;
   const nf = filled > 10 ? 2 : 1;
   const x0 = (W - (nf * FW + (nf - 1) * FGAP)) / 2;
