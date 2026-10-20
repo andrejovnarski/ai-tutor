@@ -2,7 +2,7 @@
 import { check } from "../checker/check";
 import { generate, getSkill } from "../curriculum/index";
 import { guessFor, isMastered } from "../kid/bkt";
-import { easyReview, frontier, isStruggling, reviewTarget, weakestPrereq } from "../kid/next";
+import { RECALL_DAY_MS, RECALL_GAP_DAYS, recallTarget, isRecallDue, easyReview, frontier, isStruggling, reviewTarget, weakestPrereq } from "../kid/next";
 import { finishPlacement, placementProbe, recordPlacement, startPlacement } from "../kid/placement";
 import { applyFirstTry, resetStruggle } from "../kid/state";
 import { pickStyle, recordStyle } from "../kid/style";
@@ -27,8 +27,8 @@ const stepRng = (s: Session, salt: number): Rng => createRng(mix(s.seed, s.step 
 
 export function startSession(kid: Session["kid"], seed: number, now: number): Session {
   return {
-    seed, step: 0, startedAt: now, lastActivity: now, kid,
-    pending: null, current: null, placement: null, check: null, windDown: null, stepBacksInRow: 0,
+    seed, step: 0, startedAt: now, lastActivity: now, kid: recallDefaults(kid), ranPlacement: !kid.placed,
+    pending: null, current: null, placement: null, check: null, recall: null, windDown: null, stepBacksInRow: 0,
     count: 0, recent: [], lastStyle: {}, switchStyle: [], lastCorrect: false, lastMode: null,
     problems: 0, firstTryCorrect: 0, mastered: [], recovered: 0, practiced: {}, ended: false,
   };
@@ -75,7 +75,10 @@ function serve(s: Session, now: number, deps: Deps, skillId: string, level: Leve
   const next = { ...s, step: s.step + 1 };
   const rng = stepRng(next, 0);
   const seed = rng.int(0, 2 ** 31 - 1);
-  for (const templateId of rng.shuffle(getSkill(skillId).templates)) {
+  const templates = rng.shuffle(getSkill(skillId).templates);
+  const candidates = mode === "recall" && templates.length > 1
+    ? templates.filter((id) => !s.recall?.templates.includes(id)) : templates;
+  for (const templateId of candidates) {
     let problem: Problem;
     try {
       problem = deps.generate(templateId, seed, level);
@@ -93,12 +96,15 @@ function serve(s: Session, now: number, deps: Deps, skillId: string, level: Leve
       delete practiced[skillId];
       practiced[skillId] = count + 1;
     }
-    return { session: { ...next, practiced, pending, lastActivity: now }, turn: problemTurn(pending, logs) };
+    const recall = mode === "recall" && s.recall
+      ? { ...s.recall, templates: [...s.recall.templates, templateId] } : s.recall ?? null;
+    return { session: { ...next, recall, practiced, pending, lastActivity: now }, turn: problemTurn(pending, logs) };
   }
   return end(next, now);
 }
 
 export function nextTurn(s: Session, now: number, deps: Deps = DEFAULT_DEPS): { session: Session; turn: Turn } {
+  s = { ...s, kid: recallDefaults(s.kid), recall: s.recall ?? null };
   if (s.ended) return end(s, now);
   if (now - s.lastActivity > STALE_MS) return end(s, now);
   if (s.pending) {
@@ -109,8 +115,11 @@ export function nextTurn(s: Session, now: number, deps: Deps = DEFAULT_DEPS): { 
   if (!s.kid.placed) {
     const placement = s.placement ?? startPlacement(s.kid.grade);
     const probe = placementProbe(placement)!;
-    return serve({ ...s, placement }, now, deps, probe.skillId, probe.level, "placement");
+    return serve({ ...s, placement, ranPlacement: true }, now, deps, probe.skillId, probe.level, "placement");
   }
+
+  if (s.recall) return serve({ ...s, count: s.count + 1 }, now, deps, s.recall.skillId,
+    s.kid.skills[s.recall.skillId]!.level, "recall");
 
   const [minMinutes, maxMinutes] = SESSION_MINUTES[s.kid.ageBand];
   const elapsed = now - s.startedAt;
@@ -120,13 +129,22 @@ export function nextTurn(s: Session, now: number, deps: Deps = DEFAULT_DEPS): { 
   if (elapsed >= minMinutes * 60_000 && s.lastCorrect) return end(s, now);
 
   const current = s.current && !isMastered(s.kid.skills[s.current]!) ? s.current : frontier(s.kid);
+  if (current === null || (s.count + 1) % REVIEW_EVERY === 0) {
+    const eligible = s.current ? { ...s.kid, skills: { ...s.kid.skills,
+      [s.current]: { ...s.kid.skills[s.current]!, lastSeen: s.startedAt } } } : s.kid;
+    const due = recallTarget(eligible, now, s.startedAt);
+    if (due && due !== s.current && due !== current && !s.ranPlacement) {
+      return serve({ ...s, current, count: s.count + 1, lastMode: "review",
+        recall: { skillId: due, results: [], templates: [] } }, now, deps, due, s.kid.skills[due]!.level, "recall");
+    }
+  }
   const wrong = s.recent.filter((ok) => !ok).length;
   const easy = easyReview(s.kid, current);
-  if (wrong >= LOW_ACCURACY_WRONG && easy && s.lastMode !== "review") return review(s, now, deps, easy, 1, current);
-  const due = reviewTarget(s.kid, current);
+  if (wrong >= LOW_ACCURACY_WRONG && easy && !isRecallDue(s.kid.skills[easy]!, now, s.startedAt) && s.lastMode !== "review") return review(s, now, deps, easy, 1, current);
+  const due = reviewTarget(s.kid, current, now, s.startedAt);
   if ((s.count + 1) % REVIEW_EVERY === 0 && due) return review(s, now, deps, due, s.kid.skills[due]!.level, current);
   if (current) return serve({ ...s, current, count: s.count + 1, lastMode: "practice" }, now, deps, current, s.kid.skills[current]!.level, "practice");
-  const any = reviewTarget(s.kid, null);
+  const any = reviewTarget(s.kid, null, now, s.startedAt);
   if (any) return review(s, now, deps, any, s.kid.skills[any]!.level, null);
   return end(s, now);
 }
@@ -182,7 +200,9 @@ function respond(s: Session, given: number | null, now: number): { session: Sess
     if (!helping) return { session: counted, feedback, writes };
     next = counted;
   } else if (p.try === 1) {
-    next = firstTry(next, p, correct, attempt.mistakeTag, now, writes, feedback);
+    next = p.mode === "recall"
+      ? recallAnswer(next, p, correct, attempt.mistakeTag, now, writes)
+      : firstTry(next, p, correct, attempt.mistakeTag, now, writes, feedback);
     if (p.mode === "check") {
       const out = checkAnswer(next, p, correct, attempt.mistakeTag, writes, feedback);
       if (!helping) return out;
@@ -227,14 +247,15 @@ function placementAnswer(s: Session, correct: boolean, writes: Writes): Session 
   const kid = finishPlacement(s.kid, placement);
   writes.kidPlaced = true;
   writes.skillStates.push(...Object.values(kid.skills).filter((st) => st.placed));
-  return { ...s, kid, placement: null, current: frontier(kid) };
+  return { ...s, kid, placement: null, ranPlacement: true, current: frontier(kid) };
 }
 
 /** First try: BKT, level, streaks; mastery moves the frontier on. */
 function firstTry(s: Session, p: Pending, correct: boolean, tag: Attempt["mistakeTag"], now: number,
   writes: Writes, feedback: Feedback): Session {
   const before = s.kid.skills[p.skillId]!;
-  const after: SkillState = applyFirstTry(before, { correct, tag, guess: guessFor(p.problem), now });
+  let after: SkillState = applyFirstTry(before, { correct, tag, guess: guessFor(p.problem), now });
+  if (!isMastered(before) && isMastered(after)) after = { ...after, checkStep: 0, checkDue: now + RECALL_DAY_MS };
   writes.skillStates.push(after);
   const kid = { ...s.kid, skills: { ...s.kid.skills, [p.skillId]: after } };
   let next: Session = {
@@ -287,4 +308,35 @@ function struggle(s: Session, skillId: string, writes: Writes): Session {
   return prereq
     ? { ...s, kid, check: { prereqId: prereq, returnTo: skillId, done: 0 } }
     : { ...s, kid, switchStyle: [...s.switchStyle, skillId] };
+}
+
+/** Hold BKT until the pair is complete: a single slip leaves the model alone. */
+function recallAnswer(s: Session, p: Pending, correct: boolean, tag: Attempt["mistakeTag"], now: number, writes: Writes): Session {
+  const recall = s.recall!;
+  const results = [...recall.results, { correct, tag, guess: guessFor(p.problem) }];
+  let st: SkillState = { ...s.kid.skills[p.skillId]!, lastSeen: now };
+  if (results.length === 2) {
+    if (results[0]!.correct === results[1]!.correct) {
+      for (const result of results) st = applyFirstTry(st, { ...result, now });
+      if (correct) {
+        const checkStep = Math.min(3, (st.checkStep ?? 0) + 1) as SkillState["checkStep"];
+        st = { ...st, checkStep, checkDue: now + RECALL_GAP_DAYS[checkStep] * RECALL_DAY_MS, rememberedAt: now };
+      } else st = { ...st, pKnown: Math.min(st.pKnown, 0.9), level: 1, checkStep: 0, checkDue: null };
+    } else st = { ...st, checkStep: 0, checkDue: now + RECALL_DAY_MS };
+  }
+  writes.skillStates.push(st);
+  const kid = { ...s.kid, skills: { ...s.kid.skills, [p.skillId]: st } };
+  const forgotten = results.length === 2 && results.every((result) => !result.correct);
+  return { ...s, kid, current: forgotten ? frontier(kid) : s.current,
+    recall: results.length === 2 ? null : { ...recall, results },
+    problems: s.problems + 1, firstTryCorrect: s.firstTryCorrect + (correct ? 1 : 0),
+    recent: [...s.recent, correct].slice(-RECENT) };
+}
+
+/** Saved kids from before recall checks have no schedule yet. */
+function recallDefaults(kid: Session["kid"]): Session["kid"] {
+  if (Object.values(kid.skills).every((s) => s.checkStep !== undefined && s.checkDue !== undefined && s.rememberedAt !== undefined)) return kid;
+  return { ...kid, skills: Object.fromEntries(Object.entries(kid.skills).map(([id, s]) => [id, {
+    ...s, checkStep: s.checkStep ?? 0, checkDue: s.checkDue ?? null, rememberedAt: s.rememberedAt ?? null,
+  }])) };
 }

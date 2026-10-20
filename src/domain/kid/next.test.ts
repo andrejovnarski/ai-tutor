@@ -1,5 +1,5 @@
 import { SKILLS } from "../curriculum/index";
-import { easyReview, frontier, isStruggling, reviewTarget, weakestPrereq } from "./next";
+import { easyReview, frontier, isRecallDue, recallTarget, isStruggling, reviewTarget, weakestPrereq } from "./next";
 import { newKidState } from "./state";
 import type { KidState, SkillState } from "./types";
 
@@ -77,4 +77,31 @@ it("easyReview near a skill: the easiest mastered skill of that skill's grade", 
   const got = easyReview(master(kid(), first(26)), near.id)!;
   expect(SKILLS.find((s) => s.id === got)!.grade).toBe(near.grade);
   expect(got).toBe(SKILLS.slice(0, 26).find((s) => s.grade === near.grade)!.id);
+});
+
+it("isRecallDue: mastery, future, null, and seen this session", () => {
+  const s = master(kid(), first(1)).skills[first(1)[0]!]!;
+  expect(isRecallDue({ ...s, pKnown: 0.2 }, 100, 50)).toBe(false);
+  expect(isRecallDue({ ...s, checkDue: 101 }, 100, 50)).toBe(false);
+  expect(isRecallDue({ ...s, checkDue: null }, 100, 50)).toBe(true);
+  for (const lastSeen of [50, 60]) expect(isRecallDue({ ...s, lastSeen }, 100, 50)).toBe(false);
+});
+
+it("recallTarget: null before older before newer, ties curriculum order, none null", () => {
+  const [a, b, c] = first(3) as [string, string, string];
+  let k = master(kid(), [a, b, c]);
+  k = set(set(k, a, { checkDue: 20 }), b, { checkDue: 10 });
+  expect(recallTarget(k, 100, 50)).toBe(c);
+  k = set(k, c, { lastSeen: 50 });
+  expect(recallTarget(k, 100, 50)).toBe(b);
+  k = set(k, a, { checkDue: 10 });
+  expect(recallTarget(k, 100, 50)).toBe(a);
+  expect(recallTarget(kid(), 100, 50)).toBeNull();
+});
+
+it("reviewTarget skips due skills with now/start; without now behaves as today", () => {
+  const [a, b] = first(2) as [string, string];
+  const k = set(master(kid(), [a, b]), b, { checkDue: 200 });
+  expect(reviewTarget(k, null, 100, 50)).toBe(b);
+  expect(reviewTarget(k, null)).toBe(a);
 });

@@ -30,7 +30,7 @@ it("guessFor by input", () => {
 });
 
 it("mastered needs 0.95 and 5 attempts, or placement", () => {
-  const s: SkillState = { skillId: "x", pKnown: 0.96, attempts: 4, level: 1, correctStreak: 0, wrongStreak: 0, lastSeen: null, placed: false, recentTags: [] };
+  const s: SkillState = { skillId: "x", pKnown: 0.96, attempts: 4, level: 1, correctStreak: 0, wrongStreak: 0, lastSeen: null, placed: false, recentTags: [], checkStep: 0, checkDue: null, rememberedAt: null };
   expect(isMastered(s)).toBe(false);
   expect(isMastered({ ...s, attempts: 5 })).toBe(true);
   expect(isMastered({ ...s, placed: true })).toBe(true);

@@ -1,4 +1,5 @@
 // Simulated kids for whole-system tests (spec §10).
+import { isMastered } from "../kid/bkt";
 import { getSkill } from "../curriculum/index";
 import { newKidState } from "../kid/state";
 import type { KidGrade, KidState, Mode } from "../kid/types";
@@ -7,7 +8,7 @@ import { answer, help, nextTurn, startSession } from "../session/engine";
 import type { Feedback, LogEntry, Turn } from "../session/types";
 import type { AgeBand, MistakeTag, Style } from "../types";
 
-export type BotProfile = { knows: Set<string>; slip: number; guess: number; learn: number; habit?: MistakeTag; stuck?: { share: number; action: "help" | "wrong" } };
+export type BotProfile = { knows: Set<string>; slip: number; guess: number; learn: number; habit?: MistakeTag; forget?: { day: number; skills: string[] }; stuck?: { share: number; action: "help" | "wrong" } };
 
 type ProblemTurn = Extract<Turn, { kind: "problem" }>;
 
@@ -45,6 +46,10 @@ export type SimResult = {
   logs: LogEntry[];
   /** step-back / check-passed / loop-guard / mastered / end, in order. */
   trace: string[];
+  learningTrace: (
+    | { kind: "recall"; skillId: string; results: boolean[]; mastered: boolean; pKnownBefore: number; pKnownAfter: number }
+    | { kind: "practice"; skillId: string }
+  )[];
   placementIndex: number;
   modes: Mode[];
   explanations: { skillId: string; style: Style }[];
@@ -53,20 +58,21 @@ export type SimResult = {
 const ANSWER_MS = 20_000;
 const DAY_MS = 24 * 60 * 60_000;
 
-/** Plays back-to-back sessions (one a day) until `problems` answers have been given. */
+/** Plays sessions `dayGap` days apart (default 1); forget.day is a zero-based session index. */
 export function simulate(
   profile: BotProfile,
-  opts: { grade: KidGrade; ageBand: AgeBand; seed: number; problems: number; kid?: KidState },
+  opts: { grade: KidGrade; ageBand: AgeBand; seed: number; problems: number; kid?: KidState; dayGap?: number },
 ): SimResult {
   const bot = makeBot(profile, opts.seed);
   let kid = opts.kid ?? newKidState("bot", opts.ageBand, opts.grade);
   const r: SimResult = {
-    kid, firstTryRate: 0, firstTries: 0, logs: [], trace: [], placementIndex: 0, modes: [], explanations: [],
+    kid, firstTryRate: 0, firstTries: 0, logs: [], trace: [], placementIndex: 0, modes: [], explanations: [], learningTrace: [],
   };
   let right = 0;
   let answered = 0;
   let now = 0;
   for (let day = 0; answered < opts.problems; day++) {
+    if (profile.forget?.day === day) for (const id of profile.forget.skills) bot.knows.delete(id);
     let s = startSession(kid, opts.seed * 1000 + day, now);
     for (;;) {
       const next = nextTurn(s, now);
@@ -80,8 +86,16 @@ export function simulate(
       if (turn.try === 1) r.modes.push(turn.mode);
       now += ANSWER_MS;
       const response = bot.respond(turn);
+      const recallBefore = s.recall;
       const out = (response === "help" ? help(s, now) : answer(s, response, now))!;
       s = out.session;
+      if (turn.mode === "practice" && turn.try === 1) r.learningTrace.push({ kind: "practice", skillId: turn.skillId });
+      if (recallBefore?.results.length === 1 && turn.try === 1) {
+        const st = s.kid.skills[turn.skillId]!;
+        r.learningTrace.push({ kind: "recall", skillId: turn.skillId,
+          results: [recallBefore.results[0]!.correct, out.feedback.result.kind === "correct"],
+          mastered: isMastered(st), pKnownBefore: next.session.kid.skills[turn.skillId]!.pKnown, pKnownAfter: st.pKnown });
+      }
       answered++;
       const fb = out.feedback;
       r.logs.push(...fb.logs);
@@ -97,7 +111,7 @@ export function simulate(
       if (answered >= opts.problems) break;
     }
     kid = s.kid;
-    now += DAY_MS;
+    now += (opts.dayGap ?? 1) * DAY_MS;
   }
   return { ...r, kid, firstTryRate: r.firstTries ? right / r.firstTries : 0 };
 }

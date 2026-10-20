@@ -1,7 +1,7 @@
 import type { CheckResult } from "../checker/check";
 import type { PlacementState } from "../kid/placement";
 import type { Attempt, KidState, Mode, SkillState, StyleStat } from "../kid/types";
-import type { AgeBand, Level, Problem, Style } from "../types";
+import type { AgeBand, Level, MistakeTag, Problem, Style } from "../types";
 
 export type LogEntry = { type: "template-failed" | "step-back" | "loop-guard" | "check-passed"; skillId: string; detail?: string };
 
@@ -57,17 +57,19 @@ export type Session = {
   pending: Pending | null;
   current: string | null;
   placement: PlacementState | null;
+  ranPlacement?: boolean;
   check: Check | null;
+  recall: { skillId: string; results: { correct: boolean; tag: MistakeTag | null; guess: number }[]; templates: string[] } | null;
   windDown: number | null;
   stepBacksInRow: number;
-  /** Practice and review problems served. */
+  /** Practice, review, and recall problems served. */
   count: number;
-  /** First-try results of practice and review, newest last, at most 10. */
+  /** First-try results of practice, review, and recall, newest last, at most 10. */
   recent: boolean[];
   lastStyle: Record<string, Style>;
   switchStyle: string[];
   lastCorrect: boolean;
-  /** Mode of the last practice or review problem served (low-accuracy valve fires once in a row). */
+  /** Mode of the last practice, review, or recall problem served (low-accuracy valve fires once in a row). */
   lastMode: "practice" | "review" | null;
   problems: number;
   firstTryCorrect: number;

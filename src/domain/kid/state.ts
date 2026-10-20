@@ -11,7 +11,7 @@ export function newKidState(kidId: string, ageBand: AgeBand, grade: KidGrade): K
   for (const s of SKILLS) {
     skills[s.id] = {
       skillId: s.id, pKnown: bktParams(s.id).prior, attempts: 0, level: 1,
-      correctStreak: 0, wrongStreak: 0, lastSeen: null, placed: false, recentTags: [],
+      correctStreak: 0, wrongStreak: 0, lastSeen: null, placed: false, recentTags: [], checkStep: 0, checkDue: null, rememberedAt: null,
     };
   }
   const styles = Object.fromEntries(STYLES.map((style) => [style, { style, tries: 0, wins: 0 }])) as Record<Style, StyleStat>;

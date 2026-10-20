@@ -1,6 +1,8 @@
+import { isMastered } from "../kid/bkt";
+import { RECALL_DAY_MS, RECALL_GAP_DAYS } from "../kid/next";
 import { recordPlacement } from "../kid/placement";
 import { getSkill } from "../curriculum/index";
-import { newKidState } from "../kid/state";
+import { applyFirstTry, newKidState } from "../kid/state";
 import { answer, help, nextTurn, startSession, summaryOf } from "./engine";
 import { MIN, SEC, firstSkills, fresh, generate, placedKid, play, rightFor, setSkill, wrongFor, type ProblemTurn } from "./testkit";
 import type { Session } from "./types";
@@ -385,4 +387,207 @@ describe("progress summary", () => {
     const placement = play(fresh(newKidState("k", "5-7", "K")), 0, rightFor, { max: 1 }).session;
     expect(summaryOf(placement, 10).today).toEqual({ kind: "placement" });
   });
+});
+
+describe("recall", () => {
+  const id = firstSkills(1)[0]!;
+  const setup = (step: 0 | 1 | 2 | 3 = 0) => {
+    const kid = setSkill(placedKid(firstSkills(3)), id, { lastSeen: -1, checkDue: 0, checkStep: step });
+    return { ...fresh(kid), count: 4 };
+  };
+  const finish = (s: Session, correct: boolean, now: number, helping = false) => {
+    const r = turnOf(s, now);
+    const a = helping ? help(r.s, now + 1)! : answer(r.s, correct ? rightFor(r.t) : wrongFor(r.t), now + 1)!;
+    if (!correct) {
+      const retry = turnOf(a.session, now + 2);
+      const b = answer(retry.s, rightFor(retry.t), now + 3)!;
+      expect(b.session.recall).toEqual(a.session.recall);
+      return b.session;
+    }
+    return a.session;
+  };
+
+  it("Mastery in play sets checkStep 0 and checkDue now + RECALL_DAY_MS", () => {
+    let s = fresh(placedKid([]));
+    for (let i = 0; i < 20 && !s.mastered.length; i++) s = finish(s, true, i * 10);
+    expect(s.mastered.length).toBeGreaterThan(0);
+    const st = s.kid.skills[s.mastered[0]!]!;
+    expect(st.checkStep).toBe(0);
+    expect(st.checkDue).toBe(st.lastSeen! + RECALL_DAY_MS);
+  });
+
+  it("Review slot serves two recall problems in a row with different templates; JSON round-trip survives", () => {
+    const a = turnOf(setup(), 0);
+    expect(a.t.mode).toBe("recall");
+    const s = answer(a.s, rightFor(a.t), 1)!.session;
+    const b = turnOf(JSON.parse(JSON.stringify(s)), 2);
+    expect(b.t).toMatchObject({ mode: "recall", skillId: id });
+    expect(b.t.templateId).not.toBe(a.t.templateId);
+  });
+
+  it.each([0, 1, 2, 3] as const)("Both right grows checkStep and raises pKnown (step %i)", (step) => {
+    const s = finish(finish(setup(step), true, 0), true, 10);
+    const st = s.kid.skills[id]!;
+    const next = Math.min(3, step + 1);
+    expect(st.checkStep).toBe(next);
+    expect(st.checkDue).toBe(11 + RECALL_GAP_DAYS[next]! * RECALL_DAY_MS);
+    expect(st.rememberedAt).toBe(11);
+    expect(st.pKnown).toBeGreaterThan(0.95);
+    expect(s.recall).toBeNull();
+  });
+
+  it.each([[true, false], [false, true]])("One right either order leaves pKnown unchanged: %s/%s", (a, b) => {
+    const before = setup(2);
+    const s = finish(finish(before, a!, 0), b!, 10);
+    expect(s.kid.skills[id]).toEqual({ ...before.kid.skills[id]!, lastSeen: 11, checkStep: 0, checkDue: 11 + RECALL_DAY_MS });
+  });
+
+  it("Both wrong returns to practice at level 1 with no due date", () => {
+    const s = finish(finish(setup(), false, 0), false, 10);
+    expect(isMastered(s.kid.skills[id]!)).toBe(false);
+    expect(s.kid.skills[id]).toMatchObject({ level: 1, checkStep: 0, checkDue: null });
+    expect(turnOf(s, 20).t).toMatchObject({ skillId: id, mode: "practice" });
+  });
+
+  it("Help 1 is a recall miss; try-2 retries never score", () => {
+    const s = finish(setup(), false, 0, true);
+    expect(s.recall?.results).toEqual([expect.objectContaining({ correct: false, tag: null })]);
+    expect(finish(s, true, 10).kid.skills[id]!.pKnown).toBe(0.95);
+  });
+
+  it("No recall in a session that ran placement", () => {
+    const r = play(fresh(newKidState("k", "5-7", "K")), 0, rightFor);
+    expect(r.steps.some((x) => x.turn.kind === "problem" && x.turn.mode === "placement")).toBe(true);
+    expect(r.session.count).toBeGreaterThanOrEqual(5);
+    expect(r.steps.some((x) => x.turn.kind === "problem" && x.turn.mode === "recall")).toBe(false);
+  });
+
+  it("10 overdue skills recall only at review slots, oldest first", () => {
+    let kid = placedKid(firstSkills(10));
+    for (const [i, skillId] of firstSkills(10).entries()) kid = setSkill(kid, skillId, { lastSeen: -100, checkDue: -100 + i });
+    const r = play(fresh(kid), 0, rightFor, { per: 1, max: 55 });
+    const turns = r.steps.map((x) => x.turn).filter((t): t is ProblemTurn => t.kind === "problem" && t.try === 1);
+    const pairs = turns.filter((t, i) => t.mode === "recall" && turns[i - 1]?.mode !== "recall");
+    expect(pairs).toHaveLength(10);
+    expect(pairs.map((t) => t.skillId)).toEqual(firstSkills(pairs.length));
+    for (const t of pairs) {
+      const index = turns.indexOf(t);
+      expect((index + 1) % 5).toBe(0);
+      expect(turns[index + 1]).toMatchObject({ mode: "recall", skillId: t.skillId });
+      expect(turns[index + 2]?.mode).not.toBe("recall");
+    }
+  });
+
+  it("Max time after first recall still serves second before wind-down", () => {
+    const a = turnOf(setup(), 0);
+    const s = answer(a.s, rightFor(a.t), 15 * MIN)!.session;
+    expect(turnOf(s, 15 * MIN).t.mode).toBe("recall");
+  });
+
+  it("Skill seen earlier this session or current gets no recall", () => {
+    let s = setup();
+    s = { ...s, kid: setSkill(s.kid, id, { lastSeen: 0 }) };
+    expect(turnOf(s, 1).t.skillId).not.toBe(id);
+    s = { ...setup(), current: id };
+    expect(turnOf(s, 1).t.skillId).not.toBe(id);
+  });
+
+  it("Old session JSON and skills without recall fields do not throw", () => {
+    const s = JSON.parse(JSON.stringify(setup()));
+    delete s.recall;
+    for (const st of Object.values(s.kid.skills) as Record<string, unknown>[]) {
+      delete st.checkStep; delete st.checkDue; delete st.rememberedAt;
+    }
+    expect(() => finish(finish(s, true, 0), true, 10)).not.toThrow();
+  });
+});
+
+describe("recall round 2 rulings", () => {
+  const id = firstSkills(1)[0]!;
+  const dueKid = () => setSkill(placedKid(firstSkills(3)), id, { lastSeen: -1, checkDue: null });
+
+  it("No frontier, all due: recall starts without waiting for a review slot", () => {
+    const kid = placedKid(firstSkills(100));
+    for (const st of Object.values(kid.skills)) { st.checkDue = null; st.lastSeen = -1; }
+    const a = turnOf(fresh(kid), 0);
+    expect(a.t).toMatchObject({ mode: "recall", skillId: id });
+    expect(a.s.count).toBe(1);
+  });
+
+  it("Per-answer guess and mistake tags survive JSON and score BKT in order", () => {
+    const first = turnOf({ ...fresh(dueKid()), count: 4 }, 0);
+    const p = { ...first.s.pending!, problem: { ...first.t.problem, input: "number-pad" as const } };
+    const a = answer({ ...first.s, pending: p }, p.problem.answer, 1)!;
+    expect(a.session.kid.skills[id]!.pKnown).toBe(0.95); // first BKT is held
+    expect(a.session.recall!.results).toEqual([{ correct: true, tag: null, guess: 0.15 }]);
+    const second = turnOf(JSON.parse(JSON.stringify(a.session)), 2);
+    const pending = { ...second.s.pending!, problem: { ...second.t.problem, input: "tap-choice" as const, choices: [second.t.problem.answer, second.t.problem.answer + 1] } };
+    const b = answer({ ...second.s, pending }, pending.problem.answer, 3)!;
+    const expected = applyFirstTry(applyFirstTry(first.s.kid.skills[id]!, { correct: true, tag: null, guess: 0.15, now: 3 }), { correct: true, tag: null, guess: 0.5, now: 3 });
+    expect(b.session.kid.skills[id]!.pKnown).toBe(expected.pKnown);
+    expect(b.writes.attempts[0]!.mode).toBe("recall");
+    expect(b.session).toMatchObject({ problems: 2, firstTryCorrect: 2, practiced: { [id]: 2 } });
+  });
+
+  it("Both wrong un-masters even pKnown 1 and keeps each mistake tag", () => {
+    const first = turnOf({ ...fresh(setSkill(dueKid(), id, { pKnown: 1 })), count: 4 }, 0);
+    const a = answer(first.s, wrongFor(first.t), 1)!;
+    expect(a.session.recall!.results[0]).toMatchObject({ correct: false, tag: a.writes.attempts[0]!.mistakeTag });
+    const retry = turnOf(a.session, 2);
+    const afterRetry = answer(retry.s, rightFor(retry.t), 3)!.session;
+    const second = turnOf(afterRetry, 4);
+    const b = answer(second.s, wrongFor(second.t), 5)!;
+    expect(b.session.kid.skills[id]).toMatchObject({ pKnown: 0.9, level: 1, checkStep: 0, checkDue: null });
+    expect(b.session.kid.skills[id]!.recentTags).toEqual([a.writes.attempts[0]!.mistakeTag, b.writes.attempts[0]!.mistakeTag]);
+  });
+
+  it("Due recall skill is not warmed by the low-accuracy review valve", () => {
+    const r = turnOf({ ...fresh(dueKid()), recent: [false, false, false, false] }, 0);
+    expect(r.t).toMatchObject({ mode: "practice" });
+    expect(r.t.skillId).not.toBe(id);
+  });
+
+  it("Old saved state defaults all recall fields and session recall to null", () => {
+    const old = JSON.parse(JSON.stringify(fresh(dueKid())));
+    delete old.recall;
+    for (const st of Object.values(old.kid.skills) as Record<string, unknown>[]) {
+      delete st.checkStep; delete st.checkDue; delete st.rememberedAt;
+    }
+    const r = nextTurn(old, 0);
+    expect(r.session.recall).toBeNull();
+    for (const st of Object.values(r.session.kid.skills)) expect(st).toMatchObject({ checkStep: 0, checkDue: null, rememberedAt: null });
+  });
+});
+
+it("A forgotten skill re-mastered in play restarts the one-day recall schedule", () => {
+  const id = firstSkills(1)[0]!;
+  let s: Session = { ...fresh(setSkill(placedKid(firstSkills(3)), id, { checkDue: null, lastSeen: -1, checkStep: 3 })), count: 4 };
+  for (let i = 0; i < 4; i++) {
+    const r = turnOf(s, i * 10);
+    s = answer(r.s, r.t.try === 1 ? wrongFor(r.t) : rightFor(r.t), i * 10 + 1)!.session;
+  }
+  expect(isMastered(s.kid.skills[id]!)).toBe(false);
+  for (let i = 0; i < 30 && !isMastered(s.kid.skills[id]!); i++) {
+    const r = turnOf(s, 50 + i * 10);
+    s = answer(r.s, rightFor(r.t), 51 + i * 10)!.session;
+  }
+  expect(isMastered(s.kid.skills[id]!)).toBe(true);
+  expect(s.kid.skills[id]).toMatchObject({ checkStep: 0, checkDue: s.kid.skills[id]!.lastSeen! + RECALL_DAY_MS });
+});
+
+it("Help 2 and its copied try-2 answer never score a recall twice", () => {
+  const id = firstSkills(1)[0]!;
+  const first = turnOf({ ...fresh(setSkill(placedKid(firstSkills(3)), id, { checkDue: null, lastSeen: -1 })), count: 4 }, 0);
+  const a = help(first.s, 1)!;
+  const retry = turnOf(a.session, 2);
+  const b = help(retry.s, 3)!;
+  const copied = turnOf(b.session, 4);
+  const c = answer(copied.s, rightFor(copied.t), 5)!;
+  expect(c.session.recall!.results).toEqual(a.session.recall!.results);
+  expect(c.session.kid.skills[id]!.pKnown).toBe(0.95);
+  const second = turnOf(c.session, 6);
+  const d = answer(second.s, rightFor(second.t), 7)!;
+  expect(d.session.recall).toBeNull();
+  expect(d.session).toMatchObject({ problems: 2, firstTryCorrect: 1 });
+  expect(d.session.kid.skills[id]).toMatchObject({ pKnown: 0.95, checkStep: 0, checkDue: 7 + RECALL_DAY_MS });
 });

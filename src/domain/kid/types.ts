@@ -1,7 +1,7 @@
 import type { AgeBand, Level, MistakeTag, Style } from "../types";
 
 export type KidGrade = "K" | "1" | "2" | "3" | "4" | "5";
-export type Mode = "practice" | "review" | "check" | "placement" | "wind-down";
+export type Mode = "recall" | "practice" | "review" | "check" | "placement" | "wind-down";
 
 export type SkillState = {
   skillId: string;
@@ -12,6 +12,9 @@ export type SkillState = {
   wrongStreak: number;
   lastSeen: number | null;
   placed: boolean;
+  checkStep: 0 | 1 | 2 | 3;
+  checkDue: number | null;
+  rememberedAt: number | null;
   /** Last 4 first tries, newest last; null = correct or not a known mistake. */
   recentTags: (MistakeTag | null)[];
 };

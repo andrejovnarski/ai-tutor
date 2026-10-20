@@ -17,9 +17,9 @@ export function setSkill(k: KidState, id: string, patch: Partial<SkillState>): K
   return { ...k, skills: { ...k.skills, [id]: { ...k.skills[id]!, ...patch } } };
 }
 
-/** A placed kid: the given skills mastered by placement, nothing else. */
+/** A placed kid with recalls disabled; recall tests opt in with setSkill. */
 export function placedKid(masteredIds: string[], ageBand: AgeBand = "5-7", grade: KidGrade = "K"): KidState {
-  const k = masteredIds.reduce((acc, id) => setSkill(acc, id, { pKnown: 0.95, placed: true, level: 2 }), newKidState("kid-1", ageBand, grade));
+  const k = masteredIds.reduce((acc, id) => setSkill(acc, id, { pKnown: 0.95, placed: true, level: 2, checkDue: 8.64e15 }), newKidState("kid-1", ageBand, grade));
   return { ...k, placed: true };
 }
 

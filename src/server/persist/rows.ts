@@ -8,6 +8,7 @@ export type SkillRow = {
   kid_id: string; skill_id: string; p_known: number; attempts: number; level: Level;
   correct_streak: number; wrong_streak: number; last_seen: string | null; placed: boolean;
   recent_tags: (MistakeTag | null)[];
+  check_step?: SkillState["checkStep"]; check_due?: string | null; remembered_at?: string | null;
 };
 export type StyleRow = { kid_id: string; style: Style; tries: number; wins: number };
 export type AttemptRow = {
@@ -21,6 +22,8 @@ export function kidStateFromRows(kid: KidRow, skills: SkillRow[], styles: StyleR
   state.placed = kid.placed;
   for (const r of skills) {
     state.skills[r.skill_id] = {
+      checkStep: r.check_step ?? 0, checkDue: r.check_due == null ? null : Date.parse(r.check_due),
+      rememberedAt: r.remembered_at == null ? null : Date.parse(r.remembered_at),
       skillId: r.skill_id, pKnown: r.p_known, attempts: r.attempts, level: r.level,
       correctStreak: r.correct_streak, wrongStreak: r.wrong_streak,
       lastSeen: r.last_seen === null ? null : Date.parse(r.last_seen), placed: r.placed, recentTags: r.recent_tags,
@@ -31,6 +34,8 @@ export function kidStateFromRows(kid: KidRow, skills: SkillRow[], styles: StyleR
 }
 
 export const skillRow = (kidId: string, s: SkillState): SkillRow => ({
+  check_step: s.checkStep ?? 0, check_due: s.checkDue == null ? null : new Date(s.checkDue).toISOString(),
+  remembered_at: s.rememberedAt == null ? null : new Date(s.rememberedAt).toISOString(),
   kid_id: kidId, skill_id: s.skillId, p_known: s.pKnown, attempts: s.attempts, level: s.level,
   correct_streak: s.correctStreak, wrong_streak: s.wrongStreak,
   last_seen: s.lastSeen === null ? null : new Date(s.lastSeen).toISOString(), placed: s.placed, recent_tags: s.recentTags,

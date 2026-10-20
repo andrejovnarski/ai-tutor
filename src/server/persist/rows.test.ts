@@ -53,3 +53,22 @@ it("passes a helped attempt's null answer through", () => {
     mistakeTag: null, style: "blocks", timeMs: 900, at: 1000, try: 1, mode: "practice",
   })).toMatchObject({ answer: null, result: "helped", mistake_tag: null });
 });
+
+it.each([0, 1, 2, 3] as const)("recall fields round-trip ISO timestamps and nulls at step %i", (checkStep) => {
+  const base = newKidState("k1", "5-7", "K");
+  const id = Object.keys(base.skills)[0]!;
+  for (const stamp of [null, 1_700_000_000_000]) {
+    const st = { ...base.skills[id]!, checkStep, checkDue: stamp, rememberedAt: stamp };
+    const row = skillRow("k1", st);
+    expect(row).toMatchObject({ check_step: checkStep, check_due: stamp === null ? null : "2023-11-14T22:13:20.000Z", remembered_at: stamp === null ? null : "2023-11-14T22:13:20.000Z" });
+    expect(kidStateFromRows({ id: "k1", grade: "K", age_band: "5-7", placed: false }, [row], []).skills[id]).toEqual(st);
+  }
+});
+
+it("old row shape defaults checkStep 0, checkDue null, rememberedAt null", () => {
+  const base = newKidState("k1", "5-7", "K");
+  const id = Object.keys(base.skills)[0]!;
+  const row = skillRow("k1", base.skills[id]!);
+  delete row.check_step; delete row.check_due; delete row.remembered_at;
+  expect(kidStateFromRows({ id: "k1", grade: "K", age_band: "5-7", placed: false }, [row], []).skills[id]).toMatchObject({ checkStep: 0, checkDue: null, rememberedAt: null });
+});

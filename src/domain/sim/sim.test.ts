@@ -106,3 +106,31 @@ it("the stuck profile requests help only on first tries", () => {
   expect(b.respond(turn)).toBe("help");
   expect(b.respond({ ...turn, try: 2 })).toBe(turn.problem.answer);
 });
+
+it("Remembering bot with dayGap 1 reaches checkStep 3", () => {
+  const r = simulate(bot({ knows: prefix(SKILLS.length) }), { grade: "K", ageBand: "5-7", seed: 8, problems: 4000, kid: placedThrough(SKILLS.length), dayGap: 1 });
+  expect(Object.values(r.kid.skills).some((s) => s.checkStep === 3)).toBe(true);
+});
+
+it("Forget on day N: recalled forgotten skills lose mastery and are practiced again", () => {
+  // Isolate each forgotten skill so a struggling prerequisite cannot see it before its recall.
+  for (const id of [...prefix(3)]) {
+    const r = simulate(bot({ knows: prefix(SKILLS.length), forget: { day: 2, skills: [id] } }),
+      { grade: "K", ageBand: "5-7", seed: 8, problems: 600, kid: placedThrough(SKILLS.length), dayGap: 21 });
+    const index = r.learningTrace.findIndex((e) => e.kind === "recall" && e.skillId === id && e.results.every((ok) => !ok));
+    expect(index).toBeGreaterThanOrEqual(0);
+    expect(r.learningTrace[index]).toMatchObject({ kind: "recall", mastered: false });
+    expect(r.learningTrace.slice(index + 1)).toContainEqual({ kind: "practice", skillId: id });
+    expect(isMastered(r.kid.skills[id]!)).toBe(false);
+  }
+});
+
+it("Slip bot never loses mastery from a recall with one miss", () => {
+  const r = simulate(bot({ knows: prefix(SKILLS.length), slip: 0.1 }), { grade: "K", ageBand: "5-7", seed: 8, problems: 1500, kid: placedThrough(SKILLS.length) });
+  const partials = r.learningTrace.filter((e) => e.kind === "recall" && e.results[0] !== e.results[1]);
+  expect(partials.length).toBeGreaterThan(0);
+  for (const e of partials) {
+    expect(e).toMatchObject({ mastered: true });
+    if (e.kind === "recall") expect(e.pKnownAfter).toBe(e.pKnownBefore);
+  }
+});
