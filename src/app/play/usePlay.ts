@@ -61,7 +61,7 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
     return () => { live.current = false; abort.current.abort(); };
   }, [load]);
 
-  const answer = useCallback(async (given: number) => {
+  const submit = useCallback(async (path: "answer" | "help", given?: number) => {
     const s = stateRef.current;
     if (busy.current || s.phase !== "problem" || s.version === undefined) return;
     busy.current = true;
@@ -70,8 +70,8 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
     dispatch({ type: "send" });
     try {
       const r = await runRequest(fetchRef.current, sleepRef.current, {
-        url: `/api/kids/${kidId}/answer`,
-        init: { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ version: s.version, given }) },
+        url: `/api/kids/${kidId}/${path}`,
+        init: { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ version: s.version, ...(path === "answer" ? { given } : {}) }) },
         onRetry: (attempt) => emit(g, { type: "retrying", attempt }),
         signal: abort.current.signal,
       });
@@ -87,6 +87,9 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
       if (g === gen.current) busy.current = false;
     }
   }, [kidId, emit]);
+
+  const answer = useCallback((given: number) => submit("answer", given), [submit]);
+  const help = useCallback(() => submit("help"), [submit]);
 
   const retry = useCallback(() => { void load(lastPath.current); }, [load]);
   const playAgain = useCallback(() => { void load("play-again"); }, [load]);
@@ -110,5 +113,5 @@ export function usePlay(kidId: string, deps?: { fetch?: FetchFn; sleep?: SleepFn
     }
   }, [kidId, emit]);
 
-  return { state, answer, retry, say, playAgain };
+  return { state, answer, help, retry, say, playAgain };
 }

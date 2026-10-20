@@ -190,6 +190,12 @@ test.describe("portrait 768 x 1024", () => {
     await expect(page.getByTestId("say")).toBeInViewport({ ratio: 1 });
     const board = (await page.getByTestId("board").boundingBox())!;
     const tray = (await page.getByTestId("tray").boundingBox())!;
+    const help = page.getByTestId("help");
+    await expect(help).toBeInViewport({ ratio: 1 });
+    const helpBox = (await help.boundingBox())!;
+    expect(helpBox.width).toBeGreaterThanOrEqual(88);
+    expect(helpBox.height).toBeGreaterThanOrEqual(88);
+    expect(helpBox.y + helpBox.height).toBeLessThanOrEqual(board.y);
     expect(board.y + board.height).toBeLessThanOrEqual(tray.y);
     expect(tray.y + tray.height).toBeLessThanOrEqual(1024);
     for (const b of await page.getByTestId("tray").getByRole("button").all()) {

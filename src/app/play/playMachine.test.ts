@@ -172,3 +172,12 @@ describe("isGone", () => {
     for (const s of [200, 400, 409, 500, 503]) expect(isGone(s)).toBe(false);
   });
 });
+
+it("helped feedback keeps the supported problem with no wrong styling state", () => {
+  const next = { ...problem(1), try: 2 as const, help: 1 as const };
+  const s = playReducer({ phase: "sending" }, { type: "answered", body: {
+    version: 2, feedback: { result: { kind: "helped" }, then: "retry", reveal: false }, next, line: line("Count together."),
+  } });
+  expect(s).toEqual({ phase: "problem", version: 2, turn: next, line: line("Count together."),
+    message: undefined, messageTone: undefined, messageSpeech: undefined, note: null, correct: false });
+});

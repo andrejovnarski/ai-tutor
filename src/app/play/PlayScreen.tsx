@@ -38,7 +38,7 @@ type Props = {
 };
 
 export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
-  const { state, answer, retry, say, playAgain } = usePlay(kidId);
+  const { state, answer, help, retry, say, playAgain } = usePlay(kidId);
   const reduced = useReducedMotion();
   const problem = state.turn?.kind === "problem" ? state.turn : undefined;
 
@@ -120,8 +120,14 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
         ) : (
           <div className={styles.bubbleSpace} />
         )}
-        {/* the end card has its own Back to kids */}
-        {ended ? null : <Link href="/" className={styles.done}>I&apos;m done for now</Link>}
+        <div className={styles.topActions}>
+          {problem && problem.help < 2 ? (
+            <button type="button" className={styles.helpButton} data-testid="help" disabled={state.phase !== "problem"}
+              onClick={() => { if (speech) voice.cancel(); void help(); }}>Help me</button>
+          ) : null}
+          {/* the end card has its own Back to kids */}
+          {ended ? null : <Link href="/" className={styles.done}>I&apos;m done for now</Link>}
+        </div>
       </header>
       {ended ? (
         <div className={styles.endArea}>

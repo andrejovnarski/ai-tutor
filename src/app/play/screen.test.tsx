@@ -1,3 +1,9 @@
+import { vi } from "vitest";
+import type { PlayState } from "./playMachine";
+import { PlayScreen } from "./PlayScreen";
+
+const play = vi.hoisted(() => ({ state: { phase: "loading" } as PlayState }));
+vi.mock("./usePlay", () => ({ usePlay: () => ({ state: play.state, answer: vi.fn(), help: vi.fn(), retry: vi.fn(), say: vi.fn(), playAgain: vi.fn() }) }));
 import { renderToStaticMarkup } from "react-dom/server";
 import { EndCard } from "./EndCard";
 import { ConnectionNotice } from "./ConnectionNotice";
@@ -104,5 +110,37 @@ describe("Board", () => {
   it("a story with different text shows both", () => {
     const html = renderToStaticMarkup(<Board problem={problem({ say: "How many apples?", show: { kind: "story", text: "Mia has 3 apples.", icon: "apple" } })} />);
     expect(/<h1[^>]*>/.exec(html)![0]).not.toMatch(/srOnly/);
+  });
+});
+
+describe("Help me next to Nova", () => {
+  function screen(help: 0 | 1 | 2, phase: PlayState["phase"] = "problem") {
+    play.state = { phase, version: 1, turn: { kind: "problem", mode: "practice", try: 1, help,
+      prompt: { say: "How many?", show: { kind: "ten-frames", first: 3, second: 0 } },
+      input: "tap-choice", choices: [1, 2] }, line: { say: "Count together.", tone: "calm" } };
+    return renderToStaticMarkup(<PlayScreen kidId="kid1" ageBand="5-7" />);
+  }
+  it.each([0, 1] as const)("is a real button after the bubble at help %s", (help) => {
+    const html = screen(help);
+    const header = html.match(/<header[^>]*>(.*?)<\/header>/)![1]!;
+    expect(header).toMatch(/<button[^>]*data-testid="help"[^>]*>Help me<\/button>/);
+    expect(header.indexOf('data-testid="nova-line"')).toBeLessThan(header.indexOf('data-testid="help"'));
+    expect(header.indexOf('data-testid="help"')).toBeLessThan(header.indexOf("I&#x27;m done for now"));
+    expect(html.slice(html.indexOf('data-testid="tray"'))).not.toContain("Help me");
+  });
+  it("groups help and the Done link for the narrow-screen controls row", () => {
+    const html = screen(0);
+    expect(html).toMatch(/<div class="[^"]*topActions[^"]*"><button[^>]*data-testid="help"[^>]*>Help me<\/button><a[^>]*>I&#x27;m done for now<\/a><\/div>/);
+  });
+  it.each(["sending", "retrying", "offline"] as const)("is disabled while %s", (phase) => {
+    expect(screen(0, phase)).toMatch(/<button[^>]*data-testid="help"[^>]*disabled=""[^>]*>Help me<\/button>/);
+  });
+  it("is absent at help 2, without a problem, and on the end card", () => {
+    expect(screen(2)).not.toContain('data-testid="help"');
+    play.state = { phase: "loading" };
+    expect(renderToStaticMarkup(<PlayScreen kidId="kid1" ageBand="5-7" />)).not.toContain('data-testid="help"');
+    play.state = { phase: "ended", turn: { kind: "end", summary: { problems: 1, firstTryCorrect: 0, minutes: 1, mastered: [] } },
+      summary: { problems: 1, firstTryCorrect: 0, minutes: 1, mastered: [] } };
+    expect(renderToStaticMarkup(<PlayScreen kidId="kid1" ageBand="5-7" />)).not.toContain('data-testid="help"');
   });
 });

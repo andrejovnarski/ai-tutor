@@ -25,9 +25,11 @@ const json = (status: number, body: unknown = {}) =>
 
 function mount(script: Response[]) {
   const urls: string[] = [];
+  const requests: RequestInit[] = [];
   let n = 0;
   const net = { down: false };
-  const fetch: FetchFn = async (u) => {
+  const fetch: FetchFn = async (u, init) => {
+    requests.push(init ?? {});
     urls.push(String(u));
     if (net.down) throw new Error("down");
     return script[Math.min(n++, script.length - 1)]!.clone();
@@ -37,7 +39,7 @@ function mount(script: Response[]) {
   const settle = async () => { for (let k = 0; k < 20; k++) { await new Promise((r) => setTimeout(r, 0)); if (rt.dirty) render(); } };
   render();
   rt.effects.forEach((e) => e()); // mount
-  return { urls, net, settle, get api() { return api; } };
+  return { urls, requests, net, settle, get api() { return api; } };
 }
 
 describe("usePlay play-again", () => {
@@ -83,5 +85,61 @@ describe("usePlay play-again", () => {
     h.api.retry();
     await h.settle();
     expect(h.urls.slice(before)).toEqual(["/api/kids/kid1/turn"]);
+  });
+});
+
+describe("usePlay help", () => {
+  beforeEach(() => { rt.slots = []; rt.i = 0; rt.effects = []; rt.dirty = false; });
+  const helped = { version: 2, feedback: { result: { kind: "helped" }, then: "retry", reveal: false },
+    next: { ...problemBody.turn, try: 2, help: 1 }, line: { say: "Count together.", tone: "calm" } };
+  it("posts only the version and applies the helped answer body", async () => {
+    const h = mount([json(200, problemBody), json(200, helped)]);
+    await h.settle();
+    await h.api.help();
+    await h.settle();
+    expect(h.urls.at(-1)).toBe("/api/kids/kid1/help");
+    expect(h.requests.at(-1)).toMatchObject({ method: "POST", body: JSON.stringify({ version: 1 }) });
+    expect(h.api.state).toMatchObject({ phase: "problem", version: 2, correct: false, turn: helped.next, line: helped.line });
+  });
+  it("ignores help during loading, ended, and an answer in flight", async () => {
+    const h = mount([json(200, problemBody), json(200, helped)]);
+    await h.api.help();
+    expect(h.urls).toHaveLength(1);
+    await h.settle();
+    const pending = h.api.answer(5);
+    await h.api.help();
+    expect(h.urls).toEqual(["/api/kids/kid1/turn", "/api/kids/kid1/answer"]);
+    await pending;
+    await h.settle();
+    rt.slots = [];
+    const ended = mount([json(200, endBody)]);
+    await ended.settle();
+    await ended.api.help();
+    expect(ended.urls).toHaveLength(1);
+  });
+  it("ignores a second same-tick help tap", async () => {
+    const h = mount([json(200, problemBody), json(200, helped)]);
+    await h.settle();
+    await Promise.all([h.api.help(), h.api.help()]);
+    expect(h.urls).toHaveLength(2);
+  });
+  it("uses the current turn on conflict", async () => {
+    const current = { ...problemBody, version: 3, turn: helped.next };
+    const h = mount([json(200, problemBody), json(409, current)]);
+    await h.settle();
+    await h.api.help();
+    await h.settle();
+    expect(h.api.state).toMatchObject({ phase: "problem", version: 3, turn: current.turn });
+  });
+  it("goes offline and ignores further help until recovery", async () => {
+    const h = mount([json(200, problemBody)]);
+    await h.settle();
+    h.net.down = true;
+    await h.api.help();
+    await h.settle();
+    expect(h.api.state.phase).toBe("offline");
+    const before = h.urls.length;
+    await h.api.help();
+    expect(h.urls).toHaveLength(before);
   });
 });

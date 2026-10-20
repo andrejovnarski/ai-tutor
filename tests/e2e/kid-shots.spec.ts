@@ -65,6 +65,29 @@ for (const size of SIZES) {
       }));
       expect.soft(over.x, `${size.name} ${screen} scrolls sideways`).toBeLessThanOrEqual(0);
       if (!opts.scrolls) expect.soft(over.y, `${size.name} ${screen} scrolls down`).toBeLessThanOrEqual(0);
+      if (await page.getByTestId("say").count()) {
+        const bubble = page.getByTestId("nova-line");
+        // Check both the scrolling bubble and its text blocks: a full-height child can still be clipped by its parent.
+        const overflow = await bubble.evaluate((el) => [el, ...el.children].map((node) => ({
+          x: node.scrollWidth - node.clientWidth,
+          y: node.scrollHeight - node.clientHeight,
+        })));
+        // Glyph tails overhang the line box by a few px; a clipped line is ~20 px or more.
+        const SLACK = 6;
+        for (const [index, over] of overflow.entries()) {
+          expect.soft(over.x, `${size.name} ${screen} Nova text ${index} clips horizontally`).toBeLessThanOrEqual(SLACK);
+          expect.soft(over.y, `${size.name} ${screen} Nova text ${index} clips vertically`).toBeLessThanOrEqual(SLACK);
+        }
+        const help = page.getByTestId("help");
+        if (await help.count()) {
+          const lines = await help.evaluate((el) => {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            return range.getClientRects().length;
+          });
+          expect.soft(lines, `${size.name} ${screen} Help me wraps`).toBe(1);
+        }
+      }
       await page.screenshot({ path: `test-results/kid/${size.name}-${screen}.png` });
     };
 

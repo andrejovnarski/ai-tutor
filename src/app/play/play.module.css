@@ -18,6 +18,10 @@
   box-sizing: border-box;
 }
 
+.topActions {
+  display: contents;
+}
+
 .bubbleSpace {
   flex: 1;
 }
@@ -243,6 +247,7 @@
 
 .board :focus-visible,
 .top > :focus-visible,
+.topActions > :focus-visible,
 .endArea > :focus-visible {
   outline: 3px solid var(--chalk);
   outline-offset: 2px;
@@ -536,14 +541,38 @@
   touch-action: manipulation;
 }
 
+/* Between phone and tablet widths the bubble would be squeezed by Help me and the done link: they take their own row. */
+@media (min-width: 601px) and (max-width: 720px) {
+  .top { flex-wrap: wrap; }
+  .topActions {
+    display: flex;
+    order: -1;
+    flex-basis: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 4px; /* clear the help button's drop edge */
+  }
+  .done { margin-left: auto; align-self: center; justify-content: flex-end; }
+}
+
 /* ---- Narrow screens (a phone, or a tablet in split view) --------------------------------------------------------- */
 
 /* The play screen is built for a tablet; below 600 px everything stays on one screen and nothing is cut off. The
-   done link takes its own row, Nova shrinks, tiles share the width, and the tray grows to fit the pad. */
+   help and done share their own row, Nova shrinks, tiles share the width, and the tray grows to fit the pad. */
 @media (max-width: 600px) {
   .screen { grid-template-rows: auto minmax(0, 1fr) auto; }
   .top { flex-wrap: wrap; min-height: 0; gap: 4px 12px; padding: 4px 12px 8px; }
-  .done { order: -1; flex-basis: 100%; justify-content: flex-end; font-size: 16px; }
+  .topActions {
+    display: flex;
+    order: -1;
+    flex-basis: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 4px; /* clear the help button's drop edge */
+  }
+  .done { margin-left: auto; align-self: center; justify-content: flex-end; font-size: 16px; }
   .nova { width: 72px; height: 72px; }
   .bubble { padding: 12px 16px; max-height: 168px; }
   .board { margin: 0 8px 8px; padding: 12px; border-width: 6px; border-radius: 20px; }
@@ -581,4 +610,42 @@
   .endBody .endStats { flex-direction: row; justify-content: center; }
   .endActions { flex-direction: column; align-self: stretch; gap: 12px; }
   .endButton, .endLink { min-height: 72px; }
+}
+
+.helpButton {
+  flex: none;
+  min-width: 88px;
+  min-height: 88px;
+  width: max-content;
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding: 8px;
+  font: inherit;
+  font-size: var(--text-s);
+  color: var(--ink);
+  background: var(--tray);
+  border: 3px solid var(--ink);
+  border-radius: 20px;
+  box-shadow: 0 4px 0 var(--felt-deep);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.helpButton:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+.helpButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.helpButton:focus-visible {
+  outline: 3px solid var(--chalk);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .helpButton:active:not(:disabled) { transform: none; }
 }
