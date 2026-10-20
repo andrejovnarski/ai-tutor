@@ -31,8 +31,8 @@ export const MAX_INT = 2 ** 31 - 1;
 /** The signed-in parent's repo (RLS applies), or null when signed out. The PIN cookie is not needed: kids play without it. */
 export async function parentRepo(): Promise<SupabaseRepo | null> {
   const supabase = await createServerSupabase();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return null;
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data?.claims) return null;
   await touchActivity(supabase);
   return new SupabaseRepo(supabase);
 }

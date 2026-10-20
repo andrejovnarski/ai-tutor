@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Refreshes the Supabase session cookie on every page request. Uses only the public URL and publishable key.
+// Refreshes the Supabase session cookie and verifies JWT claims locally with asymmetric signing keys.
+// Uses only the public URL and publishable key; keep the auth call immediately after createServerClient.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
@@ -18,7 +19,7 @@ export async function proxy(request: NextRequest) {
       },
     },
   );
-  await supabase.auth.getUser();
+  await supabase.auth.getClaims();
   return response;
 }
 
