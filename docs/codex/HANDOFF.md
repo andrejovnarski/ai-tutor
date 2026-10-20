@@ -42,35 +42,33 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T19 — Pocket Planet: map rules, data, IslandMap part
-- **Branch:** `codex/pocket-planet` (T18 committed; you are on it)
-- **Goal:** a pure `islandMap()` says which of the 33 flags are up and where the boat is; the reward read also
-  gets `placed`; `progress()` / `endRewards()` return `map`; an `IslandMap` SVG part draws it (mini and full)
-  with the right screen-reader label. Not shown on any screen yet (T20 does that).
-- **Context:** plan `docs/superpowers/plans/2026-10-20-pocket-planet.md` **Task 2** (exact signatures in its
-  Interfaces block); spec "Island map" section (rules, label wording, island names table). Map drawing: option A
-  in `.superpowers/brainstorm/1592744-1792531617/content/map-shape.html` (read as text). Existing code:
-  `src/domain/rewards/progress.ts`, `src/server/rewards.ts` (+ `src/server/rewards.test.ts`,
-  `tests/db/rewards.db.test.ts`), `src/app/rewards/Rod.tsx` (pattern for a CSS drop-in animation with a
-  reduced-motion still state).
+### T20 — Pocket Planet: picker and end card
+- **Branch:** `codex/pocket-planet` (T18, T19 committed; you are on it)
+- **Goal:** the picker and end card are in the Pocket Planet look. Each picker card shows a mini island map and
+  "Level N · shells K of 10"; the end card shows the full map as its hero (new flags rise, boat sails), then the
+  numbers, +XP with a shell rod, stickers and week dots.
+- **Context:** plan `docs/superpowers/plans/2026-10-20-pocket-planet.md` **Task 3** (Interfaces: `Rod` gains
+  `look`); spec "Picker" and "End card"; mockup panels 1 and 3 in
+  `.superpowers/brainstorm/1592744-1792531617/content/screens.html` (read as text). Parts from T19:
+  `src/app/rewards/IslandMap.tsx` (`IslandMap({ map, size, animate })`), `Progress.map`, `EndRewards.map`.
+  Tokens and `Nova` from T18 (`src/app/play/tokens.css`, `src/app/play/Nova.tsx`).
 - **Do:**
-  1. Failing tests first, per plan Task 2 Step 1.
-  2. `src/domain/rewards/map.ts` with `IslandMap`, `islandMap`, `ISLAND_NAMES`.
-  3. `progress` / `endRewards` gain the optional `placed` param and return `map`. `loadRewardRows` selects
-     `placed` and uses `.or("mastered_at.not.is.null,placed.eq.true")`; rows with no `mastered_at` must NOT enter
-     `masteredAt` (no `Date.parse(null)`). `kidProgress` / `kidEndRewards` pass `new Set(r.placed)`.
-     `src/server/report/collect.ts` also calls `loadRewardRows`/`progress` — the weekly report must not change.
-  4. `src/app/rewards/IslandMap.tsx` + styles in `rewards.module.css` (`--pp-*` tokens, flags `--pp-go`).
-- **Don't:** no picker / end card changes (T20). No DB schema change. Rule 9 applies; updating a query mock in
-  `rewards.test.ts` for the new `.or(...)` call, or adding `map` to exact-object expectations, is fine — say so
-  under "Choices I made".
-- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs `npm run test:db`.
-
-#### Codex report
-- Files changed: `src/domain/rewards/{map.ts,map.test.ts,progress.ts,progress.test.ts}`; `src/server/{rewards.ts,rewards.test.ts}`; `src/server/report/{build.test.ts,collect.test.ts}`; `src/app/rewards/{IslandMap.tsx,IslandMap.test.tsx,rewards.module.css,rewards.test.tsx}`; `src/app/play/screen.test.tsx`; `docs/codex/HANDOFF.md`.
-- Test results: failing tests first confirmed (4 files failed; 2 tests failed, 23 passed; missing modules also failed collection). Final `npm run typecheck`: `> tsc --noEmit` — exit 0, no errors. Final `npm test`: `Test Files  86 passed (86)`; `Tests  1418 passed (1418)`. DB/e2e not run, as requested.
-- Choices I made: compressed option A into 400 × 160 with room for the full-map label; finished boat rests at the last island. Flag delays shrink for large batches so rises plus sailing finish within 2 seconds; reduced motion shows final positions through CSS. Kept placement separate from mastery timestamps and weekly reward calculations, with a report regression test. Added `.or(...)` to query mocks and the required `map` field to three existing test fixtures; no assertions removed or weakened. No screen integration, git writes, network access, or port 3000 use; protected paths left untouched.
-- Open questions: none. Claude still needs to run the DB suite.
+  1. Failing tests first, per plan Task 3 Step 1.
+  2. Picker (`src/app/page.tsx`, `picker.module.css`, `MiniRewards.tsx`): sky ground with a still sea strip, white
+     cards with ink border + hard ink edge, avatar in a sky circle, mini map, level line (≥ 18 px), no week dots.
+     Empty state "Add your first kid" as a white kid button. Phone: two cards a row as today, nothing clipped.
+  3. End card (`EndCard.tsx`, `RewardsStrip.tsx`, `Rod.tsx` `look="shell"`, `WeekDots.tsx` played dots
+     `--pp-sun`, `play.module.css`, `rewards.module.css`): white card on sky, full `IslandMap` with `animate`
+     right under the title, "Play again" `--pp-go` with ink text, "Back to kids" white. On phone the map shrinks
+     first so the card fits.
+  4. **Claude ruling (T19 review):** the full map's island name must stay ≥ 22 px on a phone, so move it out of
+     the SVG: `IslandMap` size `"full"` renders the SVG plus an HTML caption under it (the boat's island name; none
+     when done). Keep the SVG's `role="img"` label as is. Adjust the T19 test that looks for the name only so it
+     finds it in the caption — don't drop the check.
+  5. Grown-up child page keeps cubes (`Rod` default look) — don't change it.
+- **Don't:** no domain/server changes, no Nova line changes, no grown-up page changes. Rule 9 applies.
+- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs e2e/kid-shots and
+  shows the owner screenshots.
 
 <!-- Template:
 ### T1 — <title>
