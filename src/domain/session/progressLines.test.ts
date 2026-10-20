@@ -33,3 +33,10 @@ it.each([
   expect(progressLines({ today: { kind: "practiced", skillId }, next: { kind: "more", skillId } }))
     .toEqual({ today: `You practiced ${name}.`, next: `Next time: more ${name}` });
 });
+it("drops a line whose skill is no longer in the curriculum instead of throwing", () => {
+  const gone = "removed-cluster.old-skill";
+  expect(progressLines({ today: { kind: "learned", skillId: gone }, next: { kind: "skill", skillId: gone } }))
+    .toEqual({ today: null, next: null });
+  expect(progressLines({ today: { kind: "kept-going" }, next: { kind: "more", skillId: gone } }))
+    .toEqual({ today: "You kept going and solved a tricky one!", next: null });
+});
