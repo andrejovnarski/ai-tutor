@@ -42,39 +42,29 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T18 — Pocket Planet: tokens, Nova, play screen
-- **Branch:** `codex/pocket-planet` (you are on it)
-- **Goal:** the play screen looks like the Pocket Planet (sky, sandy island board, sea tray, white tiles, orange
-  mic) and Nova is the new little ringed planet with a star burst after a right answer. Nothing about how the game
-  works changes.
-- **Context:** plan `docs/superpowers/plans/2026-10-20-pocket-planet.md` **Task 1** (read Global Constraints and
-  Review Focus too); spec `docs/superpowers/specs/2026-10-20-pocket-planet-design.md` sections "Look", "Nova",
-  "Play". Mockups (open the HTML files as text): `.superpowers/brainstorm/1592744-1792531617/content/screens.html`
-  (Play panel) and `nova.html` (option A, all three moods). Current rules: `DESIGN.md` (still the old felt
-  look — the spec wins where they differ).
+### T19 — Pocket Planet: map rules, data, IslandMap part
+- **Branch:** `codex/pocket-planet` (T18 committed; you are on it)
+- **Goal:** a pure `islandMap()` says which of the 33 flags are up and where the boat is; the reward read also
+  gets `placed`; `progress()` / `endRewards()` return `map`; an `IslandMap` SVG part draws it (mini and full)
+  with the right screen-reader label. Not shown on any screen yet (T20 does that).
+- **Context:** plan `docs/superpowers/plans/2026-10-20-pocket-planet.md` **Task 2** (exact signatures in its
+  Interfaces block); spec "Island map" section (rules, label wording, island names table). Map drawing: option A
+  in `.superpowers/brainstorm/1592744-1792531617/content/map-shape.html` (read as text). Existing code:
+  `src/domain/rewards/progress.ts`, `src/server/rewards.ts` (+ `src/server/rewards.test.ts`,
+  `tests/db/rewards.db.test.ts`), `src/app/rewards/Rod.tsx` (pattern for a CSS drop-in animation with a
+  reduced-motion still state).
 - **Do:**
-  1. Failing tests first, per plan Task 1 Step 1 (`tokens.test.ts`, `Nova.test.tsx`, `screen.test.tsx`).
-  2. Add the `--pp-*` tokens to `src/app/play/tokens.css` with the spec's exact hex values. Keep every old token
-     (grown-up pages use them).
-  3. New `Nova` (same `tone`/`hop` props, new optional `burst`), then restyle the play screen and every play state
-     (help, retry picture, "Did you say", heard strip, offline notice, number pad in landscape/portrait/phone,
-     fill frame, placement) per the spec. Maths line art on the board uses `var(--pp-ink)`.
-  4. Every new animation gets a still `prefers-reduced-motion: reduce` state.
-- **Don't:** no picker, end card, rewards or grown-up page styling (later tasks); no engine/API/DB changes; no new
-  dependencies or fonts. Don't remove or weaken tests (rule 9) — if an existing test pins an old colour or
-  class, stop and ask under "Open questions".
-- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs e2e (kid-shots) and
-  shows the owner screenshots.
-
-#### Codex report
-- Files changed: `src/app/play/{tokens.css,tokens.test.ts,Nova.tsx,Nova.test.tsx,PlayScreen.tsx,screen.test.tsx,play.module.css}`; `src/app/play/visuals/{Blocks,Equation,NumberLine,Story,TenFrames,common,icons}.tsx`; `docs/codex/HANDOFF.md`.
-- Test results:
-  - Tests first: `npm test -- tokens Nova screen` → `Test Files 3 failed (3)`; `Tests 22 failed | 39 passed (61)`.
-  - `npm run typecheck` → `tsc --noEmit`, exit 0 (no diagnostics).
-  - `npm test` → `Test Files 84 passed (84)`; `Tests 1408 passed (1408)`.
-  - `git diff --check` → exit 0. No db/e2e runs, network, git writes or port 3000 access.
-- Choices I made: reused shared play CSS for every state and existing responsive layouts; retained all legacy tokens and end-card styles. Used a static wave and hard grass rim. Nova has four stars, a 600 ms ring spin, and CSS hides stars/disables motion from first paint under reduced motion. Kept story fills and maths geometry; ten-frame grounds are sand with ink lines. Raised Start over to 88 px (72 px on phone), feedback text to 22 px minimum, and phone Done chrome to 18 px. Left the pre-existing `.impeccable/config.json` changes and `.superpowers/` untouched.
-- Open questions: none. Claude still needs to run kid-shots/e2e and show the owner screenshots.
+  1. Failing tests first, per plan Task 2 Step 1.
+  2. `src/domain/rewards/map.ts` with `IslandMap`, `islandMap`, `ISLAND_NAMES`.
+  3. `progress` / `endRewards` gain the optional `placed` param and return `map`. `loadRewardRows` selects
+     `placed` and uses `.or("mastered_at.not.is.null,placed.eq.true")`; rows with no `mastered_at` must NOT enter
+     `masteredAt` (no `Date.parse(null)`). `kidProgress` / `kidEndRewards` pass `new Set(r.placed)`.
+     `src/server/report/collect.ts` also calls `loadRewardRows`/`progress` — the weekly report must not change.
+  4. `src/app/rewards/IslandMap.tsx` + styles in `rewards.module.css` (`--pp-*` tokens, flags `--pp-go`).
+- **Don't:** no picker / end card changes (T20). No DB schema change. Rule 9 applies; updating a query mock in
+  `rewards.test.ts` for the new `.or(...)` call, or adding `map` to exact-object expectations, is fine — say so
+  under "Choices I made".
+- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs `npm run test:db`.
 
 <!-- Template:
 ### T1 — <title>
