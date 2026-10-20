@@ -39,7 +39,7 @@ Old saved states without the fields read as `0` / `null` / `null`.
   `recallTarget(kid: KidState, now: number, sessionStart: number): string | null` — a mastered skill with
   `(checkDue ?? -Infinity) <= now` and `lastSeen === null || lastSeen < sessionStart`.
 - `reviewTarget` (normal review) skips skills that `recallTarget`'s rule says are due, so a normal review never
-  warms a skill up just before its recall.
+  warms a skill up just before its recall — except in a session that ran placement (no recall can run there).
 
 ## Session engine (`src/domain/session/engine.ts`)
 
@@ -55,7 +55,7 @@ Old saved states without the fields read as `0` / `null` / `null`.
     `checkDue = now + RECALL_GAP_DAYS[newStep] * RECALL_DAY_MS`, `rememberedAt = now`.
   - One right: no BKT change, `checkStep = 0`, `checkDue = now + 1 * RECALL_DAY_MS`.
   - Both wrong: apply BKT for both wrong answers (drops it out of mastered), `level = 1`, `checkStep = 0`,
-    `checkDue = null`. The skill is then the frontier or near it and comes back through normal practice; when
+    `checkDue = null`, `rememberedAt = null` (ruling at final review: no stale "remembered" date). The skill is then the frontier or near it and comes back through normal practice; when
     it is mastered again the schedule restarts at 1 day.
   - Help 1 on a recall problem counts as a wrong answer.
 - **Kid view:** a recall problem looks like any problem. A wrong answer (or Help 1) gets the normal retry with

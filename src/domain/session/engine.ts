@@ -140,11 +140,13 @@ export function nextTurn(s: Session, now: number, deps: Deps = DEFAULT_DEPS): { 
   }
   const wrong = s.recent.filter((ok) => !ok).length;
   const easy = easyReview(s.kid, current);
-  if (wrong >= LOW_ACCURACY_WRONG && easy && !isRecallDue(s.kid.skills[easy]!, now, s.startedAt) && s.lastMode !== "review") return review(s, now, deps, easy, 1, current);
-  const due = reviewTarget(s.kid, current, now, s.startedAt);
+  // Review leaves due skills cold for their recall, unless recalls can't run this session.
+  const cold = s.ranPlacement ? undefined : now;
+  if (wrong >= LOW_ACCURACY_WRONG && easy && !(cold !== undefined && isRecallDue(s.kid.skills[easy]!, now, s.startedAt)) && s.lastMode !== "review") return review(s, now, deps, easy, 1, current);
+  const due = reviewTarget(s.kid, current, cold, s.startedAt);
   if ((s.count + 1) % REVIEW_EVERY === 0 && due) return review(s, now, deps, due, s.kid.skills[due]!.level, current);
   if (current) return serve({ ...s, current, count: s.count + 1, lastMode: "practice" }, now, deps, current, s.kid.skills[current]!.level, "practice");
-  const any = reviewTarget(s.kid, null, now, s.startedAt);
+  const any = reviewTarget(s.kid, null, cold, s.startedAt);
   if (any) return review(s, now, deps, any, s.kid.skills[any]!.level, null);
   return end(s, now);
 }
@@ -321,7 +323,7 @@ function recallAnswer(s: Session, p: Pending, correct: boolean, tag: Attempt["mi
       if (correct) {
         const checkStep = Math.min(3, (st.checkStep ?? 0) + 1) as SkillState["checkStep"];
         st = { ...st, checkStep, checkDue: now + RECALL_GAP_DAYS[checkStep] * RECALL_DAY_MS, rememberedAt: now };
-      } else st = { ...st, pKnown: Math.min(st.pKnown, 0.9), level: 1, checkStep: 0, checkDue: null };
+      } else st = { ...st, pKnown: Math.min(st.pKnown, 0.9), level: 1, checkStep: 0, checkDue: null, rememberedAt: null };
     } else st = { ...st, checkStep: 0, checkDue: now + RECALL_DAY_MS };
   }
   writes.skillStates.push(st);

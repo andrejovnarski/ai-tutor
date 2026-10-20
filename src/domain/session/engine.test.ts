@@ -442,6 +442,20 @@ describe("recall", () => {
     expect(s.kid.skills[id]).toEqual({ ...before.kid.skills[id]!, lastSeen: 11, checkStep: 0, checkDue: 11 + RECALL_DAY_MS });
   });
 
+  it("Both wrong clears an old remembered date", () => {
+    const s0 = setup();
+    const kid = setSkill(s0.kid, id, { rememberedAt: -5 });
+    const s = finish(finish({ ...s0, kid }, false, 0), false, 10);
+    expect(s.kid.skills[id]!.rememberedAt).toBeNull();
+  });
+
+  it("A session that ran placement still reviews due skills when nothing else is left", () => {
+    const kid = placedKid(firstSkills(100));
+    for (const st of Object.values(kid.skills)) { st.checkDue = null; st.lastSeen = null; }
+    const s = { ...fresh(kid), ranPlacement: true };
+    expect(turnOf(s, 0).t).toMatchObject({ mode: "review" });
+  });
+
   it("Both wrong returns to practice at level 1 with no due date", () => {
     const s = finish(finish(setup(), false, 0), false, 10);
     expect(isMastered(s.kid.skills[id]!)).toBe(false);
