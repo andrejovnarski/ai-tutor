@@ -42,41 +42,26 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T23 — Grown-up Logbook: map, shells, sun dots
-- **Branch:** `codex/grownup-logbook` (T22 committed; you are on it)
-- **Goal:** the child page opens with a "{nickname}'s islands" card showing the island map; each card on "Your
-  kids" has a mini map; the level rod shows shells and the week marks are sun dots.
-- **Context:** plan `docs/superpowers/plans/2026-10-21-grownup-logbook.md` **Task 2** (Interfaces: new
-  `IslandsCard`); spec "Child page and your kids". Reuse `src/app/rewards/IslandMap.tsx` and `Rod` (`look="shell"`)
-  as the kid side does (`src/app/MiniRewards.tsx`, `src/app/page.tsx` for loading progress per kid with
-  `Promise.all`).
+### T24 — Grown-up Logbook: shots and DESIGN.md
+- **Branch:** `codex/grownup-logbook` (T22, T23 committed; you are on it)
+- **Goal:** grown-up screenshots cover a child page with flags up and a two-kid list with a long name, with
+  scroll / clipping / target-size guards at every size; DESIGN.md's grown-up half describes "The Logbook".
+- **Context:** plan `docs/superpowers/plans/2026-10-21-grownup-logbook.md` **Task 3** (Review Focus 3); spec
+  (copy values into DESIGN.md). Patterns: `tests/e2e/grownup-shots.spec.ts` (SIZES, flow), `tests/e2e/kid-shots.spec.ts`
+  (seeding `skill_state` with `admin()`: mastered rows `p_known >= 0.95`, `attempts >= 5`, `check_due` year 9999;
+  SLACK clipping guard).
 - **Do:**
-  1. Failing tests first (plan Task 2 Step 1).
-  2. `src/app/parent/ui/IslandsCard.tsx`; child page shows it first when `progress` exists.
-  3. `RewardsSection` rod → shells; `Cubes` marks drawn as round sun dots (same role, label, counts, "+N",
-     `data-cube` kept).
-  4. Your kids page: `kidProgress` per kid, mini map in an `aria-hidden` wrapper; renders fine when null.
-- **Don't:** no domain/server changes beyond calling `kidProgress`; no copy changes; rule 9.
-- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs db + e2e + shots.
-
-#### Codex report
-- Files changed:
-  - `src/app/parent/ui/IslandsCard.tsx` (new): full still map card with nickname title and existing caption.
-  - `src/app/parent/kids/[kidId]/page.tsx`: islands card before week summary when progress exists.
-  - `src/app/parent/page.tsx`: parallel per-kid progress reads and hidden mini maps.
-  - `src/app/parent/ui/RewardsSection.tsx`, `Cubes.tsx`, `grownup.module.css`: shell rod, round sun dots, responsive mini-map width.
-  - Tests: `src/app/parent/ui/ui.test.tsx`, `src/app/parent/kids/[kidId]/page.test.tsx`, new `src/app/parent/page.test.tsx`.
-  - `docs/codex/HANDOFF.md`: this report.
-- Test results:
-  - Failing tests written and run first: 3 files failed (missing IslandsCard, child map, per-kid progress reads); targeted suite after implementation: 24 passed.
-  - `npm run typecheck`: `tsc --noEmit` — exit 0.
-  - `npm test`: `Test Files  88 passed (88)`; `Tests  1444 passed (1444)` — exit 0.
-- Choices I made:
-  - Reused IslandMap's existing caption and responsive full-map sizing; explicitly disabled animation.
-  - Kept Cubes' color prop for caller compatibility; both colors now draw sun dots, retaining labels, counts, +N and data-cube.
-  - Used one timestamp and the existing RLS client for parallel kidProgress calls; null progress omits map markup.
-  - Preserved every existing test assertion. No git writes, network, db/e2e tests or port 3000 use; left .impeccable/config.json and .superpowers/ untouched.
-- Open questions: none. Claude runs db, e2e and screenshot review.
+  1. grown-up shots, every size: keep every screen; add the child page with Counting Cove + Compare Cliffs learned
+     (map shows flags), and Your kids with Mia + Alexandrina. Assert at every screen: `scrollWidth <= innerWidth`;
+     no clipped text (SLACK guard); every visible `a`, `button`, `input`, `select` ≥ 44 px tall.
+  2. DESIGN.md: rewrite the grown-up half as "The Logbook" (frontmatter tokens/components for grown-up use,
+     Overview line, Colors, Layout, Components: strip, bare head + wave, card, button, danger, input, PIN, sticky
+     note, info note, islands card, shells, sun dots; Do's/Don'ts: no felt or grid on grown-up pages). Keep the kid
+     half as it is. Remove statements that are no longer true (felt strip, squared paper, index-card tab, cubes as
+     the grown-up signature).
+- **Don't:** no app code changes — if a guard you write finds a real bug, stop and describe it under "Open
+  questions". Rule 9. You can't run e2e; Claude runs it.
+- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count.
 
 <!-- Template:
 ### T1 — <title>
