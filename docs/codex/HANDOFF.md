@@ -40,16 +40,19 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T6 — Help me, part 1: engine `help()` and sims
-- **Branch:** `codex/help-me` (already checked out, from `main`; T7–T9 follow on the same branch)
-- **Goal:** the pure session engine supports "Help me": Help 1 (hint + picture, scored as a quiet miss) and
-  Help 2 (worked answer the child then types), stored as `helped` attempts.
-- **Read first:** spec `docs/superpowers/specs/2026-10-20-help-me-design.md` (section "Learning model") and plan
-  `docs/superpowers/plans/2026-10-20-help-me.md` — do **Task 1 (T6)** exactly, steps 1–6, including the
-  Global Constraints and Review Focus items 2, 3 and 4 that belong to Task 1.
-- **Don't:** touch `src/server`, `src/app`, migrations, or tutor lines (that's T7/T8) except type-only fixes the
-  plan's Step 4 allows. No new deps.
-- **Acceptance:** all new engine and sim tests pass; `npm run typecheck` and `npm test` green.
+### T7 — Help me, part 2: migration, server, route, Nova's help line
+- **Branch:** `codex/help-me` (checked out; T6 engine is committed on it)
+- **Goal:** `POST /api/kids/[kidId]/help` works end to end on the server: saves helped attempts (null
+  answer), returns the next turn with its help level, and Nova speaks a help line that never says the answer
+  (Help 1) or the worked answer (Help 2).
+- **Read first:** spec sections "Persistence", "Server and API", "Nova's lines"; plan
+  `docs/superpowers/plans/2026-10-20-help-me.md` — do **Task 2 (T7)** exactly, steps 1–4, with Global
+  Constraints and Review Focus item 1. Engine API from T6: `help(s, now)` in `src/domain/session/engine.ts`,
+  `Feedback.result.kind === "helped"`, `Turn.help`, `Pending.help`.
+- **Also write** the db test `saves a helped attempt with a null answer` in `tests/db/repo.db.test.ts` (Claude
+  runs it — you can't).
+- **Don't:** touch `src/app/play` (T8) or parent pages (T9). No new deps.
+- **Acceptance:** new tests pass; `npm run typecheck`, `npm test` green. Claude runs `npm run test:db`.
 
 #### Codex report
 - Files changed:
@@ -82,3 +85,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T3 — e2e flakes: mail wait + rewards XP seed | `codex/e2e-flakes` | db3696f | rewards.spec 20/20 repeated. Remaining flakes: journey weekly-report cron loops over all leftover local test parents and slows the server |
 | T4 — e2e deletes leftover @example.com users | `codex/e2e-flakes` | 8118237 | parents stay flat between runs. Remaining flakes: local auth container runs out of ports (`cannot assign requested address`) under ~1200 getUser calls/min |
 | T5 — getClaims in proxy + kid play API | `codex/auth-claims` | b3ec752 | First try. Auth /user calls per e2e run ~3100 → ~600–800; e2e 62/62 twice in 1.3 min |
+| T6 — Help me: engine `help()` + sims | `codex/help-me` | c90eb59 | First try. unit 1251 green |
