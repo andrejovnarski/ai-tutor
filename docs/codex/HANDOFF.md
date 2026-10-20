@@ -40,39 +40,7 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T2 — Placement: cap the jump per probe
-- **Branch:** `codex/placement-step-cap` (already checked out, from `main`)
-- **Goal:** one passed (or failed) placement probe moves the search at most 6 skills. Today a
-  kindergarten kid who passes the first probe (skill 0) jumps to skill 16
-  (`add-subtract-within-20.make-ten`, e.g. 7+6) as their 3rd problem. After the fix they get skill 6
-  (`add-within-10.pictures`). Owner chose this small fix; full branch-aware placement (roadmap §5)
-  comes later, after pilot data.
-- **Context:** `src/domain/kid/placement.ts` (binary search over `SKILLS`, 33 skills, 5 probes of 2
-  problems). `recordPlacement` sets `mid = floor((lo + hi) / 2)`. Tests: `src/domain/kid/placement.test.ts`,
-  placement accuracy sims in `src/domain/sim/sim.test.ts` (lines ~19–35).
-- **Do:**
-  1. Tests first in `placement.test.ts`:
-     - K kid passes probe 1 → next probe is `SKILLS[6]`, not `SKILLS[16]`.
-     - Grade-2 kid (starts at index 24) fails probe 1 → next probe is index 18, not 11.
-     - For any pass/fail sequence, consecutive probe indices differ by ≤ 6 and stay within `[lo, hi]`
-       (loop over all 2^5 outcome sequences for each grade K/1/2).
-     - Run them; confirm they fail.
-  2. Add `export const MAX_STEP = 6;` and in `recordPlacement` clamp the new `mid` to
-     `[p.mid - MAX_STEP, p.mid + MAX_STEP]` (and still within `[lo, hi]`). Nothing else changes:
-     `PlacementState` shape, probe count, `finishPlacement` stay the same, so saved placement state in
-     the db stays valid.
-  3. Keep the existing sim tests in `sim.test.ts` passing **unchanged** (my hand check says they
-     should: a K bot knowing 28 skills reaches index 25). If one fails, don't edit it — report the
-     numbers under Open questions.
-  4. Update the comment at the top of `placement.ts` to say the search is step-capped.
-- **Don't:** change grade start points, probe count, `bkt.ts`, engine, UI, or the roadmap doc.
-- **Acceptance:** new tests pass; `npm run typecheck` and `npm test` all green.
-
-#### Codex report
-- Files changed:
-- Test results:
-- Choices I made:
-- Open questions:
+_None — waiting for the next task._
 
 <!-- Template:
 ### T1 — <title>
@@ -95,3 +63,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | Task | Branch | Commits | Result |
 |------|--------|---------|--------|
 | T1 — "-es" plurals in number guard | `codex/es-plurals` | 0b6e0d4 | Done first try; unit 1214 green, typecheck clean |
+| T2 — Placement step cap (6 per probe) | `codex/placement-step-cap` | af8bade | 1 fix round (old sim tests assumed K kid knows ~all; ruled grade-matched). unit 1220, db 133, e2e 62 (4 flaky reruns) |
