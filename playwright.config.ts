@@ -9,6 +9,8 @@ try {
 
 export default defineConfig({
   testDir: "tests/e2e",
+  // Local Supabase auth runs out of ports (dial "cannot assign requested address") under 6 parallel workers.
+  workers: 3,
   globalSetup: "./tests/e2e/globalSetup.ts",
   webServer: {
     command: "npm run build && npm run start",
