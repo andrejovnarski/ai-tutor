@@ -7,7 +7,7 @@ async function pending(kidId: string) {
   const { data, error } = await admin().from("sessions").select("state")
     .eq("kid_id", kidId).is("ended_at", null).single();
   if (error) throw error;
-  return (data!.state as { pending: { templateId: string; seed: number; try: number; problem: { answer: number } } }).pending;
+  return (data!.state as { pending: { templateId: string; seed: number; try: number; help?: number; problem: { answer: number } } }).pending;
 }
 
 async function answer(page: Page, value: number) {
@@ -65,6 +65,13 @@ test("fill frame supports taps, undo, start over and keyboard, and resets on ret
   expect(await pending(kidId)).toMatchObject({ templateId: current.templateId, seed: current.seed, try: 2 });
   await expect(empty).toHaveCount(current.problem.answer);
   await expect(added).toHaveCount(0);
+  // Help 2 on the same try keeps the child's counters while Nova shows how.
+  for (let i = 0; i < 2; i++) await empty.last().click();
+  await expect(added).toHaveCount(2);
+  await page.getByRole("button", { name: "Help me" }).click();
+  await expect.poll(async () => (await pending(kidId)).help).toBe(2);
+  await expect(page.getByRole("button", { name: "Help me" })).toHaveCount(0);
+  await expect(added).toHaveCount(2);
   await answer(page, current.problem.answer);
   expect((await pending(kidId)).try).toBe(1);
   await expect(page.getByTestId("say")).toBeVisible();

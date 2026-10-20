@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { AgeBand } from "@/domain/types";
 import { AnswerTray } from "./AnswerTray";
-import { Board } from "./Board";
+import { Board, nextBoardKey, type BoardKey } from "./Board";
 import { bubbleView, wantsHold } from "./bubble";
 import { ConnectionNotice } from "./ConnectionNotice";
 import { EndCard } from "./EndCard";
@@ -41,6 +41,8 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
   const { state, answer, help, retry, say, playAgain } = usePlay(kidId);
   const reduced = useReducedMotion();
   const problem = state.turn?.kind === "problem" ? state.turn : undefined;
+  const boardKey = useRef<BoardKey | null>(null);
+  if (problem) boardKey.current = nextBoardKey(boardKey.current, state.version ?? -1, problem);
 
   const audio = useNovaAudio(kidId, speech);
   const voice = useMic({
@@ -149,7 +151,7 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
       ) : (
         <>
           <section className={styles.board} data-testid="board" aria-label="Felt board">
-            {problem ? <Board key={state.version} problem={problem} locked={state.phase !== "problem"} /> : null}
+            {problem ? <Board key={boardKey.current!.key} problem={problem} locked={state.phase !== "problem"} /> : null}
             {speech && problem ? <MicStrip mic={voice.mic} onYes={voice.yes} onNo={voice.no} /> : null}
             {notice}
           </section>

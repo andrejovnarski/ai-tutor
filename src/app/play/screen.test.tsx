@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { EndCard } from "./EndCard";
 import { ConnectionNotice } from "./ConnectionNotice";
 import { LineBubble } from "./LineBubble";
-import { Board } from "./Board";
+import { Board, nextBoardKey } from "./Board";
 
 const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&#x27;/g, "'").replace(/\s+/g, " ");
 
@@ -176,5 +176,26 @@ describe("Help me next to Nova", () => {
     play.state = { phase: "ended", turn: { kind: "end", summary: { problems: 1, firstTryCorrect: 0, minutes: 1, mastered: [] }, progress: { today: null, next: null } },
       summary: { problems: 1, firstTryCorrect: 0, minutes: 1, mastered: [] } };
     expect(renderToStaticMarkup(<PlayScreen kidId="kid1" ageBand="5-7" />)).not.toContain('data-testid="help"');
+  });
+});
+
+describe("nextBoardKey", () => {
+  const t = (tr: 1 | 2, help: 0 | 1 | 2) => ({ try: tr, help });
+  it("a new problem or a new try gets a fresh key", () => {
+    const a = nextBoardKey(null, 3, t(1, 0));
+    expect(a.key).toBe(3);
+    expect(nextBoardKey(a, 4, t(2, 0)).key).toBe(4); // wrong answer → try 2
+    expect(nextBoardKey(a, 4, t(2, 1)).key).toBe(4); // Help 1 → try 2
+    expect(nextBoardKey(a, 4, t(1, 0)).key).toBe(4); // next problem
+  });
+  it("Help 2 on the same try keeps the board (added counters stay)", () => {
+    const tryTwo = nextBoardKey(nextBoardKey(null, 3, t(1, 0)), 4, t(2, 1));
+    const help2 = nextBoardKey(tryTwo, 5, t(2, 2));
+    expect(help2.key).toBe(4);
+    expect(nextBoardKey(help2, 6, t(1, 0)).key).toBe(6); // then the next problem is fresh
+  });
+  it("is stable for the same version (render twice)", () => {
+    const help2 = nextBoardKey(nextBoardKey(null, 4, t(2, 0)), 5, t(2, 2));
+    expect(nextBoardKey(help2, 5, t(2, 2))).toBe(help2);
   });
 });
