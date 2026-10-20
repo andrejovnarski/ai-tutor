@@ -132,6 +132,13 @@
 /* Break only a word too long for the line, with a hyphen where the language allows. */
 .stickerLabel { overflow-wrap: break-word; hyphens: auto; }
 
+/* Let wide end-card stickers fit their labels instead of adding a second text row. */
+@media (min-width: 601px) {
+  .strip .stickers { flex-wrap: wrap; }
+  .strip .sticker { width: max-content; flex: none; }
+  .strip .stickerLabel { white-space: nowrap; }
+}
+
 .weekRow {
   display: flex;
   flex-direction: column;
@@ -213,7 +220,7 @@
 .mapHero {
   margin: 0;
   width: 100%;
-  max-width: 600px;
+  max-width: 350px; /* 400:160 art at the 140px height floor */
   flex: none;
 }
 .mapHero .mapFull { min-height: 140px; height: 140px; object-fit: contain; }
@@ -229,12 +236,11 @@
 .strip { width: 100%; gap: 8px; }
 .rewardTop .rodM .cube { width: 24px; height: 24px; }
 @media (max-width: 700px) {
-  .mapHero { max-width: 400px; }
+  .mapHero { max-width: 225px; /* 400:160 art at the 90px height floor */ }
   .mapHero .mapFull { min-height: 90px; height: 90px; }
   .rewardTop { flex-direction: column; gap: 4px; }
 }
 @media (max-width: 600px) {
-  .mapHero { max-width: 300px; }
   .strip, .weekRow { gap: 4px; }
   .rewardBottom { gap: 4px 8px; }
   .gain { flex-direction: row; gap: 8px; justify-content: center; }
@@ -246,9 +252,9 @@
 
 .sticker svg { width: 56px; height: 56px; }
 @media (max-width: 600px) {
-  .rewardBottom { flex-wrap: nowrap; }
-  .rewardBottom .stickerRow { flex: 0 1 88px; min-width: 0; }
-  .rewardBottom .weekRow { flex: 1; min-width: 0; }
+  /* stack: three stickers side by side with the week ran into each other on a phone */
+  .rewardBottom { flex-direction: column; flex-wrap: nowrap; }
+  .rewardBottom .stickerRow, .rewardBottom .weekRow { width: 100%; min-width: 0; }
   .rewardBottom .week { gap: 6px; }
   .rewardBottom .weekM .day { width: 18px; height: 18px; }
   .sticker svg { width: 48px; height: 48px; }

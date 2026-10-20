@@ -3,7 +3,7 @@
 // picker cards their level, mini map and shells.
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { SKILLS } from "../../src/domain/curriculum/index";
+import { CLUSTERS, SKILLS } from "../../src/domain/curriculum/index";
 import { admin } from "../helpers/admin";
 import { consent, forcePending, hideDevBadge, signIn, unique } from "./helpers";
 
@@ -28,6 +28,47 @@ async function addKids(page: Page) {
   ]).select("id, nickname");
   if (error) throw error;
   return Object.fromEntries(data.map((k) => [k.nickname as string, k.id as string]));
+}
+
+/** Seed earned flags separately from known-at-start flags; suppress recall checks. */
+async function seedMap(kidId: string, learned: string[], placed: string[] = []) {
+  const db = admin();
+  const { error: kidError } = await db.from("kids").update({ placed: true }).eq("id", kidId);
+  if (kidError) throw kidError;
+  // Earlier screenshot play may have placed extra skills; make this fixture exact.
+  const { error: clearError } = await db.from("skill_state").delete().eq("kid_id", kidId);
+  if (clearError) throw clearError;
+  const { error } = await db.from("skill_state").insert([...learned, ...placed].map(skillId => ({
+    kid_id: kidId, skill_id: skillId, p_known: 0.99, attempts: 10, level: 1,
+    correct_streak: 5, wrong_streak: 0, placed: placed.includes(skillId), recent_tags: [],
+    check_due: new Date(Date.UTC(9999, 0, 1)).toISOString(),
+  })));
+  if (error) throw error;
+  const { data, error: readError } = await db.from("skill_state").select("skill_id, mastered_at")
+    .eq("kid_id", kidId).in("skill_id", learned);
+  if (readError) throw readError;
+  expect(data).toHaveLength(learned.length);
+  for (const row of data!) expect(row.mastered_at, `${row.skill_id} earned a permanent flag`).toBeTruthy();
+}
+
+/** Start with a real engine state, then persist a finished session that earned a flag. */
+async function mapEndCard(page: Page, kidId: string, learnedNow: string[]) {
+  await page.goto(`/play/${kidId}`);
+  await expect(page.getByTestId("say")).toBeVisible();
+  const open = await pending(kidId);
+  const now = Date.now();
+  const { error } = await admin().from("sessions").update({
+    ended_at: new Date(now).toISOString(),
+    state: { ...open.state, ended: true, pending: null, problems: 2, firstTryCorrect: 1,
+      mastered: learnedNow, startedAt: now - 10 * 60_000, lastActivity: now },
+  }).eq("id", open.id);
+  if (error) throw error;
+  await page.reload();
+  await expect(page.getByTestId("end-card")).toBeVisible();
+  const map = page.getByTestId("end-card").getByRole("img", { name: /^Map:/ });
+  await expect(map.locator('[data-new="true"]').first()).toBeAttached();
+  for (const flag of await map.locator('[data-new="true"]').all()) await expect(flag).toHaveAttribute("data-flag", "up");
+  return map;
 }
 
 const pending = async (kidId: string) => {
@@ -69,6 +110,8 @@ for (const size of SIZES) {
       const endMap = page.getByTestId("end-card").locator('svg[role="img"][aria-label^="Map:"]');
       if (await page.getByTestId("end-card").count()) {
         await expect(endMap).toBeVisible();
+        const cardOverflow = await page.getByTestId("end-card").evaluate(el => el.parentElement!.scrollHeight - el.parentElement!.clientHeight);
+        expect.soft(cardOverflow, `${size.name} ${screen} end card scrolls inside its area`).toBeLessThanOrEqual(0);
         const mapBox = await endMap.boundingBox();
         const floor = ["landscape", "portrait", "pro"].includes(size.name) ? 140 : 90;
         expect.soft(mapBox!.height, `${size.name} ${screen} map height`).toBeGreaterThanOrEqual(floor);
@@ -83,6 +126,20 @@ for (const size of SIZES) {
       }
       // Glyph tails can overhang by a few px; a clipped line is ~20 px or more.
       const SLACK = 6;
+      for (const surface of await page.locator('[data-testid="end-card"], svg[aria-label^="Map:"], [data-picker-name]').all()) {
+        const clipped = await surface.evaluate((el, scrolls) => {
+          const box = el.getBoundingClientRect();
+          let left = 0, top = scrolls ? -Infinity : 0, right = innerWidth, bottom = scrolls ? Infinity : innerHeight;
+          for (let node = el.parentElement; node; node = node.parentElement) {
+            const style = getComputedStyle(node), rect = node.getBoundingClientRect();
+            if (style.overflowX !== "visible") { left = Math.max(left, rect.left); right = Math.min(right, rect.right); }
+            if (style.overflowY !== "visible" && !(scrolls && (node === document.body || node === document.documentElement))) { top = Math.max(top, rect.top); bottom = Math.min(bottom, rect.bottom); }
+          }
+          return { x: Math.max(0, left - box.left, box.right - right), y: Math.max(0, top - box.top, box.bottom - bottom) };
+        }, !!opts.scrolls);
+        expect.soft(clipped.x, `${size.name} ${screen} surface clips horizontally`).toBeLessThanOrEqual(SLACK);
+        expect.soft(clipped.y, `${size.name} ${screen} surface clips vertically`).toBeLessThanOrEqual(SLACK);
+      }
       for (const id of ["progress-today", "progress-next"]) {
         const line = page.getByTestId(id);
         if (!(await line.count())) continue;
@@ -284,5 +341,40 @@ for (const size of SIZES) {
       }
     }
     await shot("9-fill-frame");
+
+    const learned = CLUSTERS.slice(0, 2).flatMap(c => c.skills.map(s => s.id));
+    const placed = CLUSTERS[2]!.skills.slice(0, 2).map(s => s.id);
+    await seedMap(ids.Theo!, learned, placed);
+    await seedMap(ids.Alexandrina!, SKILLS.map(s => s.id));
+    await page.goto("/");
+    const theoMap = page.getByRole("link", { name: /Theo/ }).locator('svg[aria-label^="Map:"]');
+    await expect(theoMap).toHaveAttribute("aria-label", /2 islands done. Now on Adding Island, 2 of/);
+    await expect(theoMap.locator('[data-flag="up"]')).toHaveCount(learned.length + placed.length);
+    await expect(page.getByRole("link", { name: /Alexandrina/ }).locator('svg[aria-label="Map: all islands done!"]')).toBeVisible();
+    await shot("10-picker-flags", { scrolls: true });
+
+    // Earlier pad screenshots left these sessions open: finish those real states.
+    const map = await mapEndCard(page, ids.Theo!, [learned[0]!]);
+    await expect(map.locator('[data-rise="true"]').first()).toBeAttached();
+    await expect(map.locator('[data-sail="true"]')).toBeAttached();
+    await shot("11-end-card-new-flags");
+    if (size.name === "landscape") {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.reload();
+      await expect(card).toBeVisible();
+      await expect(map.locator('[data-new="true"]')).toHaveCount(1);
+      for (const flag of await map.locator('[data-new="true"]').all()) await expect(flag).toHaveAttribute("data-flag", "up");
+      const nova = page.getByRole("img", { name: "Nova", exact: true });
+      await expect(nova).toBeVisible();
+      expect(await map.evaluate(el => el.getAnimations({ subtree: true }).length)).toBe(0);
+      expect(await nova.evaluate(el => el.getAnimations({ subtree: true }).length)).toBe(0);
+      await shot("11a-end-card-reduced-motion");
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+    }
+
+    const doneMap = await mapEndCard(page, ids.Alexandrina!, [SKILLS[0]!.id]);
+    await expect(doneMap).toHaveAttribute("aria-label", "Map: all islands done!");
+    await expect(doneMap.locator('[data-flag="up"]')).toHaveCount(SKILLS.length);
+    await shot("12-end-card-all-islands");
   });
 }

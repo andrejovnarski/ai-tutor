@@ -1,7 +1,18 @@
 ---
 name: Brightling AI
-description: A patient early-math tutor. Kids play at a felt board, and grown-ups read a squared exercise book.
+description: A patient early-math tutor. Kids explore the Pocket Planet, and grown-ups read a squared exercise book.
 colors:
+  pp-sky: "#bfe9f5"
+  pp-sky-deep: "#7fd3f0"
+  pp-sea: "#4fb6c9"
+  pp-sea-deep: "#2f8aa0"
+  pp-sand: "#f6e3a8"
+  pp-grass: "#7cc36a"
+  pp-ink: "#12324a"
+  pp-white: "#ffffff"
+  pp-go: "#ff8a3d"
+  pp-sun: "#ffcf3d"
+  pp-nova: "#7a6cf0"
   felt: "#2e6b5e"
   felt-deep: "#23544a"
   chalk: "#f4f7f2"
@@ -64,6 +75,7 @@ typography:
     fontWeight: 400
     lineHeight: 1.5
 rounded:
+  pp-control: "22px"
   sticky: "2px"
   cube: "3px"
   card: "6px"
@@ -84,35 +96,35 @@ spacing:
   column: "560px"
 components:
   answer-tile:
-    backgroundColor: "{colors.tray}"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
     typography: "{typography.kid-headline}"
-    rounded: "{rounded.tile}"
+    rounded: "{rounded.pp-control}"
     size: "88px"
   kid-button-primary:
-    backgroundColor: "{colors.felt}"
-    textColor: "{colors.chalk}"
+    backgroundColor: "{colors.pp-go}"
+    textColor: "{colors.pp-ink}"
     typography: "{typography.kid-title}"
-    rounded: "{rounded.kid-button}"
+    rounded: "{rounded.pp-control}"
     padding: "0 32px"
     height: "88px"
   kid-button-secondary:
-    backgroundColor: "{colors.tray}"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
     typography: "{typography.kid-title}"
-    rounded: "{rounded.kid-button}"
+    rounded: "{rounded.pp-control}"
     padding: "0 32px"
     height: "88px"
   mic:
-    backgroundColor: "{colors.felt}"
-    textColor: "{colors.chalk}"
+    backgroundColor: "{colors.pp-go}"
+    textColor: "{colors.pp-ink}"
     rounded: "{rounded.round}"
     size: "88px"
   mic-listening:
     backgroundColor: "{colors.counter-red}"
   picker-kid-card:
-    backgroundColor: "{colors.tray}"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
     typography: "{typography.kid-title}"
     rounded: "{rounded.tray-card}"
     padding: "24px 24px 20px"
@@ -142,20 +154,26 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.card}"
     padding: "12px 16px 12px 26px"
+  island-map:
+    backgroundColor: "{colors.pp-sea}"
+    textColor: "{colors.pp-ink}"
+  nova:
+    backgroundColor: "{colors.pp-nova}"
+    textColor: "{colors.pp-sun}"
   rewards-rod:
-    backgroundColor: "{colors.tray}"
-    textColor: "{colors.cube-blue}"
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-sun}"
     rounded: "{rounded.cube}"
     size: "30px"
   sticker:
-    backgroundColor: "{colors.tray}"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
     typography: "{typography.kid-body}"
     rounded: "{rounded.round}"
     size: "72px"
   week-dots:
-    backgroundColor: "{colors.tray}"
-    textColor: "{colors.counter-yellow}"
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-sun}"
     rounded: "{rounded.round}"
     size: "28px"
 ---
@@ -164,58 +182,55 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Math Classroom"**
+**Creative North Star: "The Pocket Planet"**
 
-Brightling is one real early-years classroom drawn as two rooms. The child stands at the **felt board**: deep green felt with a faint nap, chalk-white type, and the same counters, cubes and ten-frames a teacher would stick on it. The grown-up sits at the teacher's desk with the **squared exercise book**: grid paper, index cards with coloured tabs, a sticky note for drafts, and a row of maths cubes as the one bold element. Both rooms use the same felt green, ink and counter colours, so the product feels like a single place.
+The kid side is a bright, sunny little planet of islands in the sea. Nova is a purple planet with a yellow ring. A sandy island holds the maths, white tiles offer answers, and a look-only island chain shows lasting progress. Code chooses every problem; the child never chooses an island. The board remains the most important thing on screen.
 
-The kid side is big, calm and tactile. There is one board, one tray of answers and one character (Nova), and nothing competes with the maths. The board is the most important thing on screen. Pieces are chunky, with thick ink borders, a solid drop edge and targets of 88 px or more, because small hands tap them on a tablet. The grown-up side is quiet and easy to read: a single column at most 560 px wide, Atkinson Hyperlegible body text, and plenty of white space, because parents read consent and privacy text here.
+The grown-up side still uses the **squared exercise book**: grid paper, index cards with coloured tabs, a sticky note for drafts, and maths cubes. Its palette, typography, spacing and components stay as they are. The planet Nova is intended to be the shared character at 120 px on play, 96 px on sign-in and 32 px in the grown-up strip.
 
-It deliberately avoids the **gamey arcade look** (glossy candy colours, coins, streak flames, confetti storms, loot-box rewards) and **cartoon clutter** (busy mascots or background scenes competing with the board).
-
-**Key Characteristics:**
-- Real classroom materials (felt, chalk, squared paper, index cards, counters, cubes) instead of digital chrome.
-- Flat colour throughout. Depth comes from solid drop edges and one inset board shadow, never from soft floating shadows.
-- Chunky, tactile controls: 3 px ink borders, 88 px kid targets, and buttons whose edge drops when pressed.
-- Two type voices: Andika (built for early readers) for anything a child reads and for all headings, Atkinson Hyperlegible for grown-up body text.
-- Restrained motion: a button press, Nova's hop and antenna blink, and the listening pulse on the mic. All of it is turned off under reduced motion.
+Kid controls are chunky: 3 px ink borders, hard bottom edges and tablet targets of at least 88 px. Motion is reserved for Nova during a problem, a short right-answer burst and the end-card map moment. Backgrounds stay still. No glossy candy surfaces, coins, streak flames, confetti storms or loot-box rewards.
 
 ## Colors
 
-The palette is a classroom palette: one deep felt green, near-black ink, warm off-whites, and the primary colours of real maths counters, kept for the maths itself.
+### Pocket Planet kid tokens
 
-### Primary
-- **Classroom Felt** (`felt`): the kid world's ground. It covers the picker, the play screen and the board itself. On the grown-up side it is used for the top strip and the main buttons. Chalk text on felt has a contrast ratio of 5.75:1.
-- **Deep Felt** (`felt-deep`): the board's 8 px frame, the solid drop edge under buttons and cards, and the stroke around Nova. It is the colour of "pressable" and "framed".
+These variables live in `src/app/play/tokens.css`; frontmatter `pp-*` names map to CSS `--pp-*` tokens.
 
-### Secondary
-- **Counter Yellow** (`counter-yellow`): the yellow counter. It is used for Nova's antenna light, the sticky draft note and the selected avatar tile, and as a still ring on the mic under reduced motion. It means "look here", sparingly.
-- **Cube Blue** (`cube-blue`): maths cubes and Nova's chest light. Darkened, it becomes the grown-up link colour.
+| Token | Hex | Use |
+|---|---|---|
+| `--pp-sky` | `#bfe9f5` | Page ground |
+| `--pp-sky-deep` | `#7fd3f0` | Sky gradient top |
+| `--pp-sea` | `#4fb6c9` | Map sea and still picker sea strip |
+| `--pp-sea-deep` | `#2f8aa0` | Answer tray sea; never a text ground |
+| `--pp-sand` | `#f6e3a8` | Sandy board and islands |
+| `--pp-grass` | `#7cc36a` | Board grass rim and island tops |
+| `--pp-ink` | `#12324a` | All text, maths lines, borders, hard edges and focus |
+| `--pp-white` | `#ffffff` | Tiles, keys, bubble, cards and Help me |
+| `--pp-go` | `#ff8a3d` | Resting mic, Play again, flags and boat |
+| `--pp-sun` | `#ffcf3d` | Nova ring, played week dots and selected avatar |
+| `--pp-nova` | `#7a6cf0` | Nova body only |
 
-### Tertiary
-- **Counter Red** (`counter-red`): the red counter in the maths pictures, and the mic while it is listening. It never means "wrong".
-- **Cube Green** (`cube-green`): the second cube colour in the grown-up week strip. It is currently hard-coded in `grownup.module.css`, not a CSS variable.
+Kid text is always ink on light: contrast on sky 10.2:1, sky-deep 7.9:1, sand 10.4:1, white 13.3:1, go 5.7:1, sun 9.0:1, grass 6.2:1 and sea 5.6:1. No white text and no text directly on `--pp-sea-deep` (3.3:1). Ink outlines on deep sea meet the 3:1 non-text requirement. Counter colours remain for maths; counter red also marks a listening mic, never a wrong answer.
 
-### Neutral
-- **Classroom Ink** (`ink`): all body text on light surfaces, input and tile borders, and the selected-tile drop edge. On tray it reaches 14:1.
-- **Chalk** (`chalk`): type and line art on felt, and every line in the maths visuals.
-- **Answer Tray** (`tray`): the warm off-white of the answer tray, the speech bubble, the end card, picker cards and answer tiles.
-- **Exercise-Book Paper** (`paper`): the grown-up page ground.
-- **Grid Line** (`grid`): 1 px lines on a 20 px square grid behind every grown-up page. It is also used for card borders and list dividers.
-- **Quiet Ink** (`ink-quiet`): secondary grown-up text, at 15 px (6.6:1 on paper).
-- **Link Blue** (`link`): grown-up links and the 3 px focus ring on grown-up pages (5.4:1 on paper).
-- **Danger Red** (`danger`) / **Danger Edge** (`danger-deep`): only final delete buttons and delete links, with the deeper red as their drop edge.
+### Exercise-book grown-up tokens
 
-### Named Rules
-**The Counters Are for Counting Rule.** Red, yellow, blue and green are the colours of the physical maths pieces. On the kid side they belong to the maths pictures and to Nova's two small lights, with one exception: the mic turns red while it listens. They are never used for decoration or backgrounds, and red is never used for a wrong answer.
-
-**The One Felt Rule.** There is a single green. A screen never adds a second brand hue. New states reuse felt, felt-deep, ink or a counter colour.
+- **Classroom Felt** (`felt`) and **Deep Felt** (`felt-deep`): top strip, main buttons and their solid edges. Chalk on felt is 5.75:1.
+- **Chalk** (`chalk`), **Answer Tray** (`tray`) and **Classroom Ink** (`ink`): the existing light surfaces, strip text and dark reading text.
+- **Counter Yellow** (`counter-yellow`): sticky drafts and selected avatar tiles.
+- **Cube Blue** (`cube-blue`) and **Cube Green** (`cube-green`): maths cubes; green remains hard-coded in `grownup.module.css`.
+- **Counter Red** (`counter-red`): maths counters, never wrong-answer feedback.
+- **Exercise-Book Paper** (`paper`): page ground.
+- **Grid Line** (`grid`): 1 px lines on a 20 px square grid, card borders and dividers.
+- **Quiet Ink** (`ink-quiet`): secondary 15 px text, 6.6:1 on paper.
+- **Link Blue** (`link`): links and 3 px focus rings, 5.4:1 on paper.
+- **Danger Red** (`danger`) / **Danger Edge** (`danger-deep`): final delete actions only.
 
 ## Typography
 
 **Display Font:** Andika (with system-ui, sans-serif)
 **Body Font:** Atkinson Hyperlegible (grown-up pages only, with system-ui, sans-serif)
 
-**Character:** Andika was designed for children learning to read. It has a single-storey "a", clear digits and generous counters, so it is the voice of the classroom and of every heading. Atkinson Hyperlegible keeps long grown-up reading (consent, privacy, reports) clear without feeling like a form.
+**Character:** Andika was designed for children learning to read. It has a single-storey "a", clear digits and generous counters, so it is the voice of the Pocket Planet and of every heading. Atkinson Hyperlegible keeps long grown-up reading (consent, privacy, reports) clear without feeling like a form.
 
 ### Hierarchy
 - **Kid display** (700, 64 px, 1.1): numbers that have to be read across a room, such as the end-card totals and the number-pad entry.
@@ -229,22 +244,21 @@ The palette is a classroom palette: one deep felt green, near-black ink, warm of
 - **Grown-up label** (400, 15 px): secondary text in Quiet Ink, strip links, the "+N" after cubes.
 
 ### Named Rules
-**The Twenty-Two Floor Rule.** No text a child is meant to read is smaller than 22 px. Chrome meant for grown-ups on kid screens ("Done", "Grown-ups") sits at 18 px and is visibly quieter.
+**The Twenty-Two Floor Rule.** No text a child is meant to read is smaller than 22 px. Kid chrome (the picker level/shell line and quiet grown-up links) may sit at 18 px; instructional text stays at least 22 px. The full map names its current island at 22 px. Long picker names stay within two lines and use ellipsis rather than breaking mid-word.
 
 **The Andika Heads Rule.** Every heading in both worlds is set in Andika. Atkinson is only ever body text.
 
 ## Layout
 
-**Kid play screen.** A full-height three-row grid with no scrolling (`100dvh`, overflow hidden):
-1. **Top band** (at least 150 px): Nova at 120 px and the speech bubble, capped at 216 px with internal scroll.
-2. **Board**, filling the rest of the space, with a 16 px margin. The maths picture is at most 820 px wide.
-3. **Answer tray**: 210 px tall in landscape, 260 px in portrait.
+**Kid play screen.** A full-height three-row grid (`100dvh`, overflow hidden): sky top band with Nova at 120 px, white ink-tailed speech bubble, white Help me and a quiet "I'm done for now" link; a sandy island board filling the middle; and a deep-sea answer tray with a still wave edge. The board has a 4 px ink outline, a grass rim, 28 px radius and a 28 px ink prompt below the picture. No inset shadow or dot texture. Notices stay at its foot in the flow.
 
-Answer tiles sit in one centred row (88–160 px each, 16 px gaps). The number pad is 6 keys × 88 px. In portrait, the mic and the entry stack into a 112 px column beside the keys, so everything fits a 768 px iPad. The end card replaces the board and the tray.
+Answer tiles share one centred row, at least 88 px on tablets. The number pad has six keys per row. In portrait the entry and mic sit beside the keys. Maths pictures retain their geometry and counter fills, with ink replacing chalk line art.
 
-**Picker.** A centred flex column on felt: Nova (120 px) above "Who's playing?", then the kid cards, all 216 px wide so a long name doesn't make its card the odd one out. There are 40 px between the greeting and the cards and 32 px between cards. The grown-ups link sits in the top-right corner.
+**Picker.** Sky ground with a still sea strip, cheer Nova (120 px) above "Who's playing?". Equal-width white kid cards have an ink edge, avatar in a sky circle, 28 px nickname, a roughly 200 px wide mini island map without text, and one line "Level N · shells K of 10" at least 18 px. No picker week dots. "Grown-ups" stays top right. The empty-state action is white.
 
-**Narrow screens (600 px or less: a phone, or a tablet in split view).** Everything stays on one screen and nothing is cut off. On the play screen, "I'm done for now" takes its own row, Nova shrinks to 72 px, tiles share the tray width in one row (at least 72 px tall), and the number pad becomes six keys a row, at least 64 px, with the entry (and the mic) above. The tray grows to fit. The end card's buttons stack. On the picker, cards shrink to 156 px so two fit a row.
+**End card.** White on sky: "Great work today!", full-width hero map, progress lines, numbers, rewards and buttons. Play again is orange with ink text; Back to kids is white. The map is absent when rewards are unavailable. Keep the map at least 140 px tall on tablets and 90 px on smaller sizes; the card and all its text must fit. All-islands-done keeps the same layout.
+
+**Narrow screens (600 px or less).** Nova shrinks to 72 px and the done link gets its own row. Tiles are at least 72 px tall; number keys at least 64 px, with entry and mic above. End-card buttons stack and the map shrinks first. Picker cards shrink to 156 px with two per row; names and the level/shell line must stay contained. Picker content may scroll vertically.
 
 **Grown-up pages.** One left-aligned column, at most 560 px wide, with a 20 px side gutter, on the grid paper, plus a felt top strip at the same width. It works from 320 px to tablet landscape. Spacing steps are 8, 12, 16, 24, 28 and 48 px. Sections are separated by 28 px, and the page ends with 48 px of space.
 
@@ -255,13 +269,14 @@ Answer tiles sit in one centred row (88–160 px each, 16 px gaps). The number p
 
 ## Elevation & Depth
 
-The system is flat, and depth is physical. Surfaces don't float. They sit on the table with a **solid, unblurred drop edge** in a darker shade (felt-deep or ink), the way a wooden tile or a plastic cube sits on a desk. There is one inset shadow, which sinks the felt board into its frame. Soft blurred shadows appear only twice: the mic's listening pulse, and the faint 1 px lip under index cards.
+Kid depth is a **hard ink edge**: `0 5px 0 var(--pp-ink)`, without blur. Pressing moves the control down the same amount and removes its edge; under reduced motion there is no movement. The sandy board has no inset shadow. No glow or gradients except the sky.
+
+Grown-up surfaces keep their existing physical paper and button treatments.
 
 ### Shadow Vocabulary
-- **Tile edge** (`box-shadow: 0 6px 0 var(--felt-deep)` on picker cards, `0 8px 0` on the end card): kid surfaces that rest on the felt.
+- **Kid edge** (`box-shadow: 0 5px 0 var(--pp-ink)`): white tiles, buttons and cards.
 - **Button edge** (`box-shadow: 0 3px 0 var(--felt-deep)`, or `#8f2420` for danger): grown-up buttons. On `:active` the button moves down 3 px and loses the edge.
 - **Selected edge** (`box-shadow: 0 3px 0 var(--ink)`): the selected avatar tile.
-- **Board well** (`box-shadow: inset 0 4px 18px rgb(0 0 0 / 0.28)`): only on the felt board.
 - **Card lip** (`box-shadow: 0 1px 0 rgba(30, 43, 40, 0.15)`): index cards.
 - **Sticky lift** (`box-shadow: 2px 3px 0 rgba(30, 43, 40, 0.25)`, rotated −1.2°): only the sticky draft note.
 
@@ -271,38 +286,38 @@ The system is flat, and depth is physical. Surfaces don't float. They sit on the
 ## Shapes
 
 Shapes are rounded, like the corners of classroom objects, and the radius depends on size and purpose:
-- **Kid surfaces** are generous: the board and bubble at 24 px, picker cards and the end card at 28 px, kid buttons at 20 px, tiles and keys at 16 px, the mic a full circle.
+- **Kid surfaces** are generous: the board and cards at 28 px, bubble, kid buttons, tiles and keys at 22 px, the mic a full circle.
 - **Grown-up surfaces** are tighter, like paper goods: buttons 12 px, inputs 8 px, index cards 6 px, cubes 3 px, the sticky note 2 px.
-- **Borders:** 3 px ink on kid tiles, keys, the mic and secondary buttons. 2 px ink on grown-up inputs, avatar tiles and cubes. 8 px felt-deep frames the board.
+- **Borders:** 3 px ink on kid tiles, keys, the mic and secondary buttons. 2 px ink on grown-up inputs, avatar tiles and cubes. 4 px Pocket Planet ink frames the sandy board.
 - **The index-card tab:** a 10 px coloured strip down the left edge of every card (`--tab`, felt by default).
 
 ## Components
 
 ### Buttons
 Chunky and tactile, like classroom pieces you can press.
-- **Kid primary** ("Play again"): felt with chalk text, a 3 px felt-deep border, 20 px radius, at least 88 px tall, 0 32 px padding, 28 px Andika.
-- **Kid secondary** ("All done"): transparent on tray with ink text and a 3 px ink border, same size.
+- **Kid primary** ("Play again"): orange go with ink text, a 3 px ink border, 22 px radius, hard ink edge, at least 88 px tall, 0 32 px padding, 28 px Andika.
+- **Kid secondary**: white with ink text and a 3 px ink border, same size.
 - **Grown-up button:** felt with chalk 17 px bold text, 12 px radius, at least 44 px tall, 8 px × 20 px padding, with a 3 px felt-deep drop edge that disappears as the button moves down 3 px when pressed. The press movement is turned off under reduced motion.
 - **Grown-up danger:** the same shape in danger red with a `#8f2420` edge. Only for final, destructive steps.
 - **Link button:** a text-only underlined link in Link Blue, at least 44 px tall.
 - **Disabled:** 0.6 opacity on grown-up pages, 0.45 on kid tiles.
 
 ### Answer Tiles and Number Keys
-- **Style:** tray background, ink digits at 40 px, a 3 px ink border, 16 px radius, at least 88 × 88 px (72 px tall tiles and 64 px keys on narrow screens).
+- **Style:** white background, Pocket Planet ink digits at 40 px, a 3 px ink border, 22 px radius, at least 88 × 88 px (72 px tall tiles and 64 px keys on narrow screens).
 - **Delete key:** a drawn backspace outline in the same 3 px ink stroke, not a text glyph.
-- **Press:** scales to 0.97. No colour change.
-- **Focus:** a 3 px ink outline, offset 2 px.
+- **Press:** hard ink edge disappears as the tile moves down 5 px; no movement under reduced motion.
+- **Focus:** a 3 px Pocket Planet ink outline, offset 3 px.
 
 ### Mic
-- **Rest:** an 88 px felt circle with a 3 px ink border and a chalk icon.
+- **Rest:** an 88 px orange go circle with a 3 px ink border and an ink icon.
 - **Listening:** counter red with a 1 s soft red pulse ring. Under reduced motion it gets a still 6 px counter-yellow ring instead.
-- **Thinking:** felt-deep.
+- **Thinking:** Pocket Planet sea.
 
 ### Cards / Containers
 - **Index card:** white on paper, 6 px radius, a 1 px grid border, the card lip, 12 px × 16 px padding (26 px on the left, to clear the 10 px coloured tab).
-- **Picker kid card:** tray, 28 px radius, a 6 px felt-deep edge, a 112 px felt avatar circle with a 64 px emoji, scaling to 0.97 when pressed.
-- **End card:** tray on felt, 28 px radius, an 8 px felt-deep edge, 64 px stat numbers.
-- **Speech bubble:** tray, 24 px radius, 16 px × 24 px padding, 28 px text, with a tail (a 24 px tray diamond, half tucked under) pointing at Nova. The earlier line is shown at 0.8 em so the new one leads.
+- **Picker kid card:** white, 28 px radius, ink border and hard edge, sky avatar circle, mini map and level/shell line.
+- **End card:** white on sky, 28 px radius, hard ink edge, hero map and 64 px stat numbers.
+- **Speech bubble:** white, 22 px radius, 16 px × 24 px padding, 28 px ink text, with an ink-bordered white tail pointing at Nova. The earlier line is shown at 0.8 em so the new one leads.
 - **Sticky note:** counter yellow, 2 px radius, rotated −1.2°. Only for draft or provisional notices.
 - **Note:** white with a 6 px Link Blue left rule and 6 px radius, for grown-up info callouts.
 
@@ -314,44 +329,50 @@ Chunky and tactile, like classroom pieces you can press.
 
 ### Navigation
 - **Grown-up strip:** a felt band with small Nova (32 px), "For grown-ups" in bold Andika, and one chalk back link on the right (15 px, at least 44 px tall). Focus is a chalk outline.
-- **Kid chrome:** only one quiet link, "Done" on play or "Grown-ups" on the picker. It is chalk at 18 px, underlined, at 0.85 opacity, top right, and never competes with the board.
+- **Kid chrome:** only one quiet link, "Done" on play or "Grown-ups" on the picker. It is Pocket Planet ink at 18 px, underlined, at 0.85 opacity, top right, and never competes with the board.
 
 ### Nova (signature)
-The one character: a rounded tray-coloured body with a felt-deep outline, an ink visor with chalk eyes, a counter-yellow antenna light and a cube-blue chest light. There are three expressions, all made by changing the eyes: cheer (happy arcs), calm (dots) and curious (one wide, one small eye). Nova hops 24 px with the antenna blinking once (400 ms) when it speaks. Nova is 120 px on play, 96 px on sign-in and 32 px in the grown-up strip. When speech is on, Nova is a button that replays its line.
+A purple planet (`--pp-nova`) with a yellow ring (`--pp-sun`) tilted about −12°, front half over the body, an ink outline and a small light highlight. Moods change eyes and mouth: cheer (happy arcs and smile), calm (dots and small smile), curious (one big eye, one small and an "o" mouth). Talking gives a hop and one ring tip (400 ms). A right answer spins the ring once and pops four small yellow stars beside Nova for about 600 ms, never over the board. Reduced motion removes hop, spin and stars; cheer carries the meaning. Sizes: 120 px play, 96 px sign-in, 32 px grown-up strip. When speech is on, Nova is a button that replays its line.
+
+### Island Map
+Eight islands follow curriculum order: Counting Cove, Compare Cliffs, Adding Island, Take-Away Bay, Twenty Reef, Tens Town, Hundred Harbor and Story Shore. One flag per skill: up when `mastered_at` exists or the row is placed. Flags never come down, even after a recall returns a skill to practice. New flags are up skills in the finished session's `mastered` list. The boat marks the first flag still down, or all done. This is a look-only map; code chooses the next problem.
+
+The fixed 400 × 160 SVG shows sand/grass islands with up flags and pale dashed islands without them. Up flags and boat are orange. Mini maps have no text; full maps name the current island at 22 px. Image labels say "Map: N islands done. Now on {Island}, K of M flags." (singular for one) or "Map: all islands done!".
+
+At the end-card map moment, new flags rise in sequence (about 250 ms each), then the boat sails (about 600 ms), all within two seconds. It follows the existing rewards drop trigger. Reduced motion shows flags up and boat in place immediately, with no animation.
 
 ### Maths Cubes (signature)
 A row of 16 px squares with a 2 px ink border and a 3 px radius, filled cube blue or green for each day or session, with "+N" after them. They are the one bold element on grown-up pages.
 
-### Rewards Rod
-Ten maths cubes in a row with 3 px gaps, one rod per level: 30 px cubes on the end card, 16 px on the picker and the child page. Each cube has a 2 px ink border and a 3 px radius; earned cubes are cube blue and the rest are tray. Newly earned cubes drop into their empty slots one after another (360 ms each, the whole run inside about a second). Under reduced motion they are simply already in place. A level-up shows the full rod above the new one, with "Level N!" in felt. The rod is an image labelled "N of 10 cubes". On a phone the end-card rod stretches across the card, up to 30 px per cube.
+### Shell Rod / Grown-up Rewards Rod
+Kid rewards keep their XP, levels and timing; ten shells replace the cubes visually. Earned shells are filled, and new ones drop into place with the existing reward timing. Under reduced motion they are already in place. The kid rod is labelled "N of 10 shells"; the picker uses a small shell and count instead of a rod. A level-up keeps the full rod above the new one.
+
+The grown-up child page retains ten maths cubes, 16 px each, 2 px ink borders, 3 px radius and 3 px gaps. Earned cubes are cube blue and the rest tray, with the label "N of 10 cubes".
 
 ### Stickers
 Round tray discs with an ink outline, drawn in the maths-picture family: counters, cubes, ten-frames and number lines for maths stickers, and a cube-blue star for the first game. Counter red and yellow are only for maths stickers. They are 72 px on the end card (at most three, then "+N more") with the label underneath at 22 px, and 36 px on the child page, followed by the label, the reason and the date.
 
 ### Week Dots
-Seven counters for Sunday to Saturday: 28 px on the end card, 14 px on the picker. A played day is counter yellow with an ink border, and a day not played yet is tray with a faint ink border. The row is an image labelled "Played N days this week". On the end card the week line ("2 more days for your week goal", "Week goal done!") sits underneath.
-
-### The Felt Board (signature)
-Felt with a two-layer radial-dot nap, an 8 px felt-deep frame, a 24 px radius and the board-well inset shadow. It holds the chalk-line maths picture and the 28 px prompt underneath.
+Seven counters for Sunday to Saturday: 28 px on the end card; none on the picker. A played day is Pocket Planet sun with an ink border, and a day not played yet is tray with a faint ink border. The row is an image labelled "Played N days this week". On the end card the week line ("2 more days for your week goal", "Week goal done!") sits underneath.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** build every new piece from classroom materials (felt, chalk, tray, squared paper, index cards, counters, cubes) and name its tokens after them.
+- **Do** use Pocket Planet `--pp-*` tokens on kid screens; keep exercise-book materials and tokens on grown-up pages.
 - **Do** keep kid touch targets at 88 px or more on a tablet (64 px or more on a phone) and grown-up targets at 44 px or more.
 - **Do** crop every new maths picture to its drawing with the `box` prop of `Svg`, so it fills the board.
-- **Do** give anything pressable a hard drop edge in felt-deep or ink, and remove it on press.
+- **Do** give anything pressable a hard drop edge in Pocket Planet ink on kid screens and felt-deep or ink on grown-up screens, and remove it on press.
 - **Do** set kid-readable text at 22 px or larger in Andika, and keep grown-up body text at 17 px Atkinson Hyperlegible, with lines under 70 characters.
-- **Do** show focus as a 3 px solid outline: chalk on felt, ink on tray, Link Blue on paper.
+- **Do** show focus as a 3 px solid outline: Pocket Planet ink on kid surfaces, chalk on the grown-up strip, Link Blue on paper.
 - **Do** wrap every animation in a `prefers-reduced-motion` fallback (a still state, not just "no animation" when the state carries meaning).
-- **Do** keep text contrast at 4.5:1 or above. Check any new pairing; chalk on felt is 5.75:1.
+- **Do** keep text contrast at 4.5:1 or above. Kid text is always ink on a light ground; no text on `--pp-sea-deep`.
 - **Do** word rewards as what was earned or what comes next ("+75", "Level 2!", "2 more days for your week goal"). Rewards copy never says "lose", "lost", "miss", "break" or "broke", never urges playing more right now, and uses the nickname instead of a gendered pronoun.
 
 ### Don't:
 - **Don't** add a gamey arcade look: no glossy candy colours, coins, streak flames, confetti storms or loot-box style rewards.
-- **Don't** take a reward away or show one shrinking: stickers stay, levels and cubes only go up, and a quiet week shows empty dots, not a broken streak.
+- **Don't** take a reward away or show one shrinking: stickers stay, map flags never come down, levels and shells/cubes only go up, and a quiet week shows empty dots, not a broken streak.
 - **Don't** add cartoon clutter: no extra mascots, background scenes or decorative illustrations next to the board. Nova is the only character.
 - **Don't** use counter red to mark a wrong answer, or use counter colours as decoration.
-- **Don't** introduce a second green, gradients, glassmorphism, or soft blurred drop shadows as affordances.
+- **Don't** use felt on the kid side, white kid text, text on `--pp-sea-deep`, glassmorphism or soft blurred drop shadows as affordances. The sky is the only kid gradient.
 - **Don't** put notices or overlays on top of the board. They sit at its foot, in the flow.
 - **Don't** use Atkinson Hyperlegible for headings, or bring it into kid screens.

@@ -3,16 +3,16 @@ import type { ReactNode } from "react";
 import { atkinson } from "./fonts";
 import styles from "./grownup.module.css";
 
+// The same little-planet Nova as the kid side (cheer face), drawn without the kid component's motion.
 function NovaMark({ className }: { className?: string }) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 120 120" className={className}>
-      <line x1="60" y1="14" x2="60" y2="28" strokeWidth="4" strokeLinecap="round" className={styles.novaAntenna} />
-      <circle cx="60" cy="10" r="6" fill="var(--sticky)" />
-      <ellipse cx="60" cy="72" rx="44" ry="42" fill="var(--chalk)" stroke="var(--felt-deep)" strokeWidth="4" />
-      <rect x="26" y="38" width="68" height="38" rx="16" fill="var(--ink)" />
-      <path d="M34 56 Q44 44 54 56" fill="none" stroke="var(--chalk)" strokeWidth="5" strokeLinecap="round" />
-      <path d="M66 56 Q76 44 86 56" fill="none" stroke="var(--chalk)" strokeWidth="5" strokeLinecap="round" />
-      <circle cx="60" cy="96" r="5" fill="var(--link)" />
+    <svg aria-hidden="true" viewBox="0 0 80 80" className={className}>
+      <path d="M8 50 A34 9 -12 0 0 72 36" fill="none" stroke="var(--pp-sun)" strokeWidth="6" strokeLinecap="round" />
+      <circle cx="40" cy="42" r="26" fill="var(--pp-nova)" stroke="var(--pp-ink)" strokeWidth="3" />
+      <circle cx="30" cy="30" r="4" fill="#9d93f5" />
+      <path d="M27 40 Q31 35 35 40 M45 40 Q49 35 53 40" fill="none" stroke="var(--pp-ink)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M32 50 Q40 57 48 50" fill="none" stroke="var(--pp-ink)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M8 50 A34 9 -12 0 1 72 36" fill="none" stroke="var(--pp-sun)" strokeWidth="6" strokeLinecap="round" strokeDasharray="0 70 200" />
     </svg>
   );
 }

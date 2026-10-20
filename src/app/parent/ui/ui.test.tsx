@@ -43,12 +43,11 @@ it("link colour rule does not override classed links", () => {
   expect(css).toMatch(/\.pinBox:focus-within\s*\{[^}]*outline: 3px solid var\(--link\)/);
 });
 
-it("strip focus ring is chalk, sticky tilts, record lists wrap long text, bare antenna is dark", () => {
+it("strip focus ring is chalk, sticky tilts, record lists wrap long text", () => {
   const css = readFileSync(join(__dirname, "grownup.module.css"), "utf8");
   expect(css).toMatch(/\.strip :focus-visible\s*\{[^}]*outline-color: var\(--chalk\)/);
   expect(css).toMatch(/\.sticky\s*\{[^}]*transform: rotate\(-1\.2deg\)/);
   expect(css).toMatch(/\.recordList li\s*\{[^}]*overflow-wrap: anywhere/);
-  expect(css).toMatch(/\.bareHead \.novaAntenna\s*\{[^}]*var\(--felt-deep\)/);
 });
 
 const prog = (over: Partial<Progress>): Progress => ({ xp: 620, level: 2, cubesInRod: 2, week: [], weekStreak: 0, goalWeeks: [], stickers: [], ...over } as Progress);
