@@ -19,7 +19,8 @@ Codex runs sandboxed: it can edit the workspace but can't write `.git` or use th
 ## 2. Prepare git
 - `git status` must be clean apart from known untracked files; don't sweep in the owner's
   untracked work.
-- `git switch -c codex/<slug>` from `main`. Commit the HANDOFF.md task text on the branch
+- Check `git branch --show-current` first — the owner may be on a feature branch. Branch from `main`
+  (`git switch -c codex/<slug> main`) unless the task builds on another branch; say which. Commit the HANDOFF.md task text on the branch
   (`docs(codex): T<n> task`).
 
 ## 3. Dispatch
