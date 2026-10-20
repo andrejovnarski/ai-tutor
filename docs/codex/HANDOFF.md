@@ -42,91 +42,35 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T20 — Pocket Planet: picker and end card
-- **Branch:** `codex/pocket-planet` (T18, T19 committed; you are on it)
-- **Goal:** the picker and end card are in the Pocket Planet look. Each picker card shows a mini island map and
-  "Level N · shells K of 10"; the end card shows the full map as its hero (new flags rise, boat sails), then the
-  numbers, +XP with a shell rod, stickers and week dots.
-- **Context:** plan `docs/superpowers/plans/2026-10-20-pocket-planet.md` **Task 3** (Interfaces: `Rod` gains
-  `look`); spec "Picker" and "End card"; mockup panels 1 and 3 in
-  `.superpowers/brainstorm/1592744-1792531617/content/screens.html` (read as text). Parts from T19:
-  `src/app/rewards/IslandMap.tsx` (`IslandMap({ map, size, animate })`), `Progress.map`, `EndRewards.map`.
-  Tokens and `Nova` from T18 (`src/app/play/tokens.css`, `src/app/play/Nova.tsx`).
+### T21 — Pocket Planet: kid-shots, DESIGN.md, grown-up Nova
+- **Branch:** `codex/pocket-planet` (T18–T20 committed; you are on it)
+- **Goal:** browser screenshots and guards cover the map with real flags, the map moment, "all islands done"
+  and reduced motion; DESIGN.md describes the Pocket Planet kid side.
+- **Context:** plan `docs/superpowers/plans/2026-10-20-pocket-planet.md` **Task 4** and its Review Focus 1, 4, 5;
+  spec (all of it — DESIGN.md copies its values). Seeding patterns: `tests/e2e/kid-shots.spec.ts` (kids, SIZES,
+  SLACK), `tests/e2e/fill-frame.spec.ts` (seeding `skill_state` with `admin()`; mastered rows need
+  `p_known >= 0.95` and `attempts >= 5` so the DB trigger sets `mastered_at`; known-at-start rows use
+  `placed: true`; always set `check_due` year 9999 so no recall starts), `tests/e2e/rewards.spec.ts`
+  (`finishSession`, reduced-motion check with `getAnimations`).
 - **Do:**
-  1. Failing tests first, per plan Task 3 Step 1.
-  2. Picker (`src/app/page.tsx`, `picker.module.css`, `MiniRewards.tsx`): sky ground with a still sea strip, white
-     cards with ink border + hard ink edge, avatar in a sky circle, mini map, level line (≥ 18 px), no week dots.
-     Empty state "Add your first kid" as a white kid button. Phone: two cards a row as today, nothing clipped.
-  3. End card (`EndCard.tsx`, `RewardsStrip.tsx`, `Rod.tsx` `look="shell"`, `WeekDots.tsx` played dots
-     `--pp-sun`, `play.module.css`, `rewards.module.css`): white card on sky, full `IslandMap` with `animate`
-     right under the title, "Play again" `--pp-go` with ink text, "Back to kids" white. On phone the map shrinks
-     first so the card fits.
-  4. **Claude ruling (T19 review):** the full map's island name must stay ≥ 22 px on a phone, so move it out of
-     the SVG: `IslandMap` size `"full"` renders the SVG plus an HTML caption under it (the boat's island name; none
-     when done). Keep the SVG's `role="img"` label as is. Adjust the T19 test that looks for the name only so it
-     finds it in the caption — don't drop the check.
-  5. Grown-up child page keeps cubes (`Rod` default look) — don't change it.
-- **Don't:** no domain/server changes, no Nova line changes, no grown-up page changes. Rule 9 applies.
-- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs e2e/kid-shots and
-  shows the owner screenshots.
-
-
-#### Codex report
-- Files changed:
-  - `src/app/MiniRewards.tsx`, `src/app/picker.module.css`, `src/app/page.test.tsx`: sky picker, still sea, white cards, mini maps, shell counts, nickname-first and null-progress tests.
-  - `src/app/play/EndCard.tsx`, `RewardsStrip.tsx`, `play.module.css`, `screen.test.tsx`: animated hero map before progress/stats, shell rewards, orange/white actions, no-rewards fallback checks.
-  - `src/app/rewards/IslandMap.tsx`, `IslandMap.test.tsx`, `Rod.tsx`, `rewards.module.css`, `rewards.test.tsx`: HTML island caption, shell look, sun week dots, responsive map sizing and tests.
-- Test results:
-  - Tests written first: targeted run failed (`6 failed | 62 passed`) before implementation.
-  - `npm run typecheck`: `> tsc --noEmit` — exit 0, no errors.
-  - `npm test`: `Test Files 87 passed (87)`; `Tests 1422 passed (1422)` — exit 0.
-  - `git diff --check`: clean.
-- Choices I made:
-  - Picker shell counts use an accessible shell icon and 18 px text; long lines wrap within two phone columns.
-  - Full maps use a 22 px HTML figcaption, preserving the SVG image label; completed maps omit the caption.
-  - Map artwork can shrink before the rest of the end card; the caption keeps its reading size.
-  - Rod defaults remain cubes; shell slots preserve the existing fill/drop timing and reduced-motion behavior.
-  - Updated old picker/strip expectations for the explicitly requested appearance; kept default cube, fallback and layout checks.
-- Open questions: None. Browser fit and screenshot verification remain for Claude's e2e/kid-shots run. No network, git writes, db/e2e runs, port 3000 access, or edits to `.impeccable/config.json` / `.superpowers/`.
-
-#### Fix round 1 (Claude, after e2e + screenshots)
-Claude updated two e2e specs to the new words only (`Lv` → `Level`, kid strip `cubes` → `shells`); e2e 66 green.
-But the screenshots show real problems — look at `test-results/kid/*-6-end-card.png`, `*-6a-*`, `*-6b-*`:
-1. **The end-card map is invisible** — it collapses to a 1 px line (`.mapHero .mapFull { min-height: 0; flex: 1 1 auto }`),
-   only the caption shows. The map is the hero. Required rendered height of the map SVG: **≥ 140 px** at
-   `landscape`, `portrait`, `pro`; **≥ 90 px** at `phone`, `small`, `mid`. To make room, re-lay the card body like
-   the mockup panel 3: on wide screens put the two counts and "+75 + shell rod" in **one row**, then a second row
-   with sticker(s) and week dots + week line; on phone keep stacking but tighten gaps. The card must still fit with
-   no clipping (existing kid-shots guards). If it truly cannot fit, stop and ask — don't shrink the map below the floor.
-2. **Picker name breaks mid-word** on phone ("Alexandrin / a"). Never break inside a word: on narrow cards the
-   name may drop to 22 px (`--text-s`) and wrap only between words; if still too long it ellipsizes on one line.
-3. **Picker level line wraps badly** ("0 of / 10"). Keep `Level N` and `🐚 K of 10` each unbroken
-   (`white-space: nowrap` per part); they may sit on two lines.
-4. **Guard it:** in `tests/e2e/kid-shots.spec.ts` add assertions for item 1 (map `svg[role=img][aria-label^="Map:"]`
-   bounding box height per size above, on every end-card screen) and item 2 (each picker card name element:
-   `scrollWidth <= clientWidth` and no line break inside a word — assert the name's rendered text has the same
-   number of lines as words would allow, or simply that its height ≤ 2 × line-height at 22 px). Claude runs them.
-
-
-#### Codex report — fix round 1
-- Files changed:
-  - `src/app/page.tsx`, `page.test.tsx`, `MiniRewards.tsx`, `picker.module.css`: dedicated nickname element with one-line ellipsis, plus unbroken level and shell-count phrases.
-  - `src/app/play/EndCard.tsx`, `RewardsStrip.tsx`, `play.module.css`: counts/XP row above stickers/week, compact spacing and responsive actions.
-  - `src/app/rewards/rewards.module.css`, `rewards.test.tsx`, `IslandMap.test.tsx`: explicit SVG height floors and layout regressions.
-  - `tests/e2e/kid-shots.spec.ts`: map-height guards on every end-card capture and nickname width/height guards on picker captures.
-  - `docs/codex/HANDOFF.md`: this report.
-- Test results:
-  - Tests first: `4 failed | 34 passed` before implementation.
-  - `npm run typecheck`: `> tsc --noEmit` — exit 0, no errors.
-  - `npm test`: `Test Files 87 passed (87)`; `Tests 1425 passed (1425)` — exit 0.
-  - `git diff --check`: clean.
-- Choices I made:
-  - Map SVGs have explicit 140 px height/min-height above 700 px and 90 px below, preserving the 22 px caption.
-  - Wide cards group counts and XP together, then stickers/week; phones stack body groups and share the action row to preserve map space and 72 px button heights.
-  - Smaller sticker artwork, shell slots, week dots and gaps make room without reducing child text below its existing floors.
-  - Names retain their complete accessible text while long visible names ellipsize; level/count phrases wrap only as whole parts.
-  - Kept Claude's e2e wording updates and all existing clipping/fit checks.
-- Open questions: None. Rendered fit still needs Claude's e2e/kid-shots run: an isolated local Chromium preview could not launch because the sandbox rejected it (`Operation not permitted`). No db/e2e suites, network, git writes or port 3000 access; protected paths left untouched.
+  1. kid-shots, every size: picker where Theo has all of Counting Cove + Compare Cliffs learned and two Adding
+     Island skills placed (so his mini map shows flags), Alexandrina has **every** skill learned; end card for
+     a kid whose finished session's `state.mastered` lists a skill that has a `mastered_at` (≥ 1 `[data-new="true"]`
+     flag, `data-flag="up"`); end card for the all-learned kid with label `Map: all islands done!`. Keep the map
+     height floors, name-wrap and SLACK guards on all these screens.
+  2. One reduced-motion test (one size is enough): `page.emulateMedia({ reducedMotion: "reduce" })`, end card with
+     new flags → no running animations inside the map and Nova (`getAnimations({ subtree: true })` length 0), and
+     every `[data-new="true"]` flag is `data-flag="up"`.
+  3. DESIGN.md: rewrite the kid half as "The Pocket Planet" (frontmatter colours/components for kid tokens
+     `--pp-*`, Overview, Colors, kid Typography notes, Layout for picker/play/end card, Elevation (hard ink edge),
+     Components: Nova (planet, moods, burst), island map, shell rod, tiles, mic). Keep the grown-up half and its
+     tokens as they are, and say the grown-up side still uses the exercise book. Update Do's/Don'ts (no felt on
+     the kid side; map flags never come down; text always ink on light; no text on `--pp-sea-deep`).
+  4. Check `src/app/parent/ui/GrownupFrame.tsx` and `src/app/sign-in/page.tsx` still render Nova at 32 / 96 px
+     with no clipping (an existing grown-up screenshot test may already cover it — if so, just say so).
+- **Don't:** no app code changes unless a test you write proves a real bug — then stop and describe it under
+  "Open questions" instead of fixing. Rule 9 applies. You can't run e2e — write carefully; Claude runs it.
+- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs e2e and db.
 
 <!-- Template:
 ### T1 — <title>
