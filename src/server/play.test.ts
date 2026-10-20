@@ -4,7 +4,7 @@ import type { Pending } from "../domain/session/types";
 import { styleView } from "../domain/problems/styleView";
 import { MemoryRepo } from "./persist/repo";
 import type { PublicTurn } from "./publicTurn";
-import { playAgain, playAnswer, playSay, playTurn, type AnswerResult, type TurnResult } from "./play";
+import { playAgain, playAnswer, playHelp, playSay, playTurn, type AnswerResult, type TurnResult } from "./play";
 
 const kid = placedKid(firstSkills(3));
 const seed = () => 42;
@@ -451,4 +451,76 @@ describe("kid said", () => {
   it("is null for an unknown kid", async () => {
     expect(await playSay(setup(), "nope", "hi", 0)).toBeNull();
   });
+});
+
+it("playHelp returns 404 for an unknown kid", async () => {
+  expect(await playHelp(setup(), "missing", 1, 2000, seed)).toEqual({ status: 404 });
+});
+
+it("playHelp saves both help levels and restores their lines on reload", async () => {
+  const repo = setup();
+  await playTurn(repo, kid.kidId, 1000, seed);
+  const right = pendingAnswer(repo);
+  const plans: import("./tutor/types").TurnPlan[] = [];
+  const speak: import("./play").Speak = async (plan) => {
+    plans.push(plan);
+    return { say: plan.event === "help" ? "Let's count together." : `The answer is ${plan.answer}.`, tone: "calm" };
+  };
+  const first = ok(await playHelp(repo, kid.kidId, 1, 2000, seed, speak));
+  expect(first.next).toMatchObject({ try: 2, help: 1 });
+  expect(first.feedback).toMatchObject({ result: { kind: "helped" }, then: "retry", reveal: false });
+  expect(first.revealed).toBeUndefined();
+  expect(first.nextLine).toBeUndefined();
+  expect(plans[0]).toMatchObject({ event: "help" });
+  expect(plans[0]?.revealed).toBeUndefined();
+  expect(repo.attempts[0]).toMatchObject({ result: "helped", answer: null, mistake_tag: null });
+  const stale = await playHelp(repo, kid.kidId, 1, 2100, seed, speak);
+  expect(stale).toMatchObject({ status: 409, version: first.version, turn: first.next, line: first.line });
+  expect(repo.attempts).toHaveLength(1);
+  const second = ok(await playHelp(repo, kid.kidId, first.version, 3000, seed, speak));
+  expect(second.next).toMatchObject({ try: 2, help: 2 });
+  expect(second.revealed).toBe(right);
+  expect(plans[1]).toMatchObject({ event: "explain", revealed: true });
+  expect(repo.attempts).toHaveLength(2);
+  const reload = ok(await playTurn(repo, kid.kidId, 4000, seed));
+  expect(reload).toMatchObject({ turn: second.next, line: second.line, version: second.version });
+});
+
+it("two racing help requests advance only one level", async () => {
+  const repo = setup();
+  await playTurn(repo, kid.kidId, 1000, seed);
+  const results = await Promise.all([playHelp(repo, kid.kidId, 1, 2000, seed), playHelp(repo, kid.kidId, 1, 2000, seed)]);
+  expect(results.map(r => r.status).sort()).toEqual([200, 409]);
+  expect(repo.attempts).toHaveLength(1);
+  expect(ok(await playTurn(repo, kid.kidId, 3000, seed)).turn).toMatchObject({ help: 1 });
+});
+
+it("existing event seeds stay unchanged", async () => {
+  const repo = setup();
+  await playTurn(repo, kid.kidId, 1000, seed);
+  let used = -1;
+
+  await playHelp(repo, kid.kidId, 1, 2000, seed, async (_p, s) => {
+    used = s;
+    return { say: "Let's count.", tone: "calm" };
+  });
+  expect(used).toBe(2 + 7);
+});
+
+it("keeps the existing present, correct, wrong and explain event seeds", async () => {
+  const repo = setup();
+  const spoken: { event: string; seed: number }[] = [];
+  const speak: import("./play").Speak = async (p, seed) => {
+    spoken.push({ event: p.event, seed });
+    return { say: "Let's count.", tone: "calm" };
+  };
+  await playTurn(repo, kid.kidId, 1000, seed, speak);
+  await playAnswer(repo, kid.kidId, 1, pendingAnswer(repo) + 1000, 2000, seed, speak);
+  await playAnswer(repo, kid.kidId, 2, pendingAnswer(repo) + 1000, 3000, seed, speak);
+  await playAnswer(repo, kid.kidId, 3, pendingAnswer(repo), 4000, seed, speak);
+  expect(spoken).toEqual([
+    { event: "present", seed: 1 }, { event: "wrong", seed: 4 },
+    { event: "explain", seed: 7 }, { event: "present", seed: 3 },
+    { event: "correct", seed: 5 }, { event: "present", seed: 4 },
+  ]);
 });

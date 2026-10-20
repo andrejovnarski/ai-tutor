@@ -57,6 +57,19 @@
   "kidAnswer": 6
  },
  {
+  "id": "help-strategy-4",
+  "event": "help",
+  "ageBand": "5-7",
+  "skill": "Add within 10",
+  "problem": "How many dots are there in all? 3 dots and 4 dots.",
+  "problemNumbers": [
+   3,
+   4
+  ],
+  "answer": 7,
+  "recentLines": []
+ },
+ {
   "id": "explain-5-7-0",
   "event": "explain",
   "ageBand": "5-7",
@@ -145,6 +158,19 @@
   "answer": 5,
   "recentLines": [],
   "kidAnswer": 13
+ },
+ {
+  "id": "help-strategy-11",
+  "event": "help",
+  "ageBand": "5-7",
+  "skill": "Subtract within 10",
+  "problem": "You have 9 apples and eat 4. How many are left?",
+  "problemNumbers": [
+   9,
+   4
+  ],
+  "answer": 5,
+  "recentLines": []
  },
  {
   "id": "explain-5-7-1",
@@ -237,6 +263,19 @@
   "kidAnswer": 14
  },
  {
+  "id": "help-strategy-18",
+  "event": "help",
+  "ageBand": "8-11",
+  "skill": "Add within 100",
+  "problem": "What is 43 + 25?",
+  "problemNumbers": [
+   43,
+   25
+  ],
+  "answer": 68,
+  "recentLines": []
+ },
+ {
   "id": "explain-8-11-0",
   "event": "explain",
   "ageBand": "8-11",
@@ -327,6 +366,19 @@
   "kidAnswer": 69
  },
  {
+  "id": "help-strategy-25",
+  "event": "help",
+  "ageBand": "8-11",
+  "skill": "Subtract within 100",
+  "problem": "A basket has 52 apples and 17 are given away. How many are left?",
+  "problemNumbers": [
+   52,
+   17
+  ],
+  "answer": 35,
+  "recentLines": []
+ },
+ {
   "id": "hint-placement-move-on-5-7",
   "event": "hint",
   "ageBand": "5-7",
@@ -341,6 +393,21 @@
    "Look at this, {name}! What do you think?"
   ],
   "kidAnswer": 9
+ },
+ {
+  "id": "help-strategy-27",
+  "event": "help",
+  "ageBand": "5-7",
+  "skill": "Add within 10",
+  "problem": "What is 5 + 3?",
+  "problemNumbers": [
+   5,
+   3
+  ],
+  "answer": 8,
+  "recentLines": [
+   "Look at this, {name}! What do you think?"
+  ]
  },
  {
   "id": "hint-placement-move-on-8-11",
@@ -361,6 +428,25 @@
    "Here's a new puzzle, {name}. Read it carefully, then give it a go."
   ],
   "kidAnswer": 73
+ },
+ {
+  "id": "help-strategy-29",
+  "event": "help",
+  "ageBand": "8-11",
+  "skill": "Add within 100",
+  "problem": "What is 36 + 47?",
+  "problemNumbers": [
+   36,
+   47,
+   3,
+   6,
+   4,
+   7
+  ],
+  "answer": 83,
+  "recentLines": [
+   "Here's a new puzzle, {name}. Read it carefully, then give it a go."
+  ]
  },
  {
   "id": "explain-8-11-1",
@@ -723,6 +809,20 @@
   "answer": 2,
   "recentLines": [],
   "kidAnswer": 3
+ },
+ {
+  "id": "help-strategy-54",
+  "event": "help",
+  "ageBand": "5-7",
+  "skill": "Add within 10",
+  "problem": "There are 4 ducks. Then 2 more come, and now there are 6. How many came?",
+  "problemNumbers": [
+   4,
+   2,
+   6
+  ],
+  "answer": 2,
+  "recentLines": []
  },
  {
   "id": "answer-in-problem-2",

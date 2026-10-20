@@ -1,7 +1,7 @@
 import { SKILLS } from "../../domain/curriculum";
 import type { Feedback, Turn } from "../../domain/session/types";
 import type { Problem } from "../../domain/types";
-import { fillName, feedbackPlan, kidSaidPlan, presentPlan, visualNumbers } from "./plan";
+import { fillName, feedbackPlan, helpPlan, kidSaidPlan, presentPlan, visualNumbers } from "./plan";
 
 type ProblemTurn = Extract<Turn, { kind: "problem" }>;
 const skill = SKILLS[0]!;
@@ -95,4 +95,17 @@ it("keeps the answer out of problemNumbers unless printed", () => {
   for (const [show, ans] of cases)
     expect(presentPlan(mk(show, ans), "5-7", []).problemNumbers).not.toContain(ans);
   expect(presentPlan(mk({ kind: "equation", text: "3 + 0 = ?" }, 3, "What is 3 + 0?"), "5-7", []).problemNumbers).toContain(3);
+});
+
+it("help plans omit invented answers and name only drawn styles", () => {
+  const f = fb({ result: { kind: "helped" }, then: "retry", style: "blocks" });
+  const t = turn("practice", { ...problem, sum: [3, 4] });
+  expect(helpPlan(t, f, "5-7", [])).toMatchObject({ event: "help", style: "blocks" });
+  const hidden = helpPlan(turn(), f, "5-7", []);
+  expect(hidden.style).toBeUndefined();
+  expect(hidden.kidAnswer).toBeUndefined();
+  expect(hidden.mistakeTag).toBeUndefined();
+  expect(hidden.revealed).toBeUndefined();
+  expect(helpPlan({ ...t, try: 2, style: "blocks" }, { ...f, reveal: true }, "5-7", []))
+    .toMatchObject({ event: "explain", revealed: true, style: "blocks" });
 });

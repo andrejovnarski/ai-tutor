@@ -99,7 +99,7 @@ const BLOCKED = new RegExp(
 const URL_RE = /https?:|www\.|\b[\w-]+\.(?:com|org|net|io|co|edu|gov|app|dev|me|ly)\b|\w\/\w/i;
 const EMOJI_RE = /\p{Extended_Pictographic}|\p{Regional_Indicator}|‍|️/u;
 const ALLOWED_CAPS = new Set(["Nova", "I"]);
-const HIDES_ANSWER = new Set(["present", "hint", "wrong", "kid-said"]);
+const HIDES_ANSWER = new Set(["present", "hint", "wrong", "kid-said", "help"]);
 
 function wordCount(say: string): number {
   return say.split(/\s+/).filter(Boolean).length; // "{name}" is one token, so counts as 1

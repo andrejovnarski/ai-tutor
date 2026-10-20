@@ -3,7 +3,7 @@ import { cannedLine } from "./canned";
 import { checkLine, numbersIn } from "./guards";
 import type { TurnPlan, TutorEvent } from "./types";
 
-const EVENTS: TutorEvent[] = ["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said"];
+const EVENTS: TutorEvent[] = ["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said", "help"];
 const plan = (event: TutorEvent, ageBand: "5-7" | "8-11", o: Partial<TurnPlan> = {}): TurnPlan => ({
   event, ageBand, skill: "add-within-10", problem: "What is 3 + 4?", problemNumbers: [3, 4],
   answer: 7, kidAnswer: 6, recentLines: [], ...o,
@@ -49,4 +49,15 @@ describe("cannedLine", () => {
   it("negative seeds work", () => {
     expect(cannedLine(plan("present", "5-7"), -5).say.length).toBeGreaterThan(0);
   });
+});
+
+it("has six short, warm strategy help lines for each age band", () => {
+  for (const band of ["5-7", "8-11"] as const) {
+    const lines = Array.from({ length: 6 }, (_, s) => cannedLine(plan("help", band), s).say);
+    expect(new Set(lines).size).toBe(6);
+    for (const say of lines) {
+      expect(say.split(/\s+/).length).toBeLessThanOrEqual(20);
+      expect(say).not.toMatch(/\b(wrong|oops|mistake)\b/i);
+    }
+  }
 });

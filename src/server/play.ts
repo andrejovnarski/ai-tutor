@@ -1,11 +1,11 @@
 // Server-side play loop: the engine runs here, the browser only sees PublicTurn.
-import { answer, nextTurn, startSession, summaryOf } from "../domain/session/engine";
+import { answer, help, nextTurn, startSession, summaryOf } from "../domain/session/engine";
 import type { Feedback, Pending, Session, Turn, Writes } from "../domain/session/types";
 import { nyDay } from "./nyDay";
 import type { OpenSession, Repo } from "./persist/repo";
 import { publicTurn, type PublicTurn } from "./publicTurn";
 import { cannedLine } from "./tutor/canned";
-import { feedbackPlan, kidSaidPlan, presentPlan } from "./tutor/plan";
+import { feedbackPlan, helpPlan, kidSaidPlan, presentPlan } from "./tutor/plan";
 import { TutorLineSchema, type TurnPlan, type TutorEvent, type TutorLine } from "./tutor/types";
 
 export type { PublicTurn };
@@ -46,7 +46,7 @@ const withLines = (s: Session, recent: string[], onScreen: TutorLine | undefined
 };
 
 /** Per-line seed: the version the line belongs to plus the event, so canned lines rotate from step to step. */
-const EVENTS: TutorEvent[] = ["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said"];
+const EVENTS: TutorEvent[] = ["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said", "help"];
 const seedFor = (version: number, event: TutorEvent) => version + EVENTS.indexOf(event);
 
 const pendingTurn = (p: Pending): ProblemTurn => ({
@@ -167,6 +167,34 @@ export async function playAnswer(repo: Repo, kidId: string, version: number, giv
   const result: AnswerResult = {
     status: 200, version: step.version, feedback: taken.feedback, next: publicTurn(step.turn), line,
     ...(step.line ? { nextLine: step.line } : {}),
+  };
+  if (taken.feedback.reveal) result.revealed = open.state.pending!.problem.answer;
+  return result;
+}
+
+export async function playHelp(repo: Repo, kidId: string, version: number, now: number,
+  seed: () => number, speak: Speak = cannedSpeak): Promise<AnswerResult> {
+  if (!(await repo.loadKid(kidId))) return { status: 404 };
+  const c: Ctx = { repo, kidId, now, seed, speak };
+  const conflict = async (): Promise<AnswerResult> => {
+    const step = await current(c);
+    return { status: 409, version: step.version, turn: publicTurn(step.turn), ...(step.line ? { line: step.line } : {}) };
+  };
+
+  const open = await repo.openSession(kidId);
+  if (!open || open.version !== version) return conflict();
+  const taken = help(open.state, now);
+  if (!taken) return conflict();
+
+  const { session, turn } = nextTurn(taken.session, now);
+  const answered = pendingTurn(open.state.pending!);
+  const recent = recentOf(open.state);
+  const plan = helpPlan(answered, taken.feedback, open.state.kid.ageBand, recent);
+  const line = await speak(plan, seedFor(open.version + 1, plan.event));
+  const step = await commit(c, open, session, turn, taken.writes, { feedback: line }, line);
+  if (!step) return conflict();
+  const result: AnswerResult = {
+    status: 200, version: step.version, feedback: taken.feedback, next: publicTurn(step.turn), line,
   };
   if (taken.feedback.reveal) result.revealed = open.state.pending!.problem.answer;
   return result;

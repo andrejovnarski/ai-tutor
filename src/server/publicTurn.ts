@@ -15,7 +15,7 @@ export function boardView(turn: ProblemTurn): Visual {
  * (its total is the answer). */
 export type PublicTurn =
   | {
-    kind: "problem"; mode: ProblemTurn["mode"]; try: 1 | 2;
+    kind: "problem"; mode: ProblemTurn["mode"]; try: 1 | 2; help: 0 | 1 | 2;
     prompt: ProblemTurn["problem"]["prompt"]; input: ProblemTurn["problem"]["input"]; choices?: number[];
   }
   | (Extract<Turn, { kind: "end" }> & { rewards?: EndRewards });
@@ -24,7 +24,7 @@ export function publicTurn(t: Turn): PublicTurn {
   if (t.kind === "end") return t;
   const { prompt, input, choices } = t.problem;
   return {
-    kind: "problem", mode: t.mode, try: t.try, prompt: { ...prompt, show: boardView(t) }, input, ...(choices ? { choices } : {}),
+    kind: "problem", mode: t.mode, try: t.try, help: t.help, prompt: { ...prompt, show: boardView(t) }, input, ...(choices ? { choices } : {}),
   };
 }
 

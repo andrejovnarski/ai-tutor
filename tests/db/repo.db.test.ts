@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { admin, makeParent } from "../helpers/admin";
 import { SupabaseRepo } from "../../src/server/persist/supabaseRepo";
-import { playAgain, playAnswer, playTurn, type AnswerResult } from "../../src/server/play";
+import { playAgain, playAnswer, playHelp, playTurn, type AnswerResult } from "../../src/server/play";
 import { startSession } from "../../src/domain/session/engine";
 import { firstSkills, placedKid } from "../../src/domain/session/testkit";
 import { skillRow } from "../../src/server/persist/rows";
@@ -42,6 +42,19 @@ beforeAll(async () => {
 });
 
 describe("Play against Supabase", () => {
+  it("saves a helped attempt with a null answer", async () => {
+    const kid = await kidFor(true);
+    const t = ok(await playTurn(repoA(), kid, 1000, seed));
+    const r = ok(await playHelp(repoA(), kid, t.version, 2000, seed));
+    expect(r.next).toMatchObject({ help: 1, try: 2 });
+    const saved = await admin().from("attempts").select("*").eq("kid_id", kid);
+    expect(saved.error).toBeNull();
+    expect(saved.data).toHaveLength(1);
+    expect(saved.data![0]).toMatchObject({ result: "helped", answer: null, mistake_tag: null, try: 1 });
+    const reload = ok(await playTurn(repoA(), kid, 3000, seed));
+    expect(reload.turn).toEqual(r.next);
+    expect(reload.line).toEqual(r.line);
+  });
   it("plays a first turn at version 1 and takes an answer to version 2", async () => {
     const kid = await kidFor(true);
     const t = ok(await playTurn(repoA(), kid, 1000, seed));

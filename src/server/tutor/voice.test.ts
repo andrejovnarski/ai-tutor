@@ -222,7 +222,7 @@ describe("prompt", () => {
       expect(SYSTEM_PROMPT).toContain(userMessage(ex.plan));
     }
     expect(new Set(EXAMPLES.map((e) => e.plan.event))).toEqual(
-      new Set(["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said"]));
+      new Set(["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said", "help"]));
     expect(new Set(EXAMPLES.map((e) => e.plan.ageBand))).toEqual(new Set(["5-7", "8-11"]));
   });
 

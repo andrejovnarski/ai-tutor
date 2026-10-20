@@ -4,7 +4,7 @@ import {
 } from "./playMachine";
 
 const problem = (n: number) => ({
-  kind: "problem" as const, mode: "practice" as never, try: 1 as const,
+  kind: "problem" as const, mode: "practice" as never, try: 1 as const, help: 0 as const,
   prompt: { say: `Q${n}` } as never, input: "number-pad" as never,
 });
 const line = (say: string) => ({ say, tone: "calm" as const });

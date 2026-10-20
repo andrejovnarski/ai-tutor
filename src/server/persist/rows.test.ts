@@ -46,3 +46,10 @@ it("maps an attempt to snake_case with an ISO timestamp", () => {
     at: "2023-11-14T22:13:20.000Z", try: 2, mode: "practice",
   });
 });
+
+it("passes a helped attempt's null answer through", () => {
+  expect(attemptRow("s1", {
+    kidId: "k1", skillId: "x", templateId: "t", seed: 5, level: 2, answer: null, result: "helped",
+    mistakeTag: null, style: "blocks", timeMs: 900, at: 1000, try: 1, mode: "practice",
+  })).toMatchObject({ answer: null, result: "helped", mistake_tag: null });
+});

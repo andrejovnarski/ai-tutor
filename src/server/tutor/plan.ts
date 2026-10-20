@@ -94,3 +94,16 @@ export function kidSaidPlan(turn: ProblemTurn, kidSaid: string, ageBand: AgeBand
 export function fillName(say: string, nickname: string): string {
   return say.replaceAll("{name}", nickname.trim() || "friend");
 }
+
+/** Help describes the supported board, without inventing a child answer or a mistake. */
+export function helpPlan(turn: ProblemTurn, feedback: Feedback, ageBand: AgeBand, recentLines: string[]): TurnPlan {
+  const { sum } = turn.problem;
+  const drawn = feedback.style && sum && styleView(feedback.style, sum) ? feedback.style : undefined;
+  const style = feedback.reveal ? (turn.try === 2 && turn.style === drawn ? drawn : undefined) : drawn;
+  return {
+    ...base(turn, ageBand, recentLines),
+    event: feedback.reveal ? "explain" : "help",
+    ...(feedback.reveal ? { revealed: true } : {}),
+    ...(style ? { style } : {}),
+  };
+}

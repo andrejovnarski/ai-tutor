@@ -156,3 +156,7 @@ describe("checkLine", () => {
     expect(reason("Let's go, café time!", plan())).toBe("ok");
   });
 });
+
+it("help never states the unrevealed answer", () => {
+  expect(reason("The answer is 7.", plan({ event: "help" }))).toBe("early-answer");
+});

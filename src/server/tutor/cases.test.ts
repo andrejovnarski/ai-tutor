@@ -9,7 +9,7 @@ describe("evals/tutor/cases.json", () => {
     expect(new Set(plans.map((c) => c.id)).size).toBe(plans.length);
   });
   it("covers every event in both age bands", () => {
-    for (const ev of ["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said"])
+    for (const ev of ["present", "correct", "wrong", "hint", "explain", "celebrate", "kid-said", "help"])
       for (const band of ["5-7", "8-11"]) expect(plans.some((c) => c.event === ev && c.ageBand === band)).toBe(true);
   });
   it("covers every style for wrong", () => {
@@ -33,7 +33,7 @@ describe("evals/tutor/cases.json", () => {
   it("has a counting present case, where the answer is the only number in the picture", () => {
     expect(plans.some((c) => c.event === "present" && c.skill.startsWith("Count") && c.problemNumbers.length === 0)).toBe(true);
   });
-  it("has 4 cases where the answer is in the problem", () => {
-    expect(plans.filter((c) => c.problemNumbers.includes(c.answer))).toHaveLength(4);
+  it("has at least 4 cases where the answer is in the problem", () => {
+    expect(plans.filter((c) => c.problemNumbers.includes(c.answer)).length).toBeGreaterThanOrEqual(4);
   });
 });

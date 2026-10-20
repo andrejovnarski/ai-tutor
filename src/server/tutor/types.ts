@@ -4,7 +4,7 @@ import type { AgeBand, MistakeTag, Style } from "@/domain/types";
 export const VISUAL_CUES = ["count-along", "highlight-numbers", "show-style", "sparkle"] as const;
 export type VisualCue = (typeof VISUAL_CUES)[number];
 
-export type TutorEvent = "present" | "correct" | "wrong" | "hint" | "explain" | "celebrate" | "kid-said";
+export type TutorEvent = "present" | "correct" | "wrong" | "hint" | "explain" | "celebrate" | "kid-said" | "help";
 
 export type TurnPlan = {
   event: TutorEvent;

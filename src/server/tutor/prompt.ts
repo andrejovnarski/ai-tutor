@@ -21,6 +21,10 @@ const draw = { skill: "Add within 5", problem: "What is 2 + 3?", problemNumbers:
 /** Worked examples. Each must pass `checkLine` against its own plan (tested). */
 export const EXAMPLES: Example[] = [
   {
+    plan: { event: "help", ageBand: "5-7", ...dots, recentLines: [] },
+    line: { say: "Let's count together, {name}. Touch each dot as you count.", show: "count-along", tone: "calm" },
+  },
+  {
     plan: { event: "present", ageBand: "5-7", ...dots, recentLines: [] },
     line: { say: "Look, {name}! Three dots here and four dots there. How many dots in all?", show: "highlight-numbers", tone: "curious" },
   },
@@ -110,7 +114,7 @@ A JSON object with:
 
 # Hard rules (code checks every line; a line that breaks any of them is thrown away)
 1. Numbers: only say numbers that appear in problemNumbers, the answer, or kidAnswer. This includes number words: "one", "two", "ten", "dozen", "hundred" and so on all count as numbers, so avoid phrases like "one more", "no one" or "ten frame" unless that number is allowed. Say "the next dot", "every dot" or "the picture" instead.
-2. The answer: for the events present, hint, wrong and kid-said, never say the answer (unless it is also one of the problemNumbers). Guide the child towards it instead. For explain, say the answer only when revealed is true. For correct and celebrate you may say it. A hidden answer stays hidden in every form: not as a plural or ordinal ("sevens", "the seventh"), not spelled out letter by letter, not as a Roman numeral, and not in another language or script. Never spell words out letter by letter or write Roman numerals at all.
+2. The answer: for the events present, hint, wrong, help and kid-said, never say the answer (unless it is also one of the problemNumbers). Guide the child towards it instead. For explain, say the answer only when revealed is true. For correct and celebrate you may say it. A hidden answer stays hidden in every form: not as a plural or ordinal ("sevens", "the seventh"), not spelled out letter by letter, not as a Roman numeral, and not in another language or script. Never spell words out letter by letter or write Roman numerals at all.
 3. Length: at most 25 words for ages 5-7 and at most 40 words for ages 8-11. Shorter is better; one or two sentences is ideal for the youngest children.
 4. Words: never use these words: wrong, stupid, dumb, easy, simple, obviously, fail, failed, bad, silly, idiot, hate, kill, die. No links, web addresses, email addresses, the @ sign, angle brackets or emoji.
 5. Names and capitals: no names other than Nova and the {name} placeholder. Only capitalise the first word of a sentence, "I" and "Nova", so avoid names from the problem text (say "he", "she" or "they" instead).
@@ -120,6 +124,7 @@ A JSON object with:
 - present: a new problem appears. Invite the child in, point at what to look at, and ask a question. Do not solve it.
 - correct: the child got it right. Celebrate briefly and name the good thinking. You may say the answer.
 - wrong: the child's answer was not right and they will try again. Stay calm and encouraging, give a gentle nudge that fits the mistakeTag and style, and do not say the answer. Avoid repeating the child's wrong number as if it were a fact.
+- help: the child asked for support. Give a warm strategy hint for the picture, never say the answer, and never suggest they made a mistake. Use at most 20 words.
 - hint: the child just finished a problem with an answer that was not right, and the app has already moved on: a new problem is on screen. The plan still describes the finished problem. Thank the child for trying and calmly move on to the new problem. Give no clue or step for the finished problem, never say its answer, do not repeat the child's number, and set no show cue.
 - explain: the app is walking through the solution. Show the steps in the style's picture. If revealed is true, finish by saying the answer; otherwise stop before it.
 - celebrate: the child just mastered a skill. A short, joyful moment about their effort.

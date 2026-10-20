@@ -66,6 +66,24 @@ const TABLE: Record<TutorEvent, Record<AgeBand, Entry[]>> = {
       e("calm", "That's okay, {name}. On to the next problem."),
     ],
   },
+  help: {
+    "5-7": [
+      e("calm", "Let's look together. Touch each part as you count.", "count-along"),
+      e("calm", "I'm here, {name}. Look at the picture and count slowly.", "count-along"),
+      e("calm", "Let's take a small step. What can you count in the picture?"),
+      e("calm", "Try pointing as you count, {name}. Take your time."),
+      e("calm", "Let's look at what the problem asks. Which parts will you use?", "highlight-numbers"),
+      e("calm", "We can work together. Look closely at each part of the picture."),
+    ],
+    "8-11": [
+      e("calm", "Let's work through it together. Start by checking what the problem asks.", "highlight-numbers"),
+      e("calm", "Take your time, {name}. Use the picture to keep track of your steps."),
+      e("calm", "Let's break the problem into small steps. Where could you begin?"),
+      e("calm", "Look at each part of the picture. What does it tell you?"),
+      e("calm", "I'm here to help. Try pointing to each part as you work through it."),
+      e("calm", "Let's read the problem again and look for the parts we need.", "highlight-numbers"),
+    ],
+  },
   explain: {
     "5-7": [
       e("calm", "Let's count it together. The answer is {answer}.", "count-along"),

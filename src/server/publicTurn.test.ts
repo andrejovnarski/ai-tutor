@@ -7,7 +7,7 @@ it("keeps prompt, input, choices, mode and try, and drops the rest", () => {
   if (turn.kind !== "problem") throw new Error("expected a problem");
   const pub = publicTurn(turn);
   expect(pub).toEqual({
-    kind: "problem", mode: turn.mode, try: 1, prompt: turn.problem.prompt, input: turn.problem.input,
+    kind: "problem", mode: turn.mode, try: 1, help: 0, prompt: turn.problem.prompt, input: turn.problem.input,
     ...(turn.problem.choices ? { choices: turn.problem.choices } : {}),
   });
   expect(JSON.stringify(pub)).not.toMatch(/"(answer|mistakes|templateId|seed|skillId|logs)"\s*:/);
