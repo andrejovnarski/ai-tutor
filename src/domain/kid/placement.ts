@@ -1,4 +1,4 @@
-// First-session placement: binary search along the skill chain (spec §6).
+// First-session placement: step-capped binary search along the skill chain (spec §6).
 import { SKILLS } from "../curriculum/index";
 import type { Level } from "../types";
 import type { KidGrade, KidState } from "./types";
@@ -7,6 +7,7 @@ export type PlacementState = { lo: number; hi: number; mid: number; probes: numb
 
 export const PLACEMENT_PROBES = 5;
 export const PROBE_SIZE = 2;
+export const MAX_STEP = 6;
 export const PROBE_LEVEL: Level = 2;
 const PLACED_P = 0.95;
 
@@ -30,7 +31,8 @@ export function recordPlacement(p: PlacementState, correct: boolean): PlacementS
   if (inProbe < PROBE_SIZE) return { ...p, inProbe, probeOk };
   const lo = probeOk ? p.mid + 1 : p.lo;
   const hi = probeOk ? p.hi : p.mid - 1;
-  return { lo, hi, mid: Math.floor((lo + hi) / 2), probes: p.probes + 1, inProbe: 0, probeOk: true };
+  const mid = Math.max(lo, p.mid - MAX_STEP, Math.min(hi, p.mid + MAX_STEP, Math.floor((lo + hi) / 2)));
+  return { lo, hi, mid, probes: p.probes + 1, inProbe: 0, probeOk: true };
 }
 
 /** Skills below the found point count as mastered by placement. */

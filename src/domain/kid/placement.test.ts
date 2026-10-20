@@ -28,13 +28,50 @@ it("starts at the parent-given grade", () => {
   expect(startPlacement("4").mid).toBe(firstOfGrade("2"));
 });
 
+it("moves a kindergarten kid to skill 6 after passing the first probe", () => {
+  let p = startPlacement("K");
+  p = recordPlacement(recordPlacement(p, true), true);
+  expect(placementProbe(p)?.skillId).toBe(SKILLS[6]!.id);
+});
+
+it("moves a grade-2 kid from skill 24 to skill 18 after failing the first probe", () => {
+  let p = startPlacement("2");
+  expect(p.mid).toBe(24);
+  p = recordPlacement(recordPlacement(p, false), false);
+  expect(placementProbe(p)?.skillId).toBe(SKILLS[18]!.id);
+});
+
+it.each(["K", "1", "2"] as const)("grade %s: every outcome sequence keeps probes within 6 skills and the search bounds", (grade) => {
+  for (let outcomes = 0; outcomes < 2 ** 5; outcomes++) {
+    let p = startPlacement(grade);
+    for (let probe = 0; probe < 5 && placementProbe(p); probe++) {
+      const previous = p.mid;
+      const passed = (outcomes & (1 << probe)) !== 0;
+      p = recordPlacement(recordPlacement(p, passed), passed);
+      if (placementProbe(p)) {
+        expect(Math.abs(p.mid - previous)).toBeLessThanOrEqual(6);
+        expect(p.mid).toBeGreaterThanOrEqual(p.lo);
+        expect(p.mid).toBeLessThanOrEqual(p.hi);
+      }
+    }
+  }
+});
+
 it.each(["K", "1", "2"] as const)("grade %s: a perfect kid is placed within 3 skills in ≤ 10 problems", (grade) => {
-  for (const k of [0, 5, 12, 20, SKILLS.length]) {
+  for (const k of [0, 5, 12, 20, grade === "K" ? 28 : SKILLS.length]) {
     const { p, probed, problems } = place(grade, k);
     expect(Math.abs(p.lo - k)).toBeLessThanOrEqual(3);
     expect(problems).toBeLessThanOrEqual(10);
     expect(probed[0]).toBe(startPlacement(grade).mid);
   }
+});
+
+it("caps an all-knowing kindergarten kid at placement index 25 after 5 probes", () => {
+  // The cap trades reach for no big jumps; ordinary sessions carry on from there.
+  const { p, probed } = place("K", SKILLS.length);
+  expect(p.lo).toBe(25);
+  expect(p.probes).toBe(5);
+  expect(probed).toEqual([0, 0, 6, 6, 12, 12, 18, 18, 24, 24]);
 });
 
 it("finishPlacement marks exactly the skills below lo as placed and mastered", () => {

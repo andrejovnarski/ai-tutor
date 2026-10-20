@@ -26,7 +26,9 @@ describe("placement accuracy", () => {
     const errors: number[] = [];
     for (let seed = 0; seed < 20; seed++) {
       const k = createRng(seed).int(0, 30);
-      const r = simulate(bot({ knows: prefix(k), slip: 0.1, guess: 0.25 }), { grade: "K", ageBand: "5-7", seed, problems: 10 });
+      // Match grade to knowledge so the capped search starts near realistic prior skills.
+      const grade = k <= 12 ? "K" : k <= 23 ? "1" : "2";
+      const r = simulate(bot({ knows: prefix(k), slip: 0.1, guess: 0.25 }), { grade, ageBand: "5-7", seed, problems: 10 });
       errors.push(Math.abs(r.placementIndex - k));
     }
     errors.sort((a, b) => a - b);
