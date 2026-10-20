@@ -52,6 +52,7 @@ describe("EndCard", () => {
   });
   it("without rewards renders exactly as before (no strip)", () => {
     expect(html).not.toContain("rewards-strip");
+    expect(html).not.toContain('aria-label="Map:');
     expect(html).toBe(renderToStaticMarkup(<EndCard summary={{ problems: 7, firstTryCorrect: 5 }} rewards={undefined} onPlayAgain={() => {}} />));
     // The card as it was before rewards existed, with CSS-module hashes normalised.
     expect(html.replace(/_([a-zA-Z]+)_[0-9a-z]+/g, "$1")).toBe(
@@ -61,10 +62,15 @@ describe("EndCard", () => {
     );
   });
   it("with rewards shows the strip after the counts", () => {
-    const rewards = { map: islandMap({}, new Set(), []), xp: 60, levelBefore: 1, levelAfter: 1, cubesBefore: 0, cubesAfter: 1, newStickers: ["first-game"],
+    const rewards = { map: islandMap({}, new Set(["count-to-20.objects-to-10"]), ["count-to-20.objects-to-10"]), xp: 60, levelBefore: 1, levelAfter: 1, cubesBefore: 0, cubesAfter: 1, newStickers: ["first-game"],
       week: { days: [false, true, false, false, false, false, false], played: 1, goalMet: false } };
     const withR = renderToStaticMarkup(<EndCard summary={{ problems: 7, firstTryCorrect: 5 }} rewards={rewards} onPlayAgain={() => {}} />);
     expect(withR).toContain('data-testid="rewards-strip"');
+    expect(withR).toContain('data-sail="true"');
+    expect(withR).toContain('data-rise="true"');
+    expect(withR).toMatch(/<h1[^>]*>Great work today!<\/h1><figure/);
+    expect(withR.indexOf('aria-label="Map:')).toBeLessThan(withR.indexOf('7</span>'));
+    expect(withR).toContain('aria-label="1 of 10 shells"');
     expect(text(withR)).toMatch(/right on the first try.*\+60.*Play again/);
   });
   it("uses the singular for one problem", () => {

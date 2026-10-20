@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { EndTurn, Rewards, Summary } from "./playMachine";
+import { IslandMap } from "../rewards/IslandMap";
 import { RewardsStrip } from "./RewardsStrip";
 import styles from "./play.module.css";
 
@@ -23,6 +24,7 @@ export function EndCard({ summary, rewards, progress, onPlayAgain }: {
   return (
     <section className={styles.endCard} data-testid="end-card" aria-labelledby="end-title">
       <h1 id="end-title" className={styles.endTitle}>Great work today!</h1>
+      {rewards && <IslandMap map={rewards.map} size="full" animate />}
       {(progress?.today != null || progress?.next != null) && (
         <div className={styles.endProgress}>
           {progress.today != null && <p className={styles.progressToday} data-testid="progress-today">{progress.today}</p>}
@@ -31,8 +33,7 @@ export function EndCard({ summary, rewards, progress, onPlayAgain }: {
       )}
       {rewards ? (
         <div className={styles.endBody}>
-          {stats}
-          <RewardsStrip rewards={rewards} />
+          <RewardsStrip rewards={rewards} stats={stats} />
         </div>
       ) : stats}
       <div className={styles.endActions}>

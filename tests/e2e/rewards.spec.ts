@@ -45,7 +45,7 @@ async function finishSession(page: Page, parentId: string) {
   await expect(card).toBeVisible();
 }
 
-const rodOf = (page: Page) => page.getByTestId("rewards-strip").getByRole("img", { name: /^\d+ of 10 cubes$/ }).last();
+const rodOf = (page: Page) => page.getByTestId("rewards-strip").getByRole("img", { name: /^\d+ of 10 shells$/ }).last();
 
 test("a finished session shows XP, the rod and the week; the picker and the child page show the rewards", async ({ page }) => {
   const parentId = await setUpMia(page);
@@ -54,7 +54,7 @@ test("a finished session shows XP, the rod and the week; the picker and the chil
   const strip = page.getByTestId("rewards-strip");
   await expect(strip).toBeVisible();
   await expect(strip.getByText(/^\+\d+$/)).toBeVisible();
-  await expect(rodOf(page)).toHaveAttribute("aria-label", /^[1-9]\d* of 10 cubes$/);
+  await expect(rodOf(page)).toHaveAttribute("aria-label", /^[1-9]\d* of 10 shells$/);
   await expect(rodOf(page).locator("[data-drop=true]").first()).toBeAttached();
   await expect(strip.getByRole("img", { name: /^Played 1 day this week$/ })).toBeVisible();
   expect(await page.getByTestId("end-card").innerText()).not.toMatch(/lose|lost|miss|break|broke/i);
@@ -68,7 +68,7 @@ test("a finished session shows XP, the rod and the week; the picker and the chil
 
   await page.getByRole("link", { name: "Back to kids" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("link", { name: /Mia/ })).toContainText(/Lv \d+/);
+  await expect(page.getByRole("link", { name: /Mia/ })).toContainText(/Level \d+/);
 
   await page.goto("/parent");
   await page.getByRole("link", { name: /Mia/ }).first().click();

@@ -70,6 +70,64 @@ back under the task. The owner (Andrej) has the final say on everything.
 - **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs e2e/kid-shots and
   shows the owner screenshots.
 
+
+#### Codex report
+- Files changed:
+  - `src/app/MiniRewards.tsx`, `src/app/picker.module.css`, `src/app/page.test.tsx`: sky picker, still sea, white cards, mini maps, shell counts, nickname-first and null-progress tests.
+  - `src/app/play/EndCard.tsx`, `RewardsStrip.tsx`, `play.module.css`, `screen.test.tsx`: animated hero map before progress/stats, shell rewards, orange/white actions, no-rewards fallback checks.
+  - `src/app/rewards/IslandMap.tsx`, `IslandMap.test.tsx`, `Rod.tsx`, `rewards.module.css`, `rewards.test.tsx`: HTML island caption, shell look, sun week dots, responsive map sizing and tests.
+- Test results:
+  - Tests written first: targeted run failed (`6 failed | 62 passed`) before implementation.
+  - `npm run typecheck`: `> tsc --noEmit` — exit 0, no errors.
+  - `npm test`: `Test Files 87 passed (87)`; `Tests 1422 passed (1422)` — exit 0.
+  - `git diff --check`: clean.
+- Choices I made:
+  - Picker shell counts use an accessible shell icon and 18 px text; long lines wrap within two phone columns.
+  - Full maps use a 22 px HTML figcaption, preserving the SVG image label; completed maps omit the caption.
+  - Map artwork can shrink before the rest of the end card; the caption keeps its reading size.
+  - Rod defaults remain cubes; shell slots preserve the existing fill/drop timing and reduced-motion behavior.
+  - Updated old picker/strip expectations for the explicitly requested appearance; kept default cube, fallback and layout checks.
+- Open questions: None. Browser fit and screenshot verification remain for Claude's e2e/kid-shots run. No network, git writes, db/e2e runs, port 3000 access, or edits to `.impeccable/config.json` / `.superpowers/`.
+
+#### Fix round 1 (Claude, after e2e + screenshots)
+Claude updated two e2e specs to the new words only (`Lv` → `Level`, kid strip `cubes` → `shells`); e2e 66 green.
+But the screenshots show real problems — look at `test-results/kid/*-6-end-card.png`, `*-6a-*`, `*-6b-*`:
+1. **The end-card map is invisible** — it collapses to a 1 px line (`.mapHero .mapFull { min-height: 0; flex: 1 1 auto }`),
+   only the caption shows. The map is the hero. Required rendered height of the map SVG: **≥ 140 px** at
+   `landscape`, `portrait`, `pro`; **≥ 90 px** at `phone`, `small`, `mid`. To make room, re-lay the card body like
+   the mockup panel 3: on wide screens put the two counts and "+75 + shell rod" in **one row**, then a second row
+   with sticker(s) and week dots + week line; on phone keep stacking but tighten gaps. The card must still fit with
+   no clipping (existing kid-shots guards). If it truly cannot fit, stop and ask — don't shrink the map below the floor.
+2. **Picker name breaks mid-word** on phone ("Alexandrin / a"). Never break inside a word: on narrow cards the
+   name may drop to 22 px (`--text-s`) and wrap only between words; if still too long it ellipsizes on one line.
+3. **Picker level line wraps badly** ("0 of / 10"). Keep `Level N` and `🐚 K of 10` each unbroken
+   (`white-space: nowrap` per part); they may sit on two lines.
+4. **Guard it:** in `tests/e2e/kid-shots.spec.ts` add assertions for item 1 (map `svg[role=img][aria-label^="Map:"]`
+   bounding box height per size above, on every end-card screen) and item 2 (each picker card name element:
+   `scrollWidth <= clientWidth` and no line break inside a word — assert the name's rendered text has the same
+   number of lines as words would allow, or simply that its height ≤ 2 × line-height at 22 px). Claude runs them.
+
+
+#### Codex report — fix round 1
+- Files changed:
+  - `src/app/page.tsx`, `page.test.tsx`, `MiniRewards.tsx`, `picker.module.css`: dedicated nickname element with one-line ellipsis, plus unbroken level and shell-count phrases.
+  - `src/app/play/EndCard.tsx`, `RewardsStrip.tsx`, `play.module.css`: counts/XP row above stickers/week, compact spacing and responsive actions.
+  - `src/app/rewards/rewards.module.css`, `rewards.test.tsx`, `IslandMap.test.tsx`: explicit SVG height floors and layout regressions.
+  - `tests/e2e/kid-shots.spec.ts`: map-height guards on every end-card capture and nickname width/height guards on picker captures.
+  - `docs/codex/HANDOFF.md`: this report.
+- Test results:
+  - Tests first: `4 failed | 34 passed` before implementation.
+  - `npm run typecheck`: `> tsc --noEmit` — exit 0, no errors.
+  - `npm test`: `Test Files 87 passed (87)`; `Tests 1425 passed (1425)` — exit 0.
+  - `git diff --check`: clean.
+- Choices I made:
+  - Map SVGs have explicit 140 px height/min-height above 700 px and 90 px below, preserving the 22 px caption.
+  - Wide cards group counts and XP together, then stickers/week; phones stack body groups and share the action row to preserve map space and 72 px button heights.
+  - Smaller sticker artwork, shell slots, week dots and gaps make room without reducing child text below its existing floors.
+  - Names retain their complete accessible text while long visible names ellipsize; level/count phrases wrap only as whole parts.
+  - Kept Claude's e2e wording updates and all existing clipping/fit checks.
+- Open questions: None. Rendered fit still needs Claude's e2e/kid-shots run: an isolated local Chromium preview could not launch because the sandbox rejected it (`Operation not permitted`). No db/e2e suites, network, git writes or port 3000 access; protected paths left untouched.
+
 <!-- Template:
 ### T1 — <title>
 - **Branch:** `codex/<slug>`
@@ -109,3 +167,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T17 — Fill the frame: e2e + kid-shots | `codex/fill-frame` | (this commit) | 1 fix round: template search by playing was luck (Make 10 mastered first) → `forcePending` helper writes a fixed make-ten-frame pending. e2e 66, new specs 14/14 on repeat |
 | T18 — Pocket Planet: tokens, Nova, play screen | `codex/pocket-planet` | (this commit) | First try. Claude fix: ink casing on the number-line jump (yellow on sand too faint). unit 1408, e2e 66 |
 | T19 — Pocket Planet: map rules, data, IslandMap | `codex/pocket-planet` | (this commit) | First try. Claude fixes: "1 island" label, flags grow from their foot, db test for placed rows. unit 1419, db 136 |
+| T20 — Pocket Planet: picker and end card | `codex/pocket-planet` | (this commit) | 1 fix round: end-card map collapsed to a line → height floors (140/90 px) + e2e guards; names broke mid-word → ellipsis; level line kept whole. Claude moved e2e wording Lv→Level, cubes→shells. unit 1425, e2e 66 |

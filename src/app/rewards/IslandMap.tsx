@@ -29,7 +29,7 @@ export function IslandMap({ map, size, animate = false }: {
   const sailPath = POSITIONS.slice(start, boatIsland + 1).map(([x, y], i) =>
     `${i ? "L" : "M"}${x - boatX} ${y + 19 - boatY}`).join(" ") + " L0 0";
 
-  return (
+  const art = (
     <svg viewBox="0 0 400 160" role="img" aria-label={label} className={`${styles.islandMap} ${size === "mini" ? styles.mapMini : styles.mapFull}`}>
       <g aria-hidden="true" stroke="var(--pp-ink)" strokeWidth="2" strokeLinejoin="round">
         <path d="M40 38 C80 18 90 58 120 46 S180 18 210 35 S270 18 300 40 S375 57 345 78 S285 84 250 95 S200 98 160 105 S85 128 65 100"
@@ -61,8 +61,13 @@ export function IslandMap({ map, size, animate = false }: {
             <path d="M0 0V-16L10-3Z" fill="var(--pp-white)" />
           </g>
         </g>
-        {size === "full" && !("done" in map.boat) && <text x="200" y="154" textAnchor="middle" stroke="none" fill="var(--pp-ink)" fontSize="22">{current.name}</text>}
       </g>
     </svg>
+  );
+  return size === "mini" ? art : (
+    <figure className={styles.mapHero}>
+      {art}
+      {!("done" in map.boat) && <figcaption className={styles.mapCaption}>{current.name}</figcaption>}
+    </figure>
   );
 }

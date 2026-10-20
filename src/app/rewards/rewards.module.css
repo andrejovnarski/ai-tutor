@@ -58,7 +58,7 @@
 
 .dayPlayed {
   border-color: var(--ink);
-  background: var(--counter-yellow);
+  background: var(--pp-sun);
 }
 
 /* End-card strip */
@@ -94,7 +94,7 @@
 .level {
   font-size: var(--text-m);
   font-weight: 700;
-  color: var(--felt);
+  color: var(--pp-ink);
 }
 
 .stickerRow {
@@ -191,4 +191,65 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .flagRise, .boatSail { animation: none; }
+}
+
+/* Shells keep the rod's ten slots and its established drop timing. */
+.shellRod .cube,
+.shellRod .cube.drop::before {
+  border-color: var(--pp-ink);
+  border-radius: 50% 50% 24% 24%;
+}
+.shellRod .cube { background: var(--pp-white); }
+.shellRod .cubeFilled,
+.shellRod .cube.drop::before {
+  background: repeating-conic-gradient(from -25deg at 50% 100%, transparent 0deg 20deg, var(--pp-ink) 21deg 23deg, transparent 24deg 40deg), var(--pp-sand);
+}
+.shellRod .cube.drop { background: var(--pp-white); }
+.strip { color: var(--pp-ink); }
+.strip .day { border-color: var(--pp-ink); background: var(--pp-white); }
+.strip .dayPlayed { background: var(--pp-sun); }
+
+/* An explicit SVG height avoids flex's zero intrinsic-height collapse. */
+.mapHero {
+  margin: 0;
+  width: 100%;
+  max-width: 600px;
+  flex: none;
+}
+.mapHero .mapFull { min-height: 140px; height: 140px; object-fit: contain; }
+.mapCaption { font-size: 22px; line-height: 1.3; margin-top: 4px; }
+.rewardTop, .rewardBottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  gap: 8px 24px;
+}
+.strip { width: 100%; gap: 8px; }
+.rewardTop .rodM .cube { width: 24px; height: 24px; }
+@media (max-width: 700px) {
+  .mapHero { max-width: 400px; }
+  .mapHero .mapFull { min-height: 90px; height: 90px; }
+  .rewardTop { flex-direction: column; gap: 4px; }
+}
+@media (max-width: 600px) {
+  .mapHero { max-width: 300px; }
+  .strip, .weekRow { gap: 4px; }
+  .rewardBottom { gap: 4px 8px; }
+  .gain { flex-direction: row; gap: 8px; justify-content: center; }
+  .gain .rods { align-self: auto; min-width: 0; flex: 1; max-width: 227px; }
+  .rewardTop .rodM .cube { width: auto; height: auto; max-width: 20px; flex: 1 1 0; aspect-ratio: 1; }
+  .sticker { gap: 0; }
+  .sticker svg { width: 48px; height: 48px; }
+}
+
+.sticker svg { width: 56px; height: 56px; }
+@media (max-width: 600px) {
+  .rewardBottom { flex-wrap: nowrap; }
+  .rewardBottom .stickerRow { flex: 0 1 88px; min-width: 0; }
+  .rewardBottom .weekRow { flex: 1; min-width: 0; }
+  .rewardBottom .week { gap: 6px; }
+  .rewardBottom .weekM .day { width: 18px; height: 18px; }
+  .sticker svg { width: 48px; height: 48px; }
 }

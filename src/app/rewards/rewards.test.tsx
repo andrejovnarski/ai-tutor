@@ -21,7 +21,7 @@ describe("RewardsStrip", () => {
   it("strip shows XP, rod and week", () => {
     const html = strip({});
     expect(text(html)).toContain("+215");
-    expect(html).toContain('aria-label="6 of 10 cubes"');
+    expect(html).toContain('aria-label="6 of 10 shells"');
     expect(html).toContain('aria-label="Played 2 days this week"');
     expect(text(html)).toContain("1 more day for your week goal");
     expect(text(html)).not.toMatch(/Level \d+!/);
@@ -36,8 +36,8 @@ describe("RewardsStrip", () => {
   it("level up shows Level N! with a full rod beside the new one", () => {
     const html = strip({ levelBefore: 3, levelAfter: 4, cubesBefore: 8, cubesAfter: 1 });
     expect(text(html)).toContain("Level 4!");
-    expect(html).toContain('aria-label="10 of 10 cubes"');
-    expect(html).toContain('aria-label="1 of 10 cubes"');
+    expect(html).toContain('aria-label="10 of 10 shells"');
+    expect(html).toContain('aria-label="1 of 10 shells"');
   });
   it("no new stickers shows no sticker list", () => {
     expect(strip({})).not.toContain('data-sticker');
@@ -73,6 +73,13 @@ describe("RewardsStrip", () => {
 });
 
 describe("Rod", () => {
+  it("draws shells with the same filled and drop counts", () => {
+    const html = renderToStaticMarkup(<Rod filled={3} animateFrom={1} size="m" look="shell" />);
+    expect(html).toContain('aria-label="3 of 10 shells"');
+    expect((html.match(/data-shell=/g) ?? [])).toHaveLength(10);
+    expect((html.match(/data-shell="filled"/g) ?? [])).toHaveLength(3);
+    expect((html.match(/data-drop="true"/g) ?? [])).toHaveLength(2);
+  });
   it("draws 10 cubes, filled ones marked, with an image label", () => {
     const html = renderToStaticMarkup(<Rod filled={6} size="m" />);
     expect(html).toContain('role="img"');
@@ -138,18 +145,36 @@ describe("end card layout guards", () => {
 
 describe("MiniRewards", () => {
   const html = renderToStaticMarkup(<MiniRewards progress={progress([], {}, Date.UTC(2026, 9, 19, 16))} />);
-  it("shows the level, a small rod and seven week dots", () => {
-    expect(text(html)).toContain("Lv 1");
-    expect((html.match(/data-day=/g) ?? []).length).toBe(7);
-  });
-  it("hides the rod and dots from assistive tech so the card reads as name and level", () => {
+  it("shows a mini map, level and shell count without week dots", () => {
+    expect(text(html)).toContain("Level 1");
+    expect(text(html)).toContain("0 of 10");
+    expect(html).toContain('aria-label="Map:');
+    expect(html).toContain('viewBox="0 0 400 160"');
+    expect(html).not.toContain("data-day");
+    expect(html).not.toContain("data-sail");
     expect(html).toMatch(/class="[^"]*miniArt[^"]*" aria-hidden="true"/);
-    expect(html).toContain("0 of 10 cubes"); // still drawn, just not announced
+    expect(html).toContain('aria-label="shells"');
   });
   it("level text is kid-sized and the cards keep their widths", () => {
     const css = readFileSync(new URL("../picker.module.css", import.meta.url), "utf8");
-    expect(css).toMatch(/\.level \{[^}]*var\(--text-s\)/);
+    expect(css).toMatch(/\.level \{[^}]*(?:var\(--text-s\)|18px)/);
     expect(css).toMatch(/\.kid \{[^}]*width:\s*216px/);
     expect(css).toMatch(/\.kid \{ width: 156px/);
+  });
+});
+
+describe("Pocket Planet fix-round layout", () => {
+  it("keeps each picker level/count phrase unbroken", () => {
+    const html = renderToStaticMarkup(<MiniRewards progress={progress([], {}, 0)} />);
+    expect(html).toMatch(/<span class="[^"]*levelPart[^"]*">Level 1<\/span>/);
+    expect(html).toMatch(/<span class="[^"]*levelPart[^"]*">.*0 of 10<\/span>/);
+    const css = readFileSync(new URL("../picker.module.css", import.meta.url), "utf8");
+    expect(css).toMatch(/\.levelPart\s*\{[^}]*white-space:\s*nowrap/);
+    expect(css).toMatch(/\.name\s*\{[^}]*text-overflow:\s*ellipsis/);
+  });
+  it("groups counts and gain above stickers and week", () => {
+    const html = renderToStaticMarkup(<RewardsStrip rewards={base} stats={<div>counts</div>} />);
+    expect(html).toMatch(/class="[^"]*rewardTop[^"]*"[^>]*><div>counts<\/div>/);
+    expect(html).toMatch(/class="[^"]*rewardBottom[^"]*"/);
   });
 });

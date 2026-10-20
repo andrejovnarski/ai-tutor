@@ -1,16 +1,18 @@
 import type { Progress } from "@/domain/rewards/progress";
-import { Rod } from "./rewards/Rod";
-import { WeekDots } from "./rewards/WeekDots";
+import { IslandMap } from "./rewards/IslandMap";
 import styles from "./picker.module.css";
 
-/** The level, the rod and this week's days, small, for a picker card. The pictures are hidden from screen readers so the card reads "{name} Lv N". */
+/** Still map art stays quiet so the card's accessible name starts with the kid's name. */
 export function MiniRewards({ progress }: { progress: Progress }) {
   return (
     <span className={styles.mini}>
-      <span className={styles.level}>Lv {progress.level}</span>
       <span className={styles.miniArt} aria-hidden="true">
-        <Rod filled={progress.cubesInRod} size="s" />
-        <WeekDots days={progress.week.days} size="s" />
+        <IslandMap map={progress.map} size="mini" />
+      </span>
+      <span className={styles.level}>
+        <span className={styles.levelPart}>Level {progress.level}</span>
+        <span aria-hidden="true"> · </span>
+        <span className={styles.levelPart}><span role="img" aria-label="shells">🐚</span> {progress.cubesInRod} of 10</span>
       </span>
     </span>
   );

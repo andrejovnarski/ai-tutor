@@ -23,7 +23,7 @@ export default async function HomePage() {
             <li key={k.id}>
               <Link href={`/play/${k.id}`} className={styles.kid}>
                 <span aria-hidden="true" className={styles.avatar}>{faceOf(k.avatar)}</span>
-                {k.nickname}
+                <span className={styles.name} data-picker-name><span className={styles.nameText}>{k.nickname}</span></span>
                 {progresses[i] && <MiniRewards progress={progresses[i]} />}
               </Link>
             </li>

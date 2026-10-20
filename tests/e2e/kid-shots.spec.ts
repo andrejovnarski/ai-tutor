@@ -1,6 +1,6 @@
 // Screenshots of the kid screens at tablet sizes (and a phone, for reference), saved to test-results/kid/ (git-ignored).
 // Also checks that no screen scrolls sideways or down. With REWARDS=on the end card carries the rewards strip and the
-// picker cards their level, rod and week.
+// picker cards their level, mini map and shells.
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { SKILLS } from "../../src/domain/curriculum/index";
@@ -66,6 +66,21 @@ for (const size of SIZES) {
       }));
       expect.soft(over.x, `${size.name} ${screen} scrolls sideways`).toBeLessThanOrEqual(0);
       if (!opts.scrolls) expect.soft(over.y, `${size.name} ${screen} scrolls down`).toBeLessThanOrEqual(0);
+      const endMap = page.getByTestId("end-card").locator('svg[role="img"][aria-label^="Map:"]');
+      if (await page.getByTestId("end-card").count()) {
+        await expect(endMap).toBeVisible();
+        const mapBox = await endMap.boundingBox();
+        const floor = ["landscape", "portrait", "pro"].includes(size.name) ? 140 : 90;
+        expect.soft(mapBox!.height, `${size.name} ${screen} map height`).toBeGreaterThanOrEqual(floor);
+      }
+      for (const name of await page.locator('[data-picker-name]').all()) {
+        const metrics = await name.evaluate((el) => ({
+          scroll: el.scrollWidth, width: el.clientWidth, height: el.getBoundingClientRect().height,
+          line: parseFloat(getComputedStyle(el).lineHeight),
+        }));
+        expect.soft(metrics.scroll, `${size.name} ${screen} name overflows`).toBeLessThanOrEqual(metrics.width);
+        expect.soft(metrics.height, `${size.name} ${screen} name wraps too far`).toBeLessThanOrEqual(2 * metrics.line);
+      }
       // Glyph tails can overhang by a few px; a clipped line is ~20 px or more.
       const SLACK = 6;
       for (const id of ["progress-today", "progress-next"]) {
@@ -179,7 +194,7 @@ for (const size of SIZES) {
 
     // Back on the picker, Mia's card shows the level her session earned.
     await page.getByRole("link", { name: "Back to kids" }).click();
-    await expect(page.getByRole("link", { name: /Mia/ })).toContainText(/Lv \d+/);
+    await expect(page.getByRole("link", { name: /Mia/ })).toContainText(/Level \d+/);
     await shot("6b-picker-levels", { scrolls: true });
 
     // Theo (grade 2) and Alexandrina (grade 4): the number pad, if their problems use it.
