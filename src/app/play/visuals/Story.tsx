@@ -26,7 +26,7 @@ export function Story({ v }: { v: Extract<Visual, { kind: "story" }> }) {
   const crossedFrom = groups.reduce((a, b) => a + b, 0) - Math.min(v.crossedOut ?? 0, groups.reduce((a, b) => a + b, 0));
   return (
     <Svg label={describeVisual(v)}>
-      <text x={W / 2} y={firstY} textAnchor="middle" fontSize="28" fill="var(--chalk)" data-story-text="true">
+      <text x={W / 2} y={firstY} textAnchor="middle" fontSize="28" fill="var(--pp-ink)" data-story-text="true">
         {lines.map((l, i) => (
           <tspan key={i} x={W / 2} dy={i ? LINE : 0}>{l}</tspan>
         ))}

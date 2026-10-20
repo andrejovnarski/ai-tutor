@@ -80,13 +80,13 @@ function StaticFrames({ v }: Props) {
     if (i >= filled) {
       cells.push(
         <rect key={i} data-empty="true" x={x + 4} y={y + 4} width={CELL - 8} height={CELL - 8} rx="8"
-          fill="none" stroke="var(--chalk)" strokeOpacity="0.45" strokeWidth="2" strokeDasharray="4 6" />,
+          fill="none" stroke="var(--pp-ink)" strokeOpacity="0.45" strokeWidth="2" strokeDasharray="4 6" />,
       );
     } else {
       cells.push(
         <g key={i}>
           <circle data-counter={i < v.first ? "red" : "yellow"} cx={x + CELL / 2} cy={y + CELL / 2} r="24"
-            fill={i < v.first ? "var(--counter-red)" : "var(--counter-yellow)"} stroke="var(--felt-deep)" strokeWidth="2" />
+            fill={i < v.first ? "var(--counter-red)" : "var(--counter-yellow)"} stroke="var(--pp-ink)" strokeWidth="2" />
           {i >= crossedFrom ? <Cross cx={x + CELL / 2} cy={y + CELL / 2} h={14} /> : null}
         </g>,
       );
@@ -99,11 +99,11 @@ function StaticFrames({ v }: Props) {
         const fx = x0 + f * (FW + FGAP);
         return (
           <g key={f}>
-            <rect data-frame="true" x={fx} y={y0} width={FW} height={FH} rx="10" fill="var(--felt-deep)" stroke="var(--chalk)" strokeWidth="3" />
+            <rect data-frame="true" x={fx} y={y0} width={FW} height={FH} rx="10" fill="var(--pp-sand)" stroke="var(--pp-ink)" strokeWidth="3" />
             {[1, 2, 3, 4].map((c) => (
-              <line key={c} x1={fx + c * CELL} y1={y0} x2={fx + c * CELL} y2={y0 + FH} stroke="var(--chalk)" strokeWidth="2" strokeOpacity="0.6" />
+              <line key={c} x1={fx + c * CELL} y1={y0} x2={fx + c * CELL} y2={y0 + FH} stroke="var(--pp-ink)" strokeWidth="2" strokeOpacity="0.6" />
             ))}
-            <line x1={fx} y1={y0 + CELL} x2={fx + FW} y2={y0 + CELL} stroke="var(--chalk)" strokeWidth="2" strokeOpacity="0.6" />
+            <line x1={fx} y1={y0 + CELL} x2={fx + FW} y2={y0 + CELL} stroke="var(--pp-ink)" strokeWidth="2" strokeOpacity="0.6" />
           </g>
         );
       })}

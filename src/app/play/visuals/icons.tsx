@@ -10,7 +10,7 @@ function Apple(p: P) {
   return (
     <g data-icon="apple">
       <circle cx={r(p.cx)} cy={r(p.cy + 0.07 * p.s)} r={r(0.38 * p.s)} fill="var(--counter-red)" />
-      <path d={pts(p, [[0, -0.3], [0.05, -0.45]], false)} stroke="var(--chalk)" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d={pts(p, [[0, -0.3], [0.05, -0.45]], false)} stroke="var(--pp-ink)" strokeWidth="3" strokeLinecap="round" fill="none" />
       <ellipse cx={r(p.cx + 0.14 * p.s)} cy={r(p.cy - 0.34 * p.s)} rx={r(0.1 * p.s)} ry={r(0.05 * p.s)} fill="var(--cube-blue)" />
     </g>
   );
@@ -24,7 +24,7 @@ function Star(p: P) {
   }
   return (
     <g data-icon="star">
-      <path d={pts(p, list)} fill="var(--counter-yellow)" stroke="var(--felt-deep)" strokeWidth="2" strokeLinejoin="round" />
+      <path d={pts(p, list)} fill="var(--counter-yellow)" stroke="var(--pp-ink)" strokeWidth="2" strokeLinejoin="round" />
     </g>
   );
 }
@@ -59,10 +59,10 @@ function Duck(p: P) {
 function Shell(p: P) {
   return (
     <g data-icon="shell">
-      <path d={pts(p, [[-0.42, 0.3], [-0.3, -0.1], [-0.1, -0.35], [0.1, -0.35], [0.3, -0.1], [0.42, 0.3]])} fill="#F2B8A0" stroke="var(--felt-deep)" strokeWidth="2" strokeLinejoin="round" />
-      <path d={pts(p, [[0, 0.3], [0, -0.3]], false)} stroke="var(--felt-deep)" strokeWidth="2" fill="none" />
-      <path d={pts(p, [[-0.2, 0.3], [-0.15, -0.25]], false)} stroke="var(--felt-deep)" strokeWidth="2" fill="none" />
-      <path d={pts(p, [[0.2, 0.3], [0.15, -0.25]], false)} stroke="var(--felt-deep)" strokeWidth="2" fill="none" />
+      <path d={pts(p, [[-0.42, 0.3], [-0.3, -0.1], [-0.1, -0.35], [0.1, -0.35], [0.3, -0.1], [0.42, 0.3]])} fill="#F2B8A0" stroke="var(--pp-ink)" strokeWidth="2" strokeLinejoin="round" />
+      <path d={pts(p, [[0, 0.3], [0, -0.3]], false)} stroke="var(--pp-ink)" strokeWidth="2" fill="none" />
+      <path d={pts(p, [[-0.2, 0.3], [-0.15, -0.25]], false)} stroke="var(--pp-ink)" strokeWidth="2" fill="none" />
+      <path d={pts(p, [[0.2, 0.3], [0.15, -0.25]], false)} stroke="var(--pp-ink)" strokeWidth="2" fill="none" />
     </g>
   );
 }
@@ -70,8 +70,8 @@ function Block(p: P) {
   const side = 0.78 * p.s;
   return (
     <g data-icon="block">
-      <rect x={r(p.cx - side / 2)} y={r(p.cy - side / 2)} width={r(side)} height={r(side)} rx={r(0.08 * p.s)} fill="var(--cube-blue)" stroke="var(--chalk)" strokeWidth="2" />
-      <circle cx={r(p.cx)} cy={r(p.cy)} r={r(0.14 * p.s)} fill="none" stroke="var(--chalk)" strokeWidth="2" />
+      <rect x={r(p.cx - side / 2)} y={r(p.cy - side / 2)} width={r(side)} height={r(side)} rx={r(0.08 * p.s)} fill="var(--cube-blue)" stroke="var(--pp-ink)" strokeWidth="2" />
+      <circle cx={r(p.cx)} cy={r(p.cy)} r={r(0.14 * p.s)} fill="none" stroke="var(--pp-ink)" strokeWidth="2" />
     </g>
   );
 }
@@ -79,7 +79,7 @@ function Cookie(p: P) {
   const dots: [number, number][] = [[-0.15, -0.15], [0.17, -0.05], [-0.05, 0.2], [0.15, 0.22]];
   return (
     <g data-icon="cookie">
-      <circle cx={r(p.cx)} cy={r(p.cy)} r={r(0.4 * p.s)} fill="#C98B4A" stroke="var(--felt-deep)" strokeWidth="2" />
+      <circle cx={r(p.cx)} cy={r(p.cy)} r={r(0.4 * p.s)} fill="#C98B4A" stroke="var(--pp-ink)" strokeWidth="2" />
       {dots.map(([x, y], i) => (
         <circle key={i} cx={r(p.cx + x * p.s)} cy={r(p.cy + y * p.s)} r={r(0.05 * p.s)} fill="var(--ink)" />
       ))}

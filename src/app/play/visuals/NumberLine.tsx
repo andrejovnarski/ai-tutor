@@ -30,9 +30,11 @@ export function NumberLine({ v }: { v: Extract<Visual, { kind: "number-line" }> 
     top = peak - 12 - 28;
     jump = (
       <g data-jump="true">
+        {/* ink casing so the yellow jump reads on the light sand board */}
+        <path d={`M ${a} ${LINE_Y - 30} Q ${r1((a + b) / 2)} ${ctl} ${b} ${LINE_Y - 30}`} fill="none" stroke="var(--pp-ink)" strokeWidth="9" strokeLinecap="round" />
         <path d={`M ${a} ${LINE_Y - 30} Q ${r1((a + b) / 2)} ${ctl} ${b} ${LINE_Y - 30}`} fill="none" stroke="var(--counter-yellow)" strokeWidth="5" strokeLinecap="round" />
-        <path d={`M ${b} ${LINE_Y - 22} L ${r1(b - 9 * dir)} ${LINE_Y - 40} L ${r1(b + 1 * dir)} ${LINE_Y - 40} Z`} fill="var(--counter-yellow)" />
-        <text data-label={`${j.by > 0 ? "+" : "−"}${Math.abs(j.by)}`} x={r1((a + b) / 2)} y={r1(peak - 12)} textAnchor="middle" fontSize="28" fill="var(--chalk)">
+        <path d={`M ${b} ${LINE_Y - 22} L ${r1(b - 9 * dir)} ${LINE_Y - 40} L ${r1(b + 1 * dir)} ${LINE_Y - 40} Z`} fill="var(--counter-yellow)" stroke="var(--pp-ink)" strokeWidth="2" strokeLinejoin="round" />
+        <text data-label={`${j.by > 0 ? "+" : "−"}${Math.abs(j.by)}`} x={r1((a + b) / 2)} y={r1(peak - 12)} textAnchor="middle" fontSize="28" fill="var(--pp-ink)">
           {`${j.by > 0 ? "+" : "−"}${Math.abs(j.by)}`}
         </text>
       </g>
@@ -43,20 +45,20 @@ export function NumberLine({ v }: { v: Extract<Visual, { kind: "number-line" }> 
   const box: Box = { x0: SIDE - half, y0: top, x1: W - SIDE + half, y1: LINE_Y + 48 + 6 };
   return (
     <Svg label={describeVisual(v)} box={box}>
-      <line x1={SIDE} y1={LINE_Y} x2={W - SIDE} y2={LINE_Y} stroke="var(--chalk)" strokeWidth="4" strokeLinecap="round" />
+      <line x1={SIDE} y1={LINE_Y} x2={W - SIDE} y2={LINE_Y} stroke="var(--pp-ink)" strokeWidth="4" strokeLinecap="round" />
       {ticks.map((n) => {
         const major = n % labelEvery === 0;
         return (
           <g key={n}>
-            <line data-tick={n} x1={x(n)} y1={LINE_Y - (major ? 14 : 8)} x2={x(n)} y2={LINE_Y + (major ? 14 : 8)} stroke="var(--chalk)" strokeWidth={major ? 4 : 2} />
+            <line data-tick={n} x1={x(n)} y1={LINE_Y - (major ? 14 : 8)} x2={x(n)} y2={LINE_Y + (major ? 14 : 8)} stroke="var(--pp-ink)" strokeWidth={major ? 4 : 2} />
             {major ? (
-              <text data-label={n} x={x(n)} y={LINE_Y + 48} textAnchor="middle" fontSize={labelSize} fill="var(--chalk)">{n}</text>
+              <text data-label={n} x={x(n)} y={LINE_Y + 48} textAnchor="middle" fontSize={labelSize} fill="var(--pp-ink)">{n}</text>
             ) : null}
           </g>
         );
       })}
       {v.marks.map((m) => (
-        <circle key={m} data-mark={m} cx={x(m)} cy={LINE_Y} r="13" fill="var(--counter-red)" stroke="var(--chalk)" strokeWidth="3" />
+        <circle key={m} data-mark={m} cx={x(m)} cy={LINE_Y} r="13" fill="var(--counter-red)" stroke="var(--pp-ink)" strokeWidth="3" />
       ))}
       {jump}
     </Svg>

@@ -4,8 +4,8 @@
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
-  background: var(--felt);
-  color: var(--chalk);
+  background: linear-gradient(var(--pp-sky-deep), var(--pp-sky));
+  color: var(--pp-ink);
   position: relative;
 }
 
@@ -26,7 +26,7 @@
   flex: 1;
 }
 
-/* Quiet chrome: small chalk link, top-right, never competing with the board. */
+/* Quiet chrome above the island. */
 .done {
   align-self: flex-start;
   flex: none;
@@ -35,7 +35,7 @@
   min-height: 44px;
   padding: 0 12px;
   border-radius: 22px;
-  color: var(--chalk);
+  color: var(--pp-ink);
   font-size: 18px;
   opacity: 0.85;
   text-decoration: underline;
@@ -43,7 +43,7 @@
   touch-action: manipulation;
 }
 
-/* The felt board: the one memorable thing on screen. A framed panel with a faint felt nap. */
+/* Sandy island with a still grass rim. */
 .board {
   display: flex;
   flex-direction: column;
@@ -54,15 +54,11 @@
   padding: 16px 24px 12px;
   text-align: center;
   min-height: 0;
-  border-radius: 24px;
-  border: 8px solid var(--felt-deep);
-  background-color: var(--felt);
-  background-image:
-    radial-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1.5px),
-    radial-gradient(rgb(0 0 0 / 0.05) 1px, transparent 1.5px);
-  background-size: 7px 7px, 11px 11px;
-  background-position: 0 0, 3px 5px;
-  box-shadow: inset 0 4px 18px rgb(0 0 0 / 0.28);
+  position: relative;
+  border-radius: 28px;
+  border: 4px solid var(--pp-ink);
+  background: var(--pp-sand);
+  box-shadow: 0 8px 0 var(--pp-grass), 0 12px 0 var(--pp-ink);
   font-size: var(--text-m);
 }
 
@@ -86,7 +82,7 @@
   font-size: var(--text-m);
   font-weight: 400;
   line-height: 1.25;
-  color: var(--chalk);
+  color: var(--pp-ink);
 }
 
 /* Connection notice: a calm strip at the bottom of the board, in the flow so the prompt stays visible. */
@@ -99,8 +95,8 @@
   box-sizing: border-box;
   padding: 10px 20px;
   border-radius: 20px;
-  background: var(--felt-deep);
-  color: var(--chalk);
+  background: var(--pp-white);
+  color: var(--pp-ink);
   font-size: var(--text-s);
   line-height: 1.3;
 }
@@ -110,9 +106,9 @@
   min-height: 88px;
   padding: 0 24px;
   font: inherit;
-  color: var(--ink);
-  background: var(--tray);
-  border: 3px solid var(--ink);
+  color: var(--pp-ink);
+  background: var(--pp-white);
+  border: 3px solid var(--pp-ink);
   border-radius: 16px;
   cursor: pointer;
 }
@@ -253,23 +249,24 @@
   gap: 16px;
   padding: 8px 16px;
   min-height: 0;
-  background: var(--tray);
-  color: var(--ink);
+  background: var(--pp-sea-deep);
+  position: relative;
+  isolation: isolate;
+  color: var(--pp-ink);
   text-align: center;
 }
 
 .tray :focus-visible,
 .bubble :focus-visible {
-  outline: 3px solid var(--ink);
-  outline-offset: 2px;
+  outline: 3px solid var(--pp-ink);
+  outline-offset: 3px;
 }
 
 .board :focus-visible,
 .top > :focus-visible,
-.topActions > :focus-visible,
-.endArea > :focus-visible {
-  outline: 3px solid var(--chalk);
-  outline-offset: 2px;
+.topActions > :focus-visible {
+  outline: 3px solid var(--pp-ink);
+  outline-offset: 3px;
 }
 
 /* Holds the bubble and its tail; the bubble scrolls, which would clip a tail drawn on itself. */
@@ -280,7 +277,7 @@
   display: flex;
 }
 
-/* The tail: a tray-coloured diamond, half tucked under the bubble, pointing at Nova. */
+/* White tail pointing at Nova. */
 .bubbleWrap::before {
   content: "";
   position: absolute;
@@ -289,7 +286,7 @@
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  background: var(--tray);
+  background: var(--pp-white);
   transform: translateY(-50%) rotate(45deg);
 }
 
@@ -299,8 +296,8 @@
   min-width: 0;
   padding: 16px 24px;
   border-radius: 24px;
-  background: var(--tray);
-  color: var(--ink);
+  background: var(--pp-white);
+  color: var(--pp-ink);
   text-align: left;
   line-height: 1.3;
   /* Capped so the board keeps room to count on: an extreme pair of long lines scrolls inside the bubble. */
@@ -325,8 +322,16 @@
   animation: hop 400ms ease-out 1;
 }
 
-.blink {
-  animation: blink 400ms steps(2, end) 1;
+.ring { transform-origin: 40px 42px; }
+.ringTip { animation: ringTip 400ms ease-out 1; }
+.ringSpin { animation: ringSpin 600ms ease-out 1; }
+.stars { animation: stars 600ms ease-out 1 both; }
+@keyframes ringTip { 50% { transform: rotate(12deg); } }
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+@keyframes stars {
+  0% { opacity: 0; }
+  25%, 65% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 @keyframes hop {
@@ -335,13 +340,10 @@
   100% { transform: translateY(0); }
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .hop, .blink { animation: none; }
+  .hop, .ringTip, .ringSpin, .stars { animation: none; }
+  .stars { display: none; }
 }
 
 @media (orientation: portrait) {
@@ -378,7 +380,10 @@
   justify-content: center;
   font-size: var(--text-xl);
   line-height: 1;
-  border-bottom: 4px solid var(--ink);
+  background: var(--pp-white);
+  border: 3px solid var(--pp-ink);
+  border-radius: 22px;
+  box-sizing: border-box;
 }
 
 .tile,
@@ -387,9 +392,9 @@
   min-height: 88px;
   font: inherit;
   font-size: var(--text-l);
-  color: var(--ink);
-  background: var(--tray);
-  border: 3px solid var(--ink);
+  color: var(--pp-ink);
+  background: var(--pp-white);
+  border: 3px solid var(--pp-ink);
   border-radius: 16px;
   cursor: pointer;
   touch-action: manipulation;
@@ -397,7 +402,8 @@
 
 .tile:active:not(:disabled),
 .key:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: translateY(5px);
+  box-shadow: none;
 }
 
 .tile:disabled,
@@ -427,7 +433,7 @@
 
 /* The earlier (feedback) line sits a step smaller, so the new problem's line leads and long pairs stay compact. */
 .lead {
-  font-size: 0.8em;
+  font-size: var(--text-s);
   margin-bottom: 4px;
 }
 
@@ -451,9 +457,9 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  color: var(--chalk);
-  background: var(--felt);
-  border: 3px solid var(--ink);
+  color: var(--pp-ink);
+  background: var(--pp-go);
+  border: 3px solid var(--pp-ink);
   border-radius: 50%;
   cursor: pointer;
   touch-action: manipulation;
@@ -470,19 +476,19 @@
 }
 
 .mic[data-mic="thinking"] {
-  background: var(--felt-deep);
+  background: var(--pp-sea);
 }
 
 @keyframes micPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(228 65 59 / 0.55); }
-  50% { box-shadow: 0 0 0 12px rgb(228 65 59 / 0); }
+  0%, 100% { outline: 3px solid var(--pp-ink); outline-offset: 3px; }
+  50% { outline: 3px solid var(--pp-ink); outline-offset: 8px; }
 }
 
 /* Reduced motion: a still ring instead of the pulse. */
 @media (prefers-reduced-motion: reduce) {
   .mic[data-mic="listening"] {
     animation: none;
-    box-shadow: 0 0 0 6px var(--counter-yellow);
+    box-shadow: 0 0 0 6px var(--pp-sun);
   }
 }
 
@@ -510,8 +516,8 @@
   max-width: calc(100% - 32px);
   box-sizing: border-box;
   border-radius: 20px;
-  background: var(--tray);
-  color: var(--ink);
+  background: var(--pp-white);
+  color: var(--pp-ink);
   font-size: var(--text-s);
   line-height: 1.3;
 }
@@ -535,17 +541,17 @@
   font: inherit;
   font-size: var(--text-l);
   line-height: 1;
-  color: var(--ink);
-  background: var(--tray);
-  border: 3px solid var(--ink);
+  color: var(--pp-ink);
+  background: var(--pp-white);
+  border: 3px solid var(--pp-ink);
   border-radius: 16px;
   cursor: pointer;
   touch-action: manipulation;
 }
 
 .confirm :focus-visible {
-  outline: 3px solid var(--ink);
-  outline-offset: 2px;
+  outline: 3px solid var(--pp-ink);
+  outline-offset: 3px;
 }
 
 /* Nova is a button (tap to hear the line again) when speech is on. */
@@ -591,10 +597,10 @@
     gap: 12px;
     padding-bottom: 4px; /* clear the help button's drop edge */
   }
-  .done { margin-left: auto; align-self: center; justify-content: flex-end; font-size: 16px; }
+  .done { margin-left: auto; align-self: center; justify-content: flex-end; font-size: 18px; }
   .nova { width: 72px; height: 72px; }
   .bubble { padding: 12px 16px; max-height: 168px; }
-  .board { margin: 0 8px 8px; padding: 12px; border-width: 6px; border-radius: 20px; }
+  .board { margin: 0 8px 8px; padding: 12px; border-width: 4px; border-radius: 28px; }
   .tray { padding: 12px 8px 16px; }
 
   .answers { width: 100%; gap: 12px; }
@@ -642,17 +648,17 @@
   padding: 8px;
   font: inherit;
   font-size: var(--text-s);
-  color: var(--ink);
-  background: var(--tray);
-  border: 3px solid var(--ink);
+  color: var(--pp-ink);
+  background: var(--pp-white);
+  border: 3px solid var(--pp-ink);
   border-radius: 20px;
-  box-shadow: 0 4px 0 var(--felt-deep);
+  box-shadow: 0 5px 0 var(--pp-ink);
   cursor: pointer;
   touch-action: manipulation;
 }
 
 .helpButton:active:not(:disabled) {
-  transform: translateY(4px);
+  transform: translateY(5px);
   box-shadow: none;
 }
 
@@ -662,7 +668,7 @@
 }
 
 .helpButton:focus-visible {
-  outline: 3px solid var(--chalk);
+  outline: 3px solid var(--pp-ink);
   outline-offset: 3px;
 }
 
@@ -686,9 +692,9 @@
   grid-template-rows: repeat(2, 1fr);
   aspect-ratio: 5 / 2;
   min-height: 0;
-  border: 3px solid var(--chalk);
+  border: 3px solid var(--pp-ink);
   border-radius: 10px;
-  background: var(--felt-deep);
+  background: var(--pp-sand);
 }
 
 .frameCell {
@@ -699,43 +705,90 @@
   min-width: 0;
   min-height: 0;
   padding: 0;
-  border: 1px solid rgb(244 247 242 / 60%);
+  border: 1px solid var(--pp-ink);
   background: transparent;
-  color: var(--chalk);
+  color: var(--pp-ink);
 }
 
 button.frameCell { cursor: pointer; }
-.frameCell:focus-visible { outline: 3px solid var(--chalk); outline-offset: -5px; }
+.frameCell:focus-visible { outline: 3px solid var(--pp-ink); outline-offset: -5px; }
 .frameCell:disabled { cursor: default; }
 .frameCounter {
   height: 80%;
   max-width: 80%;
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 2px solid var(--felt-deep);
+  border: 2px solid var(--pp-ink);
   box-sizing: border-box;
   background: var(--counter-added);
 }
 .frameEmpty {
   position: absolute;
   inset: 7%;
-  border: 2px dashed rgb(244 247 242 / 45%);
+  border: 2px dashed var(--pp-ink);
   border-radius: 8px;
 }
 .frameCross { position: absolute; font-size: var(--text-l); }
-.frameActions { height: 56px; flex: none; text-align: center; }
+.frameActions { height: 93px; flex: none; text-align: center; }
 .frameReset {
-  min-height: 48px;
+  min-height: 88px;
   padding: 0 24px;
   font: inherit;
   font-size: var(--text-s);
-  color: var(--ink);
-  background: var(--tray);
-  border: 3px solid var(--ink);
+  color: var(--pp-ink);
+  background: var(--pp-white);
+  border: 3px solid var(--pp-ink);
   border-radius: 20px;
-  box-shadow: 0 4px 0 var(--felt-deep);
+  box-shadow: 0 5px 0 var(--pp-ink);
   cursor: pointer;
 }
-.frameReset:active { transform: translateY(4px); box-shadow: none; }
-.frameReset:focus-visible { outline: 3px solid var(--chalk); outline-offset: 3px; }
+.frameReset:active { transform: translateY(5px); box-shadow: none; }
+.frameReset:focus-visible { outline: 3px solid var(--pp-ink); outline-offset: 3px; }
 .frameReset:disabled { cursor: default; }
+
+/* A still wave above the sea, kept behind the answer controls. */
+.tray::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  left: 0;
+  right: 0;
+  top: -12px;
+  height: 13px;
+  background: var(--pp-sea-deep);
+  clip-path: polygon(0 45%, 12.5% 15%, 25% 0, 37.5% 15%, 50% 45%, 62.5% 75%, 75% 90%, 87.5% 75%, 100% 45%, 100% 100%, 0 100%);
+}
+
+.tile, .key, .helpButton, .noticeButton, .confirmButton, .frameReset, .mic {
+  box-shadow: 0 5px 0 var(--pp-ink);
+}
+.tile, .key, .helpButton, .noticeButton, .confirmButton, .frameReset {
+  border-radius: 22px;
+}
+.noticeButton:active:not(:disabled), .confirmButton:active:not(:disabled), .mic:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow: none;
+}
+.bubble { border: 3px solid var(--pp-ink); border-radius: 22px; }
+.bubbleWrap::before { border: 3px solid var(--pp-ink); }
+/* Cover the inner half of the tail's border while leaving the outer ink edge visible. */
+.bubbleWrap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: calc(50% - 12px);
+  width: 4px;
+  height: 24px;
+  background: var(--pp-white);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile:active:not(:disabled), .key:active:not(:disabled), .helpButton:active:not(:disabled),
+  .noticeButton:active:not(:disabled), .confirmButton:active:not(:disabled),
+  .mic:active:not(:disabled), .frameReset:active { transform: none; box-shadow: none; }
+}
+
+@media (max-width: 600px) {
+  .frameActions { height: 77px; }
+  .frameReset { min-height: 72px; }
+}

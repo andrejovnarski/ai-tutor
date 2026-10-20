@@ -43,3 +43,17 @@ describe("LineBubble", () => {
     expect(renderToStaticMarkup(<LineBubble say="x" ageBand="8-11" />)).toContain("font-size:22px");
   });
 });
+
+describe("Pocket Planet Nova", () => {
+  it("uses the purple planet body", () => {
+    expect(renderToStaticMarkup(<Nova tone="calm" />)).toContain('fill="var(--pp-nova)"');
+  });
+  it("adds four stars only for a burst", () => {
+    const html = renderToStaticMarkup(<Nova tone="cheer" burst />);
+    expect(html).toContain('data-burst="true"');
+    expect(html.match(/data-star="true"/g)).toHaveLength(4);
+    const still = renderToStaticMarkup(<Nova tone="cheer" />);
+    expect(still).not.toContain('data-star');
+    expect(still).not.toContain('data-burst');
+  });
+});

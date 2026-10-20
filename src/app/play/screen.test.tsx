@@ -199,3 +199,15 @@ describe("nextBoardKey", () => {
     expect(nextBoardKey(help2, 5, t(2, 2))).toBe(help2);
   });
 });
+
+describe("Nova answer burst", () => {
+  it.each([true, false])("bursts only after a correct answer: %s", (correct) => {
+    play.state = { phase: "problem", version: 2, correct,
+      turn: { kind: "problem", mode: "practice", try: correct ? 1 : 2, help: 0,
+        prompt: { say: "How many?", show: { kind: "ten-frames", first: 3, second: 0 } },
+        input: "tap-choice", choices: [2, 3] }, line: { say: "Count together.", tone: "calm" } };
+    const html = renderToStaticMarkup(<PlayScreen kidId="kid1" ageBand="5-7" />);
+    const header = html.match(/<header[^>]*>(.*?)<\/header>/)![1]!;
+    expect(header.includes('data-burst="true"')).toBe(correct);
+  });
+});

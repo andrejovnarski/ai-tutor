@@ -66,6 +66,16 @@ back under the task. The owner (Andrej) has the final say on everything.
 - **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs e2e (kid-shots) and
   shows the owner screenshots.
 
+#### Codex report
+- Files changed: `src/app/play/{tokens.css,tokens.test.ts,Nova.tsx,Nova.test.tsx,PlayScreen.tsx,screen.test.tsx,play.module.css}`; `src/app/play/visuals/{Blocks,Equation,NumberLine,Story,TenFrames,common,icons}.tsx`; `docs/codex/HANDOFF.md`.
+- Test results:
+  - Tests first: `npm test -- tokens Nova screen` → `Test Files 3 failed (3)`; `Tests 22 failed | 39 passed (61)`.
+  - `npm run typecheck` → `tsc --noEmit`, exit 0 (no diagnostics).
+  - `npm test` → `Test Files 84 passed (84)`; `Tests 1408 passed (1408)`.
+  - `git diff --check` → exit 0. No db/e2e runs, network, git writes or port 3000 access.
+- Choices I made: reused shared play CSS for every state and existing responsive layouts; retained all legacy tokens and end-card styles. Used a static wave and hard grass rim. Nova has four stars, a 600 ms ring spin, and CSS hides stars/disables motion from first paint under reduced motion. Kept story fills and maths geometry; ten-frame grounds are sand with ink lines. Raised Start over to 88 px (72 px on phone), feedback text to 22 px minimum, and phone Done chrome to 18 px. Left the pre-existing `.impeccable/config.json` changes and `.superpowers/` untouched.
+- Open questions: none. Claude still needs to run kid-shots/e2e and show the owner screenshots.
+
 <!-- Template:
 ### T1 — <title>
 - **Branch:** `codex/<slug>`
@@ -103,3 +113,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T15 — Recall checks: e2e | `codex/recall-checks` | (this commit) | First try; passed on first run. e2e 65 |
 | T16 — Fill the frame: flag + interactive ten-frame | `codex/fill-frame` | (this commit) | Stopped once to ask about tightening an exact-object test (allowed: adds `fill: true`). Claude added `data-frame` marker. unit 1382, e2e 65 |
 | T17 — Fill the frame: e2e + kid-shots | `codex/fill-frame` | (this commit) | 1 fix round: template search by playing was luck (Make 10 mastered first) → `forcePending` helper writes a fixed make-ten-frame pending. e2e 66, new specs 14/14 on repeat |
+| T18 — Pocket Planet: tokens, Nova, play screen | `codex/pocket-planet` | (this commit) | First try. Claude fix: ink casing on the number-line jump (yellow on sand too faint). unit 1408, e2e 66 |

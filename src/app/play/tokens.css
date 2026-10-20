@@ -1,4 +1,16 @@
 :root {
+  --pp-sky: #bfe9f5;
+  --pp-sky-deep: #7fd3f0;
+  --pp-sea: #4fb6c9;
+  --pp-sea-deep: #2f8aa0;
+  --pp-sand: #f6e3a8;
+  --pp-grass: #7cc36a;
+  --pp-ink: #12324a;
+  --pp-white: #ffffff;
+  --pp-go: #ff8a3d;
+  --pp-sun: #ffcf3d;
+  --pp-nova: #7a6cf0;
+
   --felt: #2e6b5e;
   --felt-deep: #23544a;
   --chalk: #f4f7f2;

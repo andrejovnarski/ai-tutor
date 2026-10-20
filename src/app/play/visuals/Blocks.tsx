@@ -36,7 +36,7 @@ export function Blocks({ v }: { v: Extract<Visual, { kind: "blocks" }> }) {
       out.push(
         <g key={`${gi}r${r}`} data-rod="true">
           {Array.from({ length: 10 }, (_, k) => (
-            <rect key={k} data-rod-cube="true" x={rx} y={r1(base - (k + 1) * c)} width={c} height={c} rx="3" fill="var(--cube-blue)" stroke="var(--chalk)" strokeWidth="1.5" />
+            <rect key={k} data-rod-cube="true" x={rx} y={r1(base - (k + 1) * c)} width={c} height={c} rx="3" fill="var(--cube-blue)" stroke="var(--pp-ink)" strokeWidth="1.5" />
           ))}
           {crossed ? <Cross cx={r1(rx + c / 2)} cy={r1(base - 5 * c)} h={Math.min(c * 0.9, 26)} /> : null}
         </g>,
@@ -50,7 +50,7 @@ export function Blocks({ v }: { v: Extract<Visual, { kind: "blocks" }> }) {
       const cy0 = r1(base - ((o % COLW) + 1) * c);
       out.push(
         <g key={`${gi}o${o}`}>
-          <rect data-cube="true" x={cx0} y={cy0} width={c} height={c} rx="3" fill="var(--cube-blue)" stroke="var(--chalk)" strokeWidth="1.5" />
+          <rect data-cube="true" x={cx0} y={cy0} width={c} height={c} rx="3" fill="var(--cube-blue)" stroke="var(--pp-ink)" strokeWidth="1.5" />
           {o < p.crossedOnes ? <Cross cx={r1(cx0 + c / 2)} cy={r1(cy0 + c / 2)} h={c * 0.35} /> : null}
         </g>,
       );
@@ -60,14 +60,14 @@ export function Blocks({ v }: { v: Extract<Visual, { kind: "blocks" }> }) {
       x += 28;
       out.push(
         <rect key={`${gi}ghost`} data-broken-outline="true" x={r1(x - 5)} y={r1(base - 5 * c - 5)} width={r1(2 * (c + 6) + 4)} height={r1(5 * c + 10)} rx="6"
-          fill="none" stroke="var(--chalk)" strokeOpacity="0.5" strokeWidth="2" strokeDasharray="5 5" />,
+          fill="none" stroke="var(--pp-ink)" strokeOpacity="0.5" strokeWidth="2" strokeDasharray="5 5" />,
       );
       for (let o = 0; o < p.loose; o++) {
         const cx0 = r1(x + Math.floor(o / COLW) * (c + 6));
         const cy0 = r1(base - ((o % COLW) + 1) * c);
         out.push(
           <g key={`${gi}b${o}`}>
-            <rect data-cube="true" data-broken="true" x={cx0} y={cy0} width={c} height={c} rx="3" fill="var(--cube-blue)" stroke="var(--chalk)" strokeWidth="1.5" />
+            <rect data-cube="true" data-broken="true" x={cx0} y={cy0} width={c} height={c} rx="3" fill="var(--cube-blue)" stroke="var(--pp-ink)" strokeWidth="1.5" />
             {p.ones + o < p.crossedOnes ? <Cross cx={r1(cx0 + c / 2)} cy={r1(cy0 + c / 2)} h={c * 0.35} /> : null}
           </g>,
         );

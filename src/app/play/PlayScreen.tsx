@@ -1,5 +1,5 @@
 "use client";
-// The kid play screen: Nova and the line bubble on top, the felt board with the problem's picture, the answer tray.
+// The kid play screen: Nova and the line bubble on top, the island board with the problem's picture, the answer tray.
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { AgeBand } from "@/domain/types";
@@ -121,10 +121,10 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
         {/* keyed by version on a correct answer so the hop plays once per answer */}
         {speech ? (
           <button type="button" className={styles.novaButton} aria-label="Hear Nova again" onClick={audio.replay}>
-            <Nova key={view.hop ? `hop-${state.version}` : "nova"} tone={view.tone} hop={view.hop} />
+            <Nova key={view.hop ? `hop-${state.version}` : "nova"} tone={view.tone} hop={view.hop} burst={!!state.correct && !reduced} />
           </button>
         ) : (
-          <Nova key={view.hop ? `hop-${state.version}` : "nova"} tone={view.tone} hop={view.hop} />
+          <Nova key={view.hop ? `hop-${state.version}` : "nova"} tone={view.tone} hop={view.hop} burst={!!state.correct && !reduced} />
         )}
         {view.say ? (
           <LineBubble say={view.say} lead={view.lead} note={view.note} tone={view.tone} ageBand={ageBand} />
@@ -150,7 +150,7 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
         </div>
       ) : (
         <>
-          <section className={styles.board} data-testid="board" aria-label="Felt board">
+          <section className={styles.board} data-testid="board" aria-label="Island board">
             {problem ? <Board key={boardKey.current!.key} problem={problem} locked={state.phase !== "problem"} /> : null}
             {speech && problem ? <MicStrip mic={voice.mic} onYes={voice.yes} onNo={voice.no} /> : null}
             {notice}

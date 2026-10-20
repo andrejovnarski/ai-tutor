@@ -13,7 +13,7 @@ export function Equation({ v }: { v: Extract<Visual, { kind: "equation" }> }) {
         y={H / 2 + 22}
         textAnchor="middle"
         fontSize="64"
-        fill="var(--chalk)"
+        fill="var(--pp-ink)"
         {...(long ? { textLength: W - 80, lengthAdjust: "spacingAndGlyphs" } : {})}
       >
         {v.text}
