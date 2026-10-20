@@ -199,9 +199,8 @@
 .cardLink:active { transform: translateY(3px); box-shadow: none; }
 
 .cubes { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 3px; }
-.cube { width: 16px; height: 16px; border: 2px solid var(--pp-ink); border-radius: 3px; background: #fff; box-sizing: border-box; }
-.cubeBlue[data-filled="true"] { background: #3b7dd8; }
-.cubeGreen[data-filled="true"] { background: #4c9a52; }
+.cube { width: 16px; height: 16px; border: 2px solid var(--pp-ink); border-radius: 50%; background: var(--pp-white); box-sizing: border-box; }
+.cube[data-filled="true"] { background: var(--pp-sun); }
 .cubesMore { margin-left: 4px; font-size: 15px; font-weight: 700; }
 
 .sticky {
@@ -253,3 +252,5 @@
 
 .rewardLine { display: flex; align-items: center; gap: 12px; margin: 0 0 8px; }
 .stickerRow { display: flex; align-items: center; gap: 12px; }
+
+.kidMap { display: block; width: 200px; max-width: 100%; margin: 12px auto 0; }

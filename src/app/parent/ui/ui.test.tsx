@@ -4,6 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { vi } from "vitest";
 import type { Progress } from "@/domain/rewards/progress";
 import { RewardsSection, stickerReason } from "./RewardsSection";
+import { IslandsCard } from "./IslandsCard";
+import { islandMap } from "@/domain/rewards/map";
 import { Cubes } from "./Cubes";
 import { GrownupFrame } from "./GrownupFrame";
 import { IndexCard } from "./IndexCard";
@@ -112,4 +114,39 @@ it("renders the consent page without a felt tab", async () => {
   expect(html).toContain("Read the full privacy notice");
   expect(html).not.toContain("--felt");
   expect(html).not.toContain("--tab");
+});
+
+describe("IslandsCard", () => {
+  it("shows the full still map and its caption", () => {
+    const map = islandMap({}, new Set(), []);
+    map.islands.forEach((island, i) => island.flags.forEach((flag, j) => {
+      flag.up = i < 2 || (i === 2 && j < 3);
+      flag.isNew = flag.up;
+    }));
+    map.boat = { island: 2, flag: 3 };
+    const html = renderToStaticMarkup(<IslandsCard nickname="Mia" map={map} />);
+    expect(html).toContain("Mia&#x27;s islands");
+    expect(html).toContain('aria-label="Map: 2 islands done. Now on Adding Island, 3 of 5 flags."');
+    expect(html).toMatch(/<figcaption[^>]*>Adding Island<\/figcaption>/);
+    expect(html).not.toMatch(/data-rise|data-sail/);
+  });
+  it("shows an empty journey and an all-done journey without a caption", () => {
+    const map = islandMap({}, new Set(), []);
+    expect(renderToStaticMarkup(<IslandsCard nickname="Mia" map={map} />)).toContain("Map: 0 islands done. Now on Counting Cove, 0 of");
+    map.islands.forEach(i => i.flags.forEach(f => { f.up = true; }));
+    map.boat = { done: true };
+    const html = renderToStaticMarkup(<IslandsCard nickname="Mia" map={map} />);
+    expect(html).toContain('aria-label="Map: all islands done!"');
+    expect(html).not.toContain("figcaption");
+  });
+});
+it("RewardsSection uses shells", () => {
+  const html = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({})} />);
+  expect(html).toContain('aria-label="2 of 10 shells"');
+});
+it("Cubes draws round sun dots with white empty marks", () => {
+  const css = readFileSync(join(__dirname, "grownup.module.css"), "utf8");
+  expect(css).toMatch(/\.cube\s*\{[^}]*border-radius: 50%/);
+  expect(css).toMatch(/\.cube\s*\{[^}]*background: var\(--pp-white\)/);
+  expect(css).toMatch(/\.cube\[data-filled="true"\]\s*\{[^}]*background: var\(--pp-sun\)/);
 });

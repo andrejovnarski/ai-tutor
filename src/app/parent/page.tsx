@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { kidProgress } from "@/server/rewards";
+import { IslandMap } from "../rewards/IslandMap";
 import { requireParent } from "@/server/parentGate";
 import { lastPlayed, lastPlayedLabel } from "@/server/parentSummary";
 import { colorOf, faceOf } from "../avatars";
@@ -24,6 +26,7 @@ export default async function ParentPage() {
     (kids ?? []).map((k) => k.id),
   );
   const now = new Date();
+  const progresses = await Promise.all((kids ?? []).map((k) => kidProgress(supabase, k.id, now.getTime())));
   return (
     <GrownupFrame back={{ href: "/", label: "Back to kids" }}>
       <h1>Your kids</h1>
@@ -39,7 +42,7 @@ export default async function ParentPage() {
       )}
       {(kids ?? []).length > 0 && (
         <ul className={styles.plainList}>
-          {(kids ?? []).map((k) => (
+          {(kids ?? []).map((k, i) => (
             <li key={k.id}>
               <IndexCard
                 color={colorOf(k.avatar)}
@@ -57,6 +60,11 @@ export default async function ParentPage() {
                     </span>
                   </span>
                 </span>
+                {progresses[i] && (
+                  <span aria-hidden="true" className={styles.kidMap}>
+                    <IslandMap map={progresses[i].map} size="mini" />
+                  </span>
+                )}
               </IndexCard>
             </li>
           ))}

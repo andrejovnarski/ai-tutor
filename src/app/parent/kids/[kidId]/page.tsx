@@ -7,6 +7,7 @@ import { exportKid } from "@/server/rights";
 import { faceOf } from "../../../avatars";
 import { gradeName } from "../../../grades";
 import { GrownupFrame } from "../../ui/GrownupFrame";
+import { IslandsCard } from "../../ui/IslandsCard";
 import { RewardsSection } from "../../ui/RewardsSection";
 import styles from "../../ui/grownup.module.css";
 import { deleteKidAction } from "./actions";
@@ -34,6 +35,7 @@ export default async function KidPage({
         {`${kid.nickname}'s week`}
       </h1>
       <p className={styles.quiet}>{gradeName(kid.grade)}</p>
+      {progress && <IslandsCard nickname={kid.nickname} map={progress.map} />}
       {week && <WeekSummary nickname={kid.nickname} week={week.week} playedDays={week.playedDays} />}
       {progress && <RewardsSection nickname={kid.nickname} progress={progress} />}
       <section className={styles.section}>

@@ -59,6 +59,25 @@ back under the task. The owner (Andrej) has the final say on everything.
 - **Don't:** no domain/server changes beyond calling `kidProgress`; no copy changes; rule 9.
 - **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs db + e2e + shots.
 
+#### Codex report
+- Files changed:
+  - `src/app/parent/ui/IslandsCard.tsx` (new): full still map card with nickname title and existing caption.
+  - `src/app/parent/kids/[kidId]/page.tsx`: islands card before week summary when progress exists.
+  - `src/app/parent/page.tsx`: parallel per-kid progress reads and hidden mini maps.
+  - `src/app/parent/ui/RewardsSection.tsx`, `Cubes.tsx`, `grownup.module.css`: shell rod, round sun dots, responsive mini-map width.
+  - Tests: `src/app/parent/ui/ui.test.tsx`, `src/app/parent/kids/[kidId]/page.test.tsx`, new `src/app/parent/page.test.tsx`.
+  - `docs/codex/HANDOFF.md`: this report.
+- Test results:
+  - Failing tests written and run first: 3 files failed (missing IslandsCard, child map, per-kid progress reads); targeted suite after implementation: 24 passed.
+  - `npm run typecheck`: `tsc --noEmit` — exit 0.
+  - `npm test`: `Test Files  88 passed (88)`; `Tests  1444 passed (1444)` — exit 0.
+- Choices I made:
+  - Reused IslandMap's existing caption and responsive full-map sizing; explicitly disabled animation.
+  - Kept Cubes' color prop for caller compatibility; both colors now draw sun dots, retaining labels, counts, +N and data-cube.
+  - Used one timestamp and the existing RLS client for parallel kidProgress calls; null progress omits map markup.
+  - Preserved every existing test assertion. No git writes, network, db/e2e tests or port 3000 use; left .impeccable/config.json and .superpowers/ untouched.
+- Open questions: none. Claude runs db, e2e and screenshot review.
+
 <!-- Template:
 ### T1 — <title>
 - **Branch:** `codex/<slug>`
@@ -101,3 +120,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T20 — Pocket Planet: picker and end card | `codex/pocket-planet` | (this commit) | 1 fix round: end-card map collapsed to a line → height floors (140/90 px) + e2e guards; names broke mid-word → ellipsis; level line kept whole. Claude moved e2e wording Lv→Level, cubes→shells. unit 1425, e2e 66 |
 | T21 — Pocket Planet: kid-shots, DESIGN.md | `codex/pocket-planet` | (this commit) | 1 fix round: 3 stickers overflowed landscape end card → one-line labels, map frame fits art. Claude fixes: grown-up NovaMark → planet (dead antenna CSS + its assertion removed), phone stickers/week stacked (overlapped). unit 1425, db 136, e2e 66 |
 | T22 — Grown-up Logbook: tokens and pages | `codex/grownup-logbook` | (this commit) | First try. Old colour assertions moved to new tokens (allowed). unit 1436, e2e 66, grown-up shots 4 |
+| T23 — Grown-up Logbook: map, shells, sun dots | `codex/grownup-logbook` | (this commit) | First try. unit 1444, db 136, e2e 66, grown-up shots 4 |

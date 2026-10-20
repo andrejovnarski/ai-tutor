@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/font/google", () => ({ Atkinson_Hyperlegible: () => ({ variable: "atk" }) }));
 vi.mock("@/server/parentGate", () => ({ requireParent: async () => ({ supabase: {} }) }));
 vi.mock("@/server/parentSummary", () => ({ kidWeek: async () => null }));
-vi.mock("@/server/rewards", () => ({ kidProgress: async () => null }));
+vi.mock("@/server/rewards", () => ({ kidProgress: vi.fn(async () => null) }));
 vi.mock("@/server/rights", () => ({ exportKid: vi.fn() }));
 vi.mock("./actions", () => ({ deleteKidAction: async () => {} }));
 
@@ -26,5 +26,25 @@ it.each([0, 1, 2])("shows the session help count with the right plural, hiding z
     expect(html).not.toContain("Asked for help");
   } else {
     expect(html).toContain(`Asked for help ${helped} ${helped === 1 ? "time" : "times"}</span>`);
+  }
+});
+
+it.each([true, false])("shows the islands card first only with progress (%s)", async (available) => {
+  const { kidProgress } = await import("@/server/rewards");
+  const { progress } = await import("@/domain/rewards/progress");
+  vi.mocked(kidProgress).mockResolvedValue(available ? progress([], {}, Date.now()) : null);
+  vi.mocked(exportKid).mockResolvedValue({
+    kid: { id: "k1", nickname: "Mia", grade: "K", age_band: "5-7", avatar: "fox", placed: true, created_at: "2026-10-01T00:00:00Z" },
+    skill_state: [], style_stats: [], distress_flags: [], sessions: [], attempts: [],
+  });
+  const html = renderToStaticMarkup(await KidPage({ params: Promise.resolve({ kidId: "k1" }), searchParams: Promise.resolve({}) }));
+  if (available) {
+    expect(html).toContain("Mia&#x27;s islands");
+    expect(html.indexOf("Mia&#x27;s islands")).toBeLessThan(html.indexOf("<h2>Rewards"));
+    expect(html.indexOf("Mia&#x27;s islands")).toBeLessThan(html.indexOf("<h2>Progress"));
+  } else {
+    expect(html).not.toContain("islands");
+    expect(html).not.toContain("<figure");
+    expect(html).toContain("<h2>Progress");
   }
 });

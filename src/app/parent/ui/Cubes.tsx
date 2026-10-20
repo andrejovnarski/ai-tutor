@@ -3,7 +3,6 @@ import styles from "./grownup.module.css";
 export function Cubes({
   filled,
   total,
-  color,
   label,
   max,
 }: {
@@ -23,7 +22,7 @@ export function Cubes({
           key={i}
           data-cube=""
           {...(i < lit ? { "data-filled": "true" } : {})}
-          className={`${styles.cube} ${color === "blue" ? styles.cubeBlue : styles.cubeGreen}`}
+          className={styles.cube}
         />
       ))}
       {extra > 0 ? <span className={styles.cubesMore}>+{extra}</span> : null}

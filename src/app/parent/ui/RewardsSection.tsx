@@ -29,7 +29,7 @@ export function RewardsSection({ nickname, progress }: { nickname: string; progr
       <h2>Rewards</h2>
       <p className={styles.rewardLine}>
         <b>{`Level ${progress.level}`}</b>
-        <Rod filled={progress.cubesInRod} size="s" />
+        <Rod filled={progress.cubesInRod} size="s" look="shell" />
       </p>
       <p>{n === 0 ? "Week goal: 3 days a week" : `Week goal met ${n === 1 ? "1 week" : `${n} weeks`} in a row`}</p>
       {stickers.length === 0 ? (
