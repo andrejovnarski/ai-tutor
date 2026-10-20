@@ -8,6 +8,7 @@ function need(name: string): string {
 
 let warnedTutorVoice = false;
 let warnedSpeech = false;
+let warnedRewards = false;
 
 export const env = {
   supabaseUrl: () => need("NEXT_PUBLIC_SUPABASE_URL"),
@@ -28,6 +29,16 @@ export const env = {
     if (!warnedSpeech) {
       warnedSpeech = true;
       console.warn(`SPEECH must be "azure", "fake" or "off", got "${v}"; using "off"`);
+    }
+    return "off";
+  },
+  /** "on" or "off"; unset or bad is "off" (warned once). */
+  rewards: (): "on" | "off" => {
+    const v = process.env.REWARDS || "off";
+    if (v === "on" || v === "off") return v;
+    if (!warnedRewards) {
+      warnedRewards = true;
+      console.warn(`REWARDS must be "on" or "off", got "${v}"; using "off"`);
     }
     return "off";
   },

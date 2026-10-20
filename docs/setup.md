@@ -153,6 +153,7 @@ Set these environment variables for the project:
 | `STRIPE_SECRET_KEY`, `CONSENT_GATEWAY`, `RESEND_API_KEY`, `EMAIL_FROM`, `MAILER` | As in the Stripe and Resend sections |
 | `TUTOR_VOICE`, `ANTHROPIC_API_KEY` | As in the Tutor voice section. For the pilot leave `TUTOR_VOICE` unset (canned lines) |
 | `SPEECH`, `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`, `SPEECH_TOKEN_SECRET` | As in the Speech section. Unset means no mic and no audio |
+| `REWARDS` | `on` or `off`. Cubes, levels, the week goal and stickers on the end card, the picker, the child page and the weekly email. Unset (or anything else) means `off`. Leave it off until the lawyer answers question 10 in `docs/lawyer-brief.md` |
 
 Crons come from `vercel.json`: the weekly report (hourly on Sundays, it sends from 17:00 New York time) and daily retention. Hourly crons need a Vercel plan that allows them; the free Hobby plan does not, so use Pro. Hobby is also for non-commercial use only.
 

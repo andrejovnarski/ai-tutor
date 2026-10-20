@@ -142,6 +142,22 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.card}"
     padding: "12px 16px 12px 26px"
+  rewards-rod:
+    backgroundColor: "{colors.tray}"
+    textColor: "{colors.cube-blue}"
+    rounded: "{rounded.cube}"
+    size: "30px"
+  sticker:
+    backgroundColor: "{colors.tray}"
+    textColor: "{colors.ink}"
+    typography: "{typography.kid-body}"
+    rounded: "{rounded.round}"
+    size: "72px"
+  week-dots:
+    backgroundColor: "{colors.tray}"
+    textColor: "{colors.counter-yellow}"
+    rounded: "{rounded.round}"
+    size: "28px"
 ---
 
 # Design System: Brightling AI
@@ -306,6 +322,15 @@ The one character: a rounded tray-coloured body with a felt-deep outline, an ink
 ### Maths Cubes (signature)
 A row of 16 px squares with a 2 px ink border and a 3 px radius, filled cube blue or green for each day or session, with "+N" after them. They are the one bold element on grown-up pages.
 
+### Rewards Rod
+Ten maths cubes in a row with 3 px gaps, one rod per level: 30 px cubes on the end card, 16 px on the picker and the child page. Each cube has a 2 px ink border and a 3 px radius; earned cubes are cube blue and the rest are tray. Newly earned cubes drop into their empty slots one after another (360 ms each, the whole run inside about a second). Under reduced motion they are simply already in place. A level-up shows the full rod above the new one, with "Level N!" in felt. The rod is an image labelled "N of 10 cubes". On a phone the end-card rod stretches across the card, up to 30 px per cube.
+
+### Stickers
+Round tray discs with an ink outline, drawn in the maths-picture family: counters, cubes, ten-frames and number lines for maths stickers, and a cube-blue star for the first game. Counter red and yellow are only for maths stickers. They are 72 px on the end card (at most three, then "+N more") with the label underneath at 22 px, and 36 px on the child page, followed by the label, the reason and the date.
+
+### Week Dots
+Seven counters for Sunday to Saturday: 28 px on the end card, 14 px on the picker. A played day is counter yellow with an ink border, and a day not played yet is tray with a faint ink border. The row is an image labelled "Played N days this week". On the end card the week line ("2 more days for your week goal", "Week goal done!") sits underneath.
+
 ### The Felt Board (signature)
 Felt with a two-layer radial-dot nap, an 8 px felt-deep frame, a 24 px radius and the board-well inset shadow. It holds the chalk-line maths picture and the 28 px prompt underneath.
 
@@ -320,9 +345,11 @@ Felt with a two-layer radial-dot nap, an 8 px felt-deep frame, a 24 px radius an
 - **Do** show focus as a 3 px solid outline: chalk on felt, ink on tray, Link Blue on paper.
 - **Do** wrap every animation in a `prefers-reduced-motion` fallback (a still state, not just "no animation" when the state carries meaning).
 - **Do** keep text contrast at 4.5:1 or above. Check any new pairing; chalk on felt is 5.75:1.
+- **Do** word rewards as what was earned or what comes next ("+75", "Level 2!", "2 more days for your week goal"). Rewards copy never says "lose", "lost", "miss", "break" or "broke", never urges playing more right now, and uses the nickname instead of a gendered pronoun.
 
 ### Don't:
 - **Don't** add a gamey arcade look: no glossy candy colours, coins, streak flames, confetti storms or loot-box style rewards.
+- **Don't** take a reward away or show one shrinking: stickers stay, levels and cubes only go up, and a quiet week shows empty dots, not a broken streak.
 - **Don't** add cartoon clutter: no extra mascots, background scenes or decorative illustrations next to the board. Nova is the only character.
 - **Don't** use counter red to mark a wrong answer, or use counter colours as decoration.
 - **Don't** introduce a second green, gradients, glassmorphism, or soft blurred drop shadows as affordances.

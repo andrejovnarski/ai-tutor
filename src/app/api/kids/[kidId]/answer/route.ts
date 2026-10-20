@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { playAnswer } from "@/server/play";
-import { badRequest, forKid, MAX_INT, nicknameOrNull, notFound, novaSpeak, parentRepo, seed, tryAgain } from "@/server/playApi";
+import { badRequest, forKid, MAX_INT, nicknameOrNull, notFound, novaSpeak, parentRepo, seed, tryAgain, withRewards } from "@/server/playApi";
 
 export async function POST(req: Request, { params }: { params: Promise<{ kidId: string }> }) {
   const { kidId } = await params;
@@ -28,12 +28,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ kidId: 
   if (r.status === 404) return notFound();
   if (r.status === 409) {
     return NextResponse.json(
-      { version: r.version, turn: r.turn, ...(r.line ? { line: forKid(r.line, nickname, kidId) } : {}) }, { status: 409 });
+      { version: r.version, turn: await withRewards(r.turn, repo.client, kidId), ...(r.line ? { line: forKid(r.line, nickname, kidId) } : {}) }, { status: 409 });
   }
   // Only what the screen needs: no engine logs.
   const { result, then, style, reveal, mastered } = r.feedback;
   return NextResponse.json({
-    version: r.version, feedback: { result, then, style, reveal, mastered }, next: r.next,
+    version: r.version, feedback: { result, then, style, reveal, mastered }, next: await withRewards(r.next, repo.client, kidId),
     line: forKid(r.line, nickname, kidId), ...(r.nextLine ? { nextLine: forKid(r.nextLine, nickname, kidId) } : {}),
     ...(r.revealed !== undefined ? { revealed: r.revealed } : {}),
   });

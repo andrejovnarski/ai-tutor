@@ -1,5 +1,6 @@
 import type { Mail } from "../email/mailer";
 import type { MistakeTag } from "../../domain/types";
+import { gained, type Progress } from "../../domain/rewards/progress";
 import { DEFAULT_TIP, TAG_LABEL, TIP_FOR_TAG } from "./tips";
 
 export { DEFAULT_TIP, TAG_LABEL, TIP_FOR_TAG };
@@ -11,12 +12,26 @@ export type KidWeek = {
   mastered: string[]; // skill names
   currentSkill: string | null; // skill name
   stuck: string[]; // tag labels
+  rewards?: string; // one sentence from rewardsLine
 };
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** One sentence about what the child earned this week, or null when there is nothing to say. */
+export function rewardsLine(nickname: string, before: Progress, after: Progress): string | null {
+  const g = gained(before, after);
+  const parts: string[] = [];
+  if (after.level > before.level) parts.push(`reached level ${after.level}`);
+  if (g.newStickers.length > 0) parts.push(`earned ${plural(g.newStickers.length, "sticker", "stickers")}`);
+  if (after.weekStreak >= 1) parts.push(`met the week goal ${plural(after.weekStreak, "week", "weeks")} in a row`);
+  if (parts.length === 0) return null;
+  const last = parts.pop()!;
+  const joined = parts.length === 0 ? last : parts.length === 1 ? `${parts[0]} and ${last}` : `${parts.join(", ")}, and ${last}`;
+  return `${nickname} ${joined}.`;
+}
 
 /** Lines for one kid, shared by the text and HTML versions. */
 function kidLines(k: KidWeek): string[] {
@@ -26,6 +41,7 @@ function kidLines(k: KidWeek): string[] {
     `Mastered this week: ${k.mastered.length ? k.mastered.join(", ") : "nothing new yet"}`,
     `Working on now: ${k.currentSkill ?? "everything so far is mastered"}`,
     `Stuck points: ${k.stuck.length ? k.stuck.join("; ") : "none this week"}`,
+    ...(k.rewards ? [k.rewards] : []),
   ];
 }
 

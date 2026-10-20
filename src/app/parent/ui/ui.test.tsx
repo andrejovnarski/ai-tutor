@@ -2,11 +2,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { vi } from "vitest";
+import type { Progress } from "@/domain/rewards/progress";
+import { RewardsSection, stickerReason } from "./RewardsSection";
 import { Cubes } from "./Cubes";
 import { GrownupFrame } from "./GrownupFrame";
 import { IndexCard } from "./IndexCard";
 import { PinField } from "./PinField";
 
+vi.mock("server-only", () => ({}));
 vi.mock("next/font/google", () => ({ Atkinson_Hyperlegible: () => ({ variable: "atk" }) }));
 
 it("Cubes labels itself and fills the right count", () => {
@@ -46,4 +49,37 @@ it("strip focus ring is chalk, sticky tilts, record lists wrap long text, bare a
   expect(css).toMatch(/\.sticky\s*\{[^}]*transform: rotate\(-1\.2deg\)/);
   expect(css).toMatch(/\.recordList li\s*\{[^}]*overflow-wrap: anywhere/);
   expect(css).toMatch(/\.bareHead \.novaAntenna\s*\{[^}]*var\(--felt-deep\)/);
+});
+
+const prog = (over: Partial<Progress>): Progress => ({ xp: 620, level: 2, cubesInRod: 2, week: [], weekStreak: 0, goalWeeks: [], stickers: [], ...over } as Progress);
+
+describe("RewardsSection", () => {
+  it("shows streak, stickers with plain words and New York dates", () => {
+    const html = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({
+      weekStreak: 4,
+      stickers: [{ id: "first-game", at: Date.UTC(2026, 9, 5, 15) }, { id: "weeks:4", at: Date.UTC(2026, 9, 18, 3) }, { id: "nope", at: 0 }],
+    })} />);
+    expect(html).toContain("Rewards"); expect(html).toContain("Level 2");
+    expect(html).toContain("Week goal met 4 weeks in a row");
+    expect(html).toContain("first finished game, Oct 5");
+    expect(html).toContain("week goal met 4 times, Oct 17");
+    expect(html.match(/<li /g)).toHaveLength(2);
+  });
+  it("says 1 time, not 1 times", () => {
+    const html = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({ stickers: [{ id: "weeks:1", at: Date.UTC(2026, 9, 5, 15) }] })} />);
+    expect(html).toContain("week goal met 1 time,");
+  });
+  it("kept-trying stickers count tricky problems, 1 without a plural", () => {
+    const html = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({
+      stickers: [{ id: "tries:10", at: Date.UTC(2026, 9, 5, 15) }],
+    })} />);
+    expect(html).toContain("kept going on 10 tricky problems, Oct 5");
+    expect(html).not.toContain("tried again");
+    expect(stickerReason({ id: "tries:1", kind: "tries", label: "", art: "pencil" })).toBe("kept going on 1 tricky problem");
+  });
+  it("streak 0 and 1 and empty chart", () => {
+    const zero = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({})} />);
+    expect(zero).toContain("Week goal: 3 days a week"); expect(zero).toContain("No stickers yet. They show up as Mia plays.");
+    expect(renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({ weekStreak: 1 })} />)).toContain("Week goal met 1 week in a row");
+  });
 });

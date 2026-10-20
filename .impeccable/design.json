@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-19T01:29:10.467Z",
+  "generatedAt": "2026-10-19T02:20:58.669Z",
   "title": "Design System: Brightling AI",
   "extensions": {
     "colorMeta": {
@@ -425,6 +425,30 @@
       "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-paper{background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px;padding:24px}.ds-card{display:block;position:relative;max-width:360px;padding:12px 16px 12px 26px;background:#fff;border:1px solid var(--grid);border-radius:6px;box-shadow:0 1px 0 rgba(30,43,40,.15);color:var(--ink);text-decoration:none}.ds-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:10px;border-radius:6px 0 0 6px;background:var(--felt)}.ds-card:focus-visible{outline:3px solid var(--link);outline-offset:2px}.ds-name{display:block;font-family:Andika,sans-serif;font-weight:700;font-size:21px;margin-bottom:6px}.ds-cubes{display:inline-flex;gap:3px}.ds-cube{width:16px;height:16px;border:2px solid var(--ink);border-radius:3px;background:#fff;box-sizing:border-box}.ds-cube.on{background:var(--cube-blue)}"
     },
     {
+      "name": "Rewards Rod",
+      "kind": "custom",
+      "refersTo": "rewards-rod",
+      "description": "One level as a rod of ten maths cubes: earned cubes cube blue, new ones drop in (still under reduced motion).",
+      "html": "<span class=\"ds-rod\" role=\"img\" aria-label=\"3 of 10 cubes\"><i class=\"ds-rc on\"></i><i class=\"ds-rc on\"></i><i class=\"ds-rc on new\"></i><i class=\"ds-rc\"></i><i class=\"ds-rc\"></i><i class=\"ds-rc\"></i><i class=\"ds-rc\"></i><i class=\"ds-rc\"></i><i class=\"ds-rc\"></i><i class=\"ds-rc\"></i></span>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-rod{display:inline-flex;gap:3px;padding:16px;background:var(--tray)}.ds-rc{width:30px;height:30px;box-sizing:border-box;border:2px solid var(--ink);border-radius:3px;background:var(--tray)}.ds-rc.on{background:var(--cube-blue)}.ds-rc.new{animation:ds-drop 360ms cubic-bezier(.16,1,.3,1) both}@keyframes ds-drop{from{transform:translateY(-32px);opacity:0}40%{opacity:1}to{transform:none;opacity:1}}@media (prefers-reduced-motion:reduce){.ds-rc.new{animation:none}}"
+    },
+    {
+      "name": "Sticker",
+      "kind": "custom",
+      "refersTo": "sticker",
+      "description": "A round tray sticker with an ink outline and a maths-picture drawing, label underneath.",
+      "html": "<span class=\"ds-sticker\"><svg width=\"72\" height=\"72\" viewBox=\"0 0 100 100\"><circle cx=\"50\" cy=\"50\" r=\"46\" fill=\"#fbfaf5\" stroke=\"#1e2b28\" stroke-width=\"4\"/><circle cx=\"50\" cy=\"35\" r=\"13\" fill=\"#e4413b\" stroke=\"#23544a\" stroke-width=\"2.5\"/><circle cx=\"34\" cy=\"62\" r=\"13\" fill=\"#f6c531\" stroke=\"#23544a\" stroke-width=\"2.5\"/><circle cx=\"66\" cy=\"62\" r=\"13\" fill=\"#e4413b\" stroke=\"#23544a\" stroke-width=\"2.5\"/></svg><span>Count to 10</span></span>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-sticker{display:inline-flex;flex-direction:column;align-items:center;gap:4px;width:112px;padding:16px;background:var(--tray);color:var(--ink);font-family:Andika,system-ui,sans-serif;font-size:22px;line-height:1.3;text-align:center}"
+    },
+    {
+      "name": "Week Dots",
+      "kind": "custom",
+      "refersTo": "week-dots",
+      "description": "Sunday to Saturday as seven counters; a played day is counter yellow.",
+      "html": "<span class=\"ds-week\" role=\"img\" aria-label=\"Played 2 days this week\"><i class=\"ds-day on\"></i><i class=\"ds-day\"></i><i class=\"ds-day on\"></i><i class=\"ds-day\"></i><i class=\"ds-day\"></i><i class=\"ds-day\"></i><i class=\"ds-day\"></i></span>",
+      "css": ":host{--felt:#2e6b5e;--felt-deep:#23544a;--chalk:#f4f7f2;--tray:#fbfaf5;--ink:#1e2b28;--counter-red:#e4413b;--counter-yellow:#f6c531;--cube-blue:#3b7dd8;--paper:#f6f8f5;--grid:#dbe6ee;--link:#2a64b8;--danger:#c3332d;}.ds-week{display:inline-flex;gap:8px;padding:16px;background:var(--tray)}.ds-day{width:28px;height:28px;box-sizing:border-box;border:2px solid rgb(30 43 40/.55);border-radius:50%;background:var(--tray)}.ds-day.on{border-color:var(--ink);background:var(--counter-yellow)}"
+    },
+    {
       "name": "Grown-up Strip",
       "kind": "nav",
       "refersTo": "grownup-strip",
@@ -488,10 +512,12 @@
       "**Do** set kid-readable text at 22 px or larger in Andika, and keep grown-up body text at 17 px Atkinson Hyperlegible, with lines under 70 characters.",
       "**Do** show focus as a 3 px solid outline: chalk on felt, ink on tray, Link Blue on paper.",
       "**Do** wrap every animation in a `prefers-reduced-motion` fallback (a still state, not just \"no animation\" when the state carries meaning).",
-      "**Do** keep text contrast at 4.5:1 or above. Check any new pairing; chalk on felt is 5.75:1."
+      "**Do** keep text contrast at 4.5:1 or above. Check any new pairing; chalk on felt is 5.75:1.",
+      "**Do** word rewards as what was earned or what comes next (\"+75\", \"Level 2!\", \"2 more days for your week goal\"). Rewards copy never says \"lose\", \"lost\", \"miss\", \"break\" or \"broke\", never urges playing more right now, and uses the nickname instead of a gendered pronoun."
     ],
     "donts": [
       "**Don't** add a gamey arcade look: no glossy candy colours, coins, streak flames, confetti storms or loot-box style rewards.",
+      "**Don't** take a reward away or show one shrinking: stickers stay, levels and cubes only go up, and a quiet week shows empty dots, not a broken streak.",
       "**Don't** add cartoon clutter: no extra mascots, background scenes or decorative illustrations next to the board. Nova is the only character.",
       "**Don't** use counter red to mark a wrong answer, or use counter colours as decoration.",
       "**Don't** introduce a second green, gradients, glassmorphism, or soft blurred drop shadows as affordances.",

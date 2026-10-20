@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import { requireParent } from "@/server/parentGate";
 import { kidWeek } from "@/server/parentSummary";
+import { kidProgress } from "@/server/rewards";
 import { kidRecord } from "@/server/kidRecord";
 import { exportKid } from "@/server/rights";
 import { faceOf } from "../../../avatars";
 import { gradeName } from "../../../grades";
 import { GrownupFrame } from "../../ui/GrownupFrame";
+import { RewardsSection } from "../../ui/RewardsSection";
 import styles from "../../ui/grownup.module.css";
 import { deleteKidAction } from "./actions";
 import { WeekSummary } from "./WeekSummary";
@@ -23,7 +25,7 @@ export default async function KidPage({
   const data = await exportKid(supabase, kidId);
   if (!data) notFound();
   const { kid } = data;
-  const week = await kidWeek(supabase, kidId, new Date());
+  const [week, progress] = await Promise.all([kidWeek(supabase, kidId, new Date()), kidProgress(supabase, kidId, Date.now())]);
   const record = kidRecord(data);
   return (
     <GrownupFrame back={{ href: "/parent", label: "Your kids" }}>
@@ -33,6 +35,7 @@ export default async function KidPage({
       </h1>
       <p className={styles.quiet}>{gradeName(kid.grade)}</p>
       {week && <WeekSummary nickname={kid.nickname} week={week.week} playedDays={week.playedDays} />}
+      {progress && <RewardsSection nickname={kid.nickname} progress={progress} />}
       <section className={styles.section}>
         <h2>Progress</h2>
         {record.skills.length === 0 ? (
