@@ -42,33 +42,7 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T17 — Fill the frame: e2e and kid-shots
-- **Branch:** `codex/fill-frame` (T16 committed; you are on it)
-- **Goal:** browser tests prove the fill frame works by touch and keyboard, resets on retry, and fits every kid
-  screen size with ≥ 48 px cells at tablet.
-- **Context:** plan `docs/superpowers/plans/2026-10-20-fill-the-frame.md` **Task 2**; spec
-  `docs/superpowers/specs/2026-10-20-fill-the-frame-design.md`. Patterns: `tests/e2e/play.spec.ts` (~line 157:
-  seeding `skill_state` with `admin()`, reading `state.pending` to know the answer and `templateId`),
-  `tests/e2e/recall.spec.ts` (seeding with `check_due` year 9999 so no recall interferes),
-  `tests/e2e/kid-shots.spec.ts` (`SIZES`, `SLACK` clipping guard). The frame grid has `data-frame="true"`;
-  added counters `data-counter="added"`; empty cells `data-empty="true"`.
-- **Do:**
-  1. `tests/e2e/fill-frame.spec.ts` per plan Task 2 Step 1. Seed every skill before `add-within-10.make-ten`
-     in curriculum order as mastered (`check_due` year 9999), so Make 10 is the frontier. It has two templates
-     (`make-ten-frame`, `make-ten-bond`); answer right until `state.pending.templateId === "make-ten-frame"`
-     (cap the loop, fail clearly).
-  2. kid-shots per plan Task 2 Step 2: a Make 10 frame screen with 3 added counters at every `SIZES` entry;
-     cell button boxes ≥ 48 × 48 at the tablet size; frame grid, `Start over` and the answer tiles inside the
-     viewport (use the existing SLACK guard style).
-- **Don't:** no app code changes. Don't remove or weaken tests (rule 9). You can't run e2e — write carefully;
-  Claude runs it.
-- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count.
-
-#### Codex report — round 2
-- Files changed: `tests/e2e/helpers.ts`, `tests/e2e/fill-frame.spec.ts`, `tests/e2e/kid-shots.spec.ts`, `docs/codex/HANDOFF.md`. No app code changes.
-- Test results: `npm run typecheck` → `tsc --noEmit` (exit 0); `npm test` → `Test Files  83 passed (83)`, `Tests  1382 passed (1382)`. E2e and db tests not run. No git writes; port 3000 untouched.
-- Choices I made: Replaced both template-search loops with shared `forcePending`, using the kid's age band and `adaptInput(generate(...))`. Only `state.pending` is replaced; the remaining state and session version are preserved, followed by reload and a board visibility check. Fixed seed `0` at level 1 produces answer `4`; both callers assert answer ≥ 4. Kept the other interaction, retry, screenshot, tablet cell-size and clipping assertions, along with the frontier seeding.
-- Open questions: None. Claude still needs to run the browser tests.
+_None — waiting for the next task._
 
 <!-- Template:
 ### T1 — <title>
