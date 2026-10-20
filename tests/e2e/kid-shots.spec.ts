@@ -3,8 +3,9 @@
 // picker cards their level, rod and week.
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { SKILLS } from "../../src/domain/curriculum/index";
 import { admin } from "../helpers/admin";
-import { consent, hideDevBadge, signIn, unique } from "./helpers";
+import { consent, forcePending, hideDevBadge, signIn, unique } from "./helpers";
 
 const SIZES = [
   { name: "landscape", width: 1024, height: 768 },
@@ -196,5 +197,77 @@ for (const size of SIZES) {
         await shot(`8-${name.toLowerCase()}-pad`);
       }
     }
+
+    // A fresh placed kid keeps the existing placement and end-card screenshots intact.
+    await page.goto("/");
+    const { data: family, error: familyError } = await admin().from("kids").select("parent_id").eq("id", ids.Mia!).single();
+    if (familyError) throw familyError;
+    const { data: frameKid, error: frameKidError } = await admin().from("kids").insert({
+      parent_id: family!.parent_id, nickname: "Finn", grade: "K", age_band: "5-7", avatar: "fox",
+    }).select("id").single();
+    if (frameKidError) throw frameKidError;
+    const kidId = frameKid!.id as string;
+    const db = admin();
+    const { error: placedError } = await db.from("kids").update({ placed: true }).eq("id", kidId);
+    if (placedError) throw placedError;
+    const frontier = SKILLS.findIndex((skill) => skill.id === "add-within-10.make-ten");
+    expect(frontier, "Make 10 exists in curriculum order").toBeGreaterThan(0);
+    const { error: seedError } = await db.from("skill_state").insert(SKILLS.slice(0, frontier).map((skill) => ({
+      kid_id: kidId, skill_id: skill.id, p_known: 0.99, attempts: 10, level: 1,
+      correct_streak: 5, wrong_streak: 0, placed: false, recent_tags: [],
+      mastered_at: new Date().toISOString(), check_due: new Date(Date.UTC(9999, 0, 1)).toISOString(),
+    })));
+    if (seedError) throw seedError;
+
+    await page.goto(`/play/${kidId}`);
+    await expect(page.getByTestId("say")).toBeVisible();
+    const current = await forcePending(page, kidId, {
+      templateId: "make-ten-frame", skillId: "add-within-10.make-ten", seed: 0, level: 1,
+    });
+    expect(current.templateId).toBe("make-ten-frame");
+    expect(current.problem.answer, "fixed frame seed has at least four empty cells").toBeGreaterThanOrEqual(4);
+    expect(current.problem.answer, "at least three empty cells for screenshots").toBeGreaterThanOrEqual(3);
+    await expect(page.locator("main")).not.toHaveAttribute("data-hold", "true");
+    const frame = page.locator('[data-frame="true"]');
+    const empty = frame.getByRole("button", { name: "Empty space, add a counter", exact: true });
+    // Measure before adding: a frame with exactly three spaces has no empty buttons afterwards.
+    if (size.name === "landscape") {
+      expect(await empty.count()).toBeGreaterThanOrEqual(3);
+      for (const cell of await empty.all()) {
+        const box = await cell.boundingBox();
+        expect(box, "tablet cell has a box").not.toBeNull();
+        expect.soft(box!.width, "tablet cell width").toBeGreaterThanOrEqual(48);
+        expect.soft(box!.height, "tablet cell height").toBeGreaterThanOrEqual(48);
+      }
+    }
+    for (let i = 0; i < 3; i++) await empty.last().click();
+    await expect(frame.locator('[data-counter="added"]')).toHaveCount(3);
+    const reset = page.getByRole("button", { name: "Start over", exact: true });
+    await expect(reset).toBeVisible();
+    const SLACK = 6;
+    for (const [name, controls] of [
+      ["frame", frame], ["Start over", reset], ["answer tile", page.getByTestId("choices").getByRole("button")],
+    ] as const) {
+      expect(await controls.count(), `${size.name} ${name} exists`).toBeGreaterThan(0);
+      for (const control of await controls.all()) {
+        await expect(control).toBeVisible();
+        // Intersect viewport with every ancestor, including overflow-hidden board/tray containers.
+        const clipping = await control.evaluate((el) => {
+          const box = el.getBoundingClientRect();
+          let left = 0, top = 0, right = innerWidth, bottom = innerHeight;
+          for (let node = el.parentElement; node; node = node.parentElement) {
+            const style = getComputedStyle(node);
+            const rect = node.getBoundingClientRect();
+            if (style.overflowX !== "visible") { left = Math.max(left, rect.left); right = Math.min(right, rect.right); }
+            if (style.overflowY !== "visible") { top = Math.max(top, rect.top); bottom = Math.min(bottom, rect.bottom); }
+          }
+          return { x: Math.max(0, left - box.left, box.right - right, el.scrollWidth - el.clientWidth),
+            y: Math.max(0, top - box.top, box.bottom - bottom, el.scrollHeight - el.clientHeight) };
+        });
+        expect.soft(clipping.x, `${size.name} ${name} clips horizontally`).toBeLessThanOrEqual(SLACK);
+        expect.soft(clipping.y, `${size.name} ${name} clips vertically`).toBeLessThanOrEqual(SLACK);
+      }
+    }
+    await shot("9-fill-frame");
   });
 }

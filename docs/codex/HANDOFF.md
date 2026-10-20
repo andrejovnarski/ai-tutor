@@ -42,27 +42,33 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T16 — Fill the frame: flag and interactive ten-frame
-- **Branch:** `codex/fill-frame` (Claude made it; you are on it)
-- **Goal:** on "Make 10" frame problems the child can tap empty cells to add counters (undo, start over) as a
-  counting tool; answering with tiles is unchanged.
-- **Context:** spec `docs/superpowers/specs/2026-10-20-fill-the-frame-design.md`; plan
-  `docs/superpowers/plans/2026-10-20-fill-the-frame.md` **Task 1** — read both, plus `DESIGN.md` for the colour
-  token and button look. Files: `src/domain/types.ts`, `src/domain/curriculum/add-within-10.ts`,
-  `src/app/play/visuals/{TenFrames,Visual}.tsx`, `src/app/play/{Board,PlayScreen}.tsx`,
-  `src/app/play/{tokens.css,play.module.css}`.
-- **Do:** plan Task 1 Steps 1–4 (tests first, watch them fail, then implement). Exact accessible names and
-  interfaces from the plan. Cover Review Focus 1, 2, 3, 5.
-- **Don't:** no engine/grading/API/database/tutor change; don't show any count; don't save/log/send taps
-  (COPPA); no e2e (that is T17). Don't remove or weaken tests (rule 9) — if an existing visual/render test
-  breaks, stop and ask.
+### T17 — Fill the frame: e2e and kid-shots
+- **Branch:** `codex/fill-frame` (T16 committed; you are on it)
+- **Goal:** browser tests prove the fill frame works by touch and keyboard, resets on retry, and fits every kid
+  screen size with ≥ 48 px cells at tablet.
+- **Context:** plan `docs/superpowers/plans/2026-10-20-fill-the-frame.md` **Task 2**; spec
+  `docs/superpowers/specs/2026-10-20-fill-the-frame-design.md`. Patterns: `tests/e2e/play.spec.ts` (~line 157:
+  seeding `skill_state` with `admin()`, reading `state.pending` to know the answer and `templateId`),
+  `tests/e2e/recall.spec.ts` (seeding with `check_due` year 9999 so no recall interferes),
+  `tests/e2e/kid-shots.spec.ts` (`SIZES`, `SLACK` clipping guard). The frame grid has `data-frame="true"`;
+  added counters `data-counter="added"`; empty cells `data-empty="true"`.
+- **Do:**
+  1. `tests/e2e/fill-frame.spec.ts` per plan Task 2 Step 1. Seed every skill before `add-within-10.make-ten`
+     in curriculum order as mastered (`check_due` year 9999), so Make 10 is the frontier. It has two templates
+     (`make-ten-frame`, `make-ten-bond`); answer right until `state.pending.templateId === "make-ten-frame"`
+     (cap the loop, fail clearly).
+  2. kid-shots per plan Task 2 Step 2: a Make 10 frame screen with 3 added counters at every `SIZES` entry;
+     cell button boxes ≥ 48 × 48 at the tablet size; frame grid, `Start over` and the answer tiles inside the
+     viewport (use the existing SLACK guard style).
+- **Don't:** no app code changes. Don't remove or weaken tests (rule 9). You can't run e2e — write carefully;
+  Claude runs it.
 - **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count.
 
-#### Codex report
-- Files changed: `src/domain/types.ts`, `src/domain/curriculum/add-within-10.ts`, `src/domain/curriculum/add-within-10.test.ts`, `src/app/play/visuals/TenFrames.tsx`, new `src/app/play/visuals/TenFrames.test.tsx`, `src/app/play/visuals/Visual.tsx`, `src/app/play/Board.tsx`, `src/app/play/PlayScreen.tsx`, `src/app/play/tokens.css`, `src/app/play/play.module.css`, and this report.
-- Test results: tests first demonstrated 6 expected failures; final `npm run typecheck` → `tsc --noEmit` (exit 0); final `npm test` → `Test Files 83 passed (83)`, `Tests 1382 passed (1382)`. Covers ordered additions, undo, clearing, locking, full-frame focus, retry reset, changed-frame reset, passive visuals, and template flags. No git writes, port 3000 activity, db tests, or e2e tests.
-- Choices I made: native HTML grid buttons for the interactive frame; existing SVG rendering retained for passive frames. Added counters use blue (`--counter-added: #3b7dd8`); reserved reset-button space avoids layout shifts. Used a Node-only hook/render harness following `usePlay.test.tsx`, without new dependencies. Per Claude's explicit ruling, strengthened the existing make-ten-frame exact-object assertion to also require `fill: true`, preserving every other field and check. Taps remain local React state with no count display or persistence.
-- Open questions: none. Browser hit-area and clipping checks remain T17, as planned.
+#### Codex report — round 2
+- Files changed: `tests/e2e/helpers.ts`, `tests/e2e/fill-frame.spec.ts`, `tests/e2e/kid-shots.spec.ts`, `docs/codex/HANDOFF.md`. No app code changes.
+- Test results: `npm run typecheck` → `tsc --noEmit` (exit 0); `npm test` → `Test Files  83 passed (83)`, `Tests  1382 passed (1382)`. E2e and db tests not run. No git writes; port 3000 untouched.
+- Choices I made: Replaced both template-search loops with shared `forcePending`, using the kid's age band and `adaptInput(generate(...))`. Only `state.pending` is replaced; the remaining state and session version are preserved, followed by reload and a board visibility check. Fixed seed `0` at level 1 produces answer `4`; both callers assert answer ≥ 4. Kept the other interaction, retry, screenshot, tablet cell-size and clipping assertions, along with the frontier seeding.
+- Open questions: None. Claude still needs to run the browser tests.
 
 <!-- Template:
 ### T1 — <title>
@@ -100,3 +106,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T14 — Recall checks: migration, rows, parent words | `codex/recall-checks` | (this commit) | First try. Claude fixes: `coalesce(check_step,0)` in save_step (old payloads), testkit not-due date → year 9999 (Postgres range), null mastered_at guard, "recall" in download mode list. unit 1373, db 135, e2e 64 |
 | T15 — Recall checks: e2e | `codex/recall-checks` | (this commit) | First try; passed on first run. e2e 65 |
 | T16 — Fill the frame: flag + interactive ten-frame | `codex/fill-frame` | (this commit) | Stopped once to ask about tightening an exact-object test (allowed: adds `fill: true`). Claude added `data-frame` marker. unit 1382, e2e 65 |
+| T17 — Fill the frame: e2e + kid-shots | `codex/fill-frame` | (this commit) | 1 fix round: template search by playing was luck (Make 10 mastered first) → `forcePending` helper writes a fixed make-ten-frame pending. e2e 66, new specs 14/14 on repeat |

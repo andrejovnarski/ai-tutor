@@ -1,5 +1,9 @@
 // Shared e2e steps. The app under test runs on :3000, which is Supabase's site_url, so mailed links are used as is.
 import { expect, type Page } from "@playwright/test";
+import { generate } from "../../src/domain/curriculum/index";
+import { adaptInput } from "../../src/domain/problems/build";
+import type { AgeBand, Level } from "../../src/domain/types";
+import type { Session } from "../../src/domain/session/types";
 import { admin, latestEmailLink } from "../helpers/admin";
 
 export const unique = (prefix = "parent") => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
@@ -85,4 +89,37 @@ export async function hideDevBadge(page: Page) {
       document.head.append(s);
     });
   });
+}
+
+/** Replaces only the open session's pending problem, preserving its state and version. */
+export async function forcePending(
+  page: Page,
+  kidId: string,
+  { templateId, skillId, seed, level }: { templateId: string; skillId: string; seed: number; level: Level },
+) {
+  const db = admin();
+  const results = await Promise.allSettled([
+    db.from("sessions").select("id, state").eq("kid_id", kidId).is("ended_at", null).single(),
+    db.from("kids").select("age_band").eq("id", kidId).single(),
+  ]);
+  for (const result of results) {
+    if (result.status === "rejected") throw result.reason;
+    if (result.value.error) throw result.value.error;
+  }
+  const [sessionResult, kidResult] = results;
+  if (sessionResult!.status !== "fulfilled" || kidResult!.status !== "fulfilled") throw new Error("Fixture reads failed");
+  const session = sessionResult.value.data!;
+  const ageBand = kidResult.value.data!.age_band as AgeBand;
+  const problem = adaptInput(generate(templateId, seed, level), ageBand);
+  const pending = {
+    skillId, templateId, seed, level, mode: "practice" as const, try: 1 as const, help: 0 as const,
+    presentedAt: Date.now(), style: null, problem, shown: true,
+  };
+  const { error } = await db.from("sessions").update({
+    state: { ...(session.state as Session), pending },
+  }).eq("id", session.id);
+  if (error) throw error;
+  await page.reload();
+  await expect(page.getByTestId("board")).toBeVisible();
+  return pending;
 }
