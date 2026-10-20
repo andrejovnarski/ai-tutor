@@ -14,6 +14,31 @@ const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&#x27;/g, "
 
 describe("EndCard", () => {
   const html = renderToStaticMarkup(<EndCard summary={{ problems: 7, firstTryCorrect: 5 }} onPlayAgain={() => {}} />);
+  it.each([
+    { today: "You practiced Big taking away with borrowing.", next: "Next time: more Big taking away with borrowing" },
+    { today: "You showed Nova what you can do!", next: null },
+    { today: null, next: "Next time: a mix of your skills" },
+    { today: null, next: null },
+    undefined,
+  ])("renders only supplied progress lines between the title and stats: %s", (progress) => {
+    const html = renderToStaticMarkup(<EndCard summary={{ problems: 7, firstTryCorrect: 5 }} progress={progress} onPlayAgain={() => {}} />);
+    for (const key of ["today", "next"] as const) {
+      const value = progress?.[key];
+      if (value == null) expect(html).not.toContain(`data-testid="progress-${key}"`);
+      else {
+        expect(html).toContain(`data-testid="progress-${key}">${value}</p>`);
+        expect(html.indexOf(value)).toBeGreaterThan(html.indexOf("</h1>"));
+        expect(html.indexOf(value)).toBeLessThan(html.indexOf("7</span>"));
+      }
+    }
+  });
+  it("passes ended state progress through the screen", () => {
+    play.state = { phase: "ended", summary: { problems: 1, firstTryCorrect: 1, minutes: 1, mastered: [] },
+      progress: { today: "You practiced Counting.", next: "Next time: more Counting" } };
+    const html = renderToStaticMarkup(<PlayScreen kidId="kid1" ageBand="5-7" />);
+    expect(html).toContain('data-testid="progress-today">You practiced Counting.</p>');
+    expect(html).toContain('data-testid="progress-next">Next time: more Counting</p>');
+  });
   it("says well done with the counts", () => {
     expect(html).toContain('data-testid="end-card"');
     expect(text(html)).toContain("Great work today!");

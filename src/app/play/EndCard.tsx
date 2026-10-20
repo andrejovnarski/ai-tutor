@@ -1,11 +1,12 @@
 import Link from "next/link";
-import type { Rewards, Summary } from "./playMachine";
+import type { EndTurn, Rewards, Summary } from "./playMachine";
 import { RewardsStrip } from "./RewardsStrip";
 import styles from "./play.module.css";
 
-export function EndCard({ summary, rewards, onPlayAgain }: {
+export function EndCard({ summary, rewards, progress, onPlayAgain }: {
   summary: Pick<Summary, "problems" | "firstTryCorrect">;
   rewards?: Rewards;
+  progress?: EndTurn["progress"];
   onPlayAgain: () => void;
 }) {
   const { problems, firstTryCorrect } = summary;
@@ -22,6 +23,12 @@ export function EndCard({ summary, rewards, onPlayAgain }: {
   return (
     <section className={styles.endCard} data-testid="end-card" aria-labelledby="end-title">
       <h1 id="end-title" className={styles.endTitle}>Great work today!</h1>
+      {(progress?.today != null || progress?.next != null) && (
+        <div className={styles.endProgress}>
+          {progress.today != null && <p className={styles.progressToday} data-testid="progress-today">{progress.today}</p>}
+          {progress.next != null && <p className={styles.progressNext} data-testid="progress-next">{progress.next}</p>}
+        </div>
+      )}
       {rewards ? (
         <div className={styles.endBody}>
           {stats}

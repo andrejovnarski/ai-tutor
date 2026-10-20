@@ -153,6 +153,15 @@ describe("playReducer", () => {
     expect(playReducer({ phase: "loading" }, { type: "loaded", body: { version: 1, turn: { kind: "end", summary } as never } }).rewards).toBeUndefined();
     expect(playReducer(base, { type: "answered", body: answered({ next: { kind: "end", summary } as never, nextLine: undefined }) }).rewards).toBeUndefined();
   });
+  it("carries progress on loaded, conflict and answered end turns", () => {
+    const summary = { problems: 1, firstTryCorrect: 1, minutes: 1, mastered: [] };
+    const progress = { today: "You practiced Counting.", next: "Next time: more Counting" };
+    const turn = { kind: "end" as const, summary, progress };
+    for (const type of ["loaded", "conflict"] as const) {
+      expect(playReducer(base, { type, body: { version: 2, turn } }).progress).toEqual(progress);
+    }
+    expect(playReducer(base, { type: "answered", body: answered({ next: turn }) }).progress).toEqual(progress);
+  });
   it("send only from problem; retrying and offline keep the turn", () => {
     expect(playReducer({ phase: "problem", version: 1 }, { type: "send" }).phase).toBe("sending");
     for (const phase of ["sending", "retrying", "offline", "loading", "ended"] as const) {

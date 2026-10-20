@@ -86,3 +86,22 @@ test("with reduced motion the rod's new cubes are already in place, with no anim
   await expect(rod.locator("[data-drop=true]").first()).toBeAttached();
   expect(await rod.evaluate((el) => el.getAnimations({ subtree: true }).length)).toBe(0);
 });
+
+test("a finished session keeps both progress lines on reload", async ({ page }) => {
+  const parentId = await setUpMia(page);
+  await finishSession(page, parentId);
+  const today = page.getByTestId("progress-today");
+  const next = page.getByTestId("progress-next");
+  await expect(today).toBeVisible();
+  await expect(next).toBeVisible();
+  const shownToday = await today.innerText();
+  const shownNext = await next.innerText();
+  expect(shownToday).toMatch(/^You .+/);
+  expect(shownNext).toMatch(/^Next time: .+/);
+
+  await page.reload();
+  await expect(today).toBeVisible();
+  await expect(next).toBeVisible();
+  await expect(today).toHaveText(shownToday);
+  await expect(next).toHaveText(shownNext);
+});

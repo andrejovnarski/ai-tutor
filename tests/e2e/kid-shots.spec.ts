@@ -65,6 +65,20 @@ for (const size of SIZES) {
       }));
       expect.soft(over.x, `${size.name} ${screen} scrolls sideways`).toBeLessThanOrEqual(0);
       if (!opts.scrolls) expect.soft(over.y, `${size.name} ${screen} scrolls down`).toBeLessThanOrEqual(0);
+      // Glyph tails can overhang by a few px; a clipped line is ~20 px or more.
+      const SLACK = 6;
+      for (const id of ["progress-today", "progress-next"]) {
+        const line = page.getByTestId(id);
+        if (!(await line.count())) continue;
+        const overflow = await line.evaluate((el) => [el.parentElement!, el].map((node) => ({
+          x: node.scrollWidth - node.clientWidth,
+          y: node.scrollHeight - node.clientHeight,
+        })));
+        for (const [index, over] of overflow.entries()) {
+          expect.soft(over.x, `${size.name} ${screen} ${id} text ${index} clips horizontally`).toBeLessThanOrEqual(SLACK);
+          expect.soft(over.y, `${size.name} ${screen} ${id} text ${index} clips vertically`).toBeLessThanOrEqual(SLACK);
+        }
+      }
       if (await page.getByTestId("say").count()) {
         const bubble = page.getByTestId("nova-line");
         // Check both the scrolling bubble and its text blocks: a full-height child can still be clipped by its parent.
@@ -73,7 +87,6 @@ for (const size of SIZES) {
           y: node.scrollHeight - node.clientHeight,
         })));
         // Glyph tails overhang the line box by a few px; a clipped line is ~20 px or more.
-        const SLACK = 6;
         for (const [index, over] of overflow.entries()) {
           expect.soft(over.x, `${size.name} ${screen} Nova text ${index} clips horizontally`).toBeLessThanOrEqual(SLACK);
           expect.soft(over.y, `${size.name} ${screen} Nova text ${index} clips vertically`).toBeLessThanOrEqual(SLACK);
@@ -128,10 +141,40 @@ for (const size of SIZES) {
     }
     await expect(card).toBeVisible();
     await expect(page.getByTestId("rewards-strip")).toBeVisible();
+    await expect(page.getByTestId("progress-today")).toBeVisible();
+    await expect(page.getByTestId("progress-next")).toBeVisible();
     // The card's area scrolls rather than cut a tall card off; at these sizes the whole card fits.
     const cardOver = await card.evaluate((el) => el.parentElement!.scrollHeight - el.parentElement!.clientHeight);
     expect.soft(cardOver, `${size.name} end card scrolls inside its area`).toBeLessThanOrEqual(0);
     await shot("6-end-card");
+
+    // Exercise the longest kid name through the real end-card rendering, keeping the earned rewards.
+    await page.route("**/api/kids/*/turn", async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      if (body.turn.kind === "end") body.turn.progress = {
+        today: "You practiced Big taking away with borrowing.",
+        next: "Next time: more Big taking away with borrowing",
+      };
+      await route.fulfill({ response, json: body });
+    });
+    await page.reload();
+    await expect(page.getByTestId("progress-today")).toHaveText("You practiced Big taking away with borrowing.");
+    await expect(page.getByTestId("progress-next")).toHaveText("Next time: more Big taking away with borrowing");
+    if (size.name === "phone") {
+      for (const id of ["progress-today", "progress-next"]) {
+        const lines = await page.getByTestId(id).evaluate((el) => {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          return range.getClientRects().length;
+        });
+        expect(lines, `${id} wraps on a phone`).toBeGreaterThan(1);
+      }
+    }
+    const longCardOver = await card.evaluate((el) => el.parentElement!.scrollHeight - el.parentElement!.clientHeight);
+    expect.soft(longCardOver, `${size.name} long-progress end card scrolls inside its area`).toBeLessThanOrEqual(0);
+    await shot("6a-end-card-long-progress");
+    await page.unroute("**/api/kids/*/turn");
 
     // Back on the picker, Mia's card shows the level her session earned.
     await page.getByRole("link", { name: "Back to kids" }).click();

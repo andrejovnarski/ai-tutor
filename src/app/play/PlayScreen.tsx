@@ -144,7 +144,7 @@ export function PlayScreen({ kidId, ageBand, speech = false, cues }: Props) {
       </header>
       {ended ? (
         <div className={styles.endArea}>
-          <EndCard summary={state.summary!} rewards={state.rewards} onPlayAgain={playAgain} />
+          <EndCard progress={state.progress} summary={state.summary!} rewards={state.rewards} onPlayAgain={playAgain} />
         </div>
       ) : (
         <>

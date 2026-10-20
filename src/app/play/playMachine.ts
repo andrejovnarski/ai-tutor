@@ -21,6 +21,7 @@ export type PlayState = {
   /** What to voice for `message` (speech on only). Set wherever `message` is set. */
   messageSpeech?: LineSpeech;
   summary?: Summary;
+  progress?: EndTurn["progress"];
   /** What the finished session earned; absent when rewards are off or could not be loaded. */
   rewards?: Rewards;
   /** 1..4 while phase is "retrying". */
@@ -64,7 +65,7 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
     case "loaded":
     case "conflict": {
       const { version, turn, line } = ev.body;
-      if (turn.kind === "end") return { phase: "ended", version, turn, summary: turn.summary, rewards: turn.rewards, line };
+      if (turn.kind === "end") return { phase: "ended", version, turn, summary: turn.summary, progress: turn.progress, rewards: turn.rewards, line };
       return { phase: "problem", version, turn, line, note: null, message: undefined, messageSpeech: undefined, correct: false };
     }
     case "answered": {
@@ -72,7 +73,7 @@ export function playReducer(state: PlayState, ev: PlayEvent): PlayState {
       const correct = b.feedback.result.kind === "correct";
       const note = revealNote(b.line.say, b.feedback.reveal, b.revealed);
       if (b.next.kind === "end") {
-        return { phase: "ended", version: b.version, turn: b.next, summary: b.next.summary, rewards: b.next.rewards, line: b.line, note, correct };
+        return { phase: "ended", version: b.version, turn: b.next, summary: b.next.summary, progress: b.next.progress, rewards: b.next.rewards, line: b.line, note, correct };
       }
       return {
         phase: "problem", version: b.version, turn: b.next,
