@@ -40,18 +40,15 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T8 — Help me, part 3: the button and e2e
-- **Branch:** `codex/help-me` (checked out; T6 + T7 committed — `/help` route and `PublicTurn.help` exist)
-- **Goal:** a calm "Help me" button on the play screen calls `/help`; the screen shows Nova's help line and the
-  teaching picture, then the worked answer, without any "wrong" styling.
-- **Read first:** spec sections "Child experience" and "Client"; `DESIGN.md`; plan
-  `docs/superpowers/plans/2026-10-20-help-me.md` — do **Task 3 (T8)** exactly, steps 1–5, with Global
-  Constraints and Review Focus items 2 and 5. The `/help` response has the same shape as `/answer` with
-  `feedback.result.kind === "helped"` (see `src/app/api/kids/[kidId]/help/route.ts`).
-- **Also write** `tests/e2e/help.spec.ts` per Step 5 (Claude runs it — you can't). Copy patterns from
-  `tests/e2e/rewards.spec.ts` / `play.spec.ts` (`setUpMia`, marking the kid placed via `admin()`).
-- **Don't:** touch `src/server` or `src/domain` (done), parent pages (T9). No new deps.
-- **Acceptance:** new unit tests pass; `npm run typecheck`, `npm test` green. Claude runs the e2e.
+### T9 — Help me, part 4: parents, download text, lawyer line
+- **Branch:** `codex/help-me` (checked out; T6–T8 committed)
+- **Goal:** parents see "Asked for help N times" per session on the child page; the data download explains
+  `helped`; the lawyer brief gets one line.
+- **Read first:** spec section "Parents"; plan `docs/superpowers/plans/2026-10-20-help-me.md` — do
+  **Task 4 (T9)** steps 1–4 exactly. Copy: `Asked for help 2 times` (and `Asked for help 1 time` for one —
+  match the plural style already used on that page); nothing shown when 0.
+- **Don't:** touch kid screens, server play code or the weekly email. No new deps.
+- **Acceptance:** new tests pass; `npm run typecheck`, `npm test` green. Claude runs db + e2e and the final review.
 
 #### Codex report
 - Files changed:
@@ -86,3 +83,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T5 — getClaims in proxy + kid play API | `codex/auth-claims` | b3ec752 | First try. Auth /user calls per e2e run ~3100 → ~600–800; e2e 62/62 twice in 1.3 min |
 | T6 — Help me: engine `help()` + sims | `codex/help-me` | c90eb59 | First try. unit 1251 green |
 | T7 — Help me: migration, `/help` route, help line | `codex/help-me` | ccfe5f4 | Stopped at out-of-scope fixture (Claude fixed). unit 1271, db 134, e2e 62 |
+| T8 — Help me button + e2e | `codex/help-me` | 0fd8693 | 2 fix rounds (48px in tray → 88px next to Nova; phone bubble clipped → own row ≤720px). e2e 63 |
