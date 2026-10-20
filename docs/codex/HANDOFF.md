@@ -42,7 +42,22 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-_None — waiting for the next task._
+### T22 — Grown-up Logbook: tokens and all pages restyled
+- **Branch:** `codex/grownup-logbook` (you are on it)
+- **Goal:** every grown-up page (sign-in, check email, privacy, consent, PIN set/unlock, your kids, add child,
+  child page, account) uses the calm Logbook look: pale sky page, white strip, white cards with thin ink border
+  and hard ink edge, orange buttons with ink text, blue links and focus rings. No felt green, no squared paper.
+- **Context:** plan `docs/superpowers/plans/2026-10-21-grownup-logbook.md` **Task 1** (read Global Constraints and
+  Review Focus); spec `docs/superpowers/specs/2026-10-21-grownup-logbook-design.md` "Look". Mockup option A in
+  `.superpowers/brainstorm/1592744-1792531617/content/grownup-look.html` (read as text). Parts:
+  `src/app/parent/ui/*`. Kid tokens already exist in `src/app/play/tokens.css`.
+- **Do:**
+  1. Failing tests first (plan Task 1 Step 1).
+  2. Add the three tokens; restyle `grownup.module.css` and the parts; drop the felt tab on the consent page's card.
+  3. Every press move / transition gets a still `prefers-reduced-motion` state.
+- **Don't:** no map, shells or sun dots yet (T23); no copy or flow changes; don't touch the weekly email or
+  sticker art; no new dependencies. Rule 9 — replacing an assertion's old token with the new one is fine, list it.
+- **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs e2e + grown-up shots.
 
 <!-- Template:
 ### T1 — <title>
