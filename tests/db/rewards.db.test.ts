@@ -38,6 +38,21 @@ describe("loadRewardRows", () => {
     expect(byEnd.at(-1)).toMatchObject({ problems: 5, lastActivity: T2 });
   });
 
+  it("returns learned skills in masteredAt and placement-known skills in placed, nothing else", async () => {
+    const base = { kid_id: kid, attempts: 0, level: 1, correct_streak: 0, wrong_streak: 0, recent_tags: [] };
+    const { error } = await admin().from("skill_state").insert([
+      { ...base, skill_id: "count-to-20.objects-to-10", p_known: 0.99, attempts: 6, placed: false },
+      { ...base, skill_id: "count-to-20.objects-to-20", p_known: 0.97, placed: true },
+      { ...base, skill_id: "count-to-20.number-after", p_known: 0.3, placed: false },
+    ]);
+    expect(error).toBeNull();
+    const { masteredAt, placed } = await loadRewardRows(a.client, kid);
+    expect(Object.keys(masteredAt)).toEqual(["count-to-20.objects-to-10"]);
+    expect(Number.isFinite(masteredAt["count-to-20.objects-to-10"])).toBe(true);
+    expect(placed).toEqual(["count-to-20.objects-to-20"]);
+    expect((await loadRewardRows(b.client, kid)).placed).toEqual([]);
+  });
+
   it("another family sees nothing (RLS)", async () => {
     expect((await loadRewardRows(b.client, kid)).sessions).toHaveLength(0);
   });

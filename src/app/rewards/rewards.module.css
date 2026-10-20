@@ -156,3 +156,39 @@
   .stickers { gap: 8px; }
   .sticker { width: auto; flex: 1 1 0; min-width: 0; max-width: 112px; }
 }
+
+/* Pocket Planet map: all geometry is still unless this particular render opts into the map moment. */
+.islandMap {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+  background: var(--pp-sea);
+  border-radius: 16px;
+  font-family: var(--font-andika), Andika, sans-serif;
+}
+.mapMini { max-width: 200px; }
+.mapFull { max-width: 600px; }
+.flagRise {
+  /* grow up from the flag's foot, not from the SVG's corner */
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flagRise 250ms ease-out var(--rise-delay, 0ms) both;
+}
+.boatSail {
+  offset-distance: 100%;
+  offset-rotate: 0deg;
+  offset-anchor: 0px 0px;
+  animation: boatSail 600ms ease-in-out var(--sail-delay, 0ms) both;
+}
+@keyframes flagRise {
+  from { transform: scaleY(0.3); }
+  to { transform: scaleY(1); }
+}
+@keyframes boatSail {
+  from { offset-distance: 0%; }
+  to { offset-distance: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flagRise, .boatSail { animation: none; }
+}

@@ -1,3 +1,4 @@
+import { islandMap } from "@/domain/rewards/map";
 import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
 import { progress, type EndRewards } from "@/domain/rewards/progress";
@@ -10,6 +11,7 @@ import { StickerArt } from "./StickerArt";
 const text = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/\s+/g, " ");
 
 const base: EndRewards = {
+  map: islandMap({}, new Set(), []),
   xp: 215, levelBefore: 3, levelAfter: 3, cubesBefore: 2, cubesAfter: 6, newStickers: [],
   week: { days: [true, true, false, false, false, false, false], played: 2, goalMet: false },
 };

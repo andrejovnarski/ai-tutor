@@ -66,6 +66,12 @@ back under the task. The owner (Andrej) has the final say on everything.
   under "Choices I made".
 - **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs `npm run test:db`.
 
+#### Codex report
+- Files changed: `src/domain/rewards/{map.ts,map.test.ts,progress.ts,progress.test.ts}`; `src/server/{rewards.ts,rewards.test.ts}`; `src/server/report/{build.test.ts,collect.test.ts}`; `src/app/rewards/{IslandMap.tsx,IslandMap.test.tsx,rewards.module.css,rewards.test.tsx}`; `src/app/play/screen.test.tsx`; `docs/codex/HANDOFF.md`.
+- Test results: failing tests first confirmed (4 files failed; 2 tests failed, 23 passed; missing modules also failed collection). Final `npm run typecheck`: `> tsc --noEmit` — exit 0, no errors. Final `npm test`: `Test Files  86 passed (86)`; `Tests  1418 passed (1418)`. DB/e2e not run, as requested.
+- Choices I made: compressed option A into 400 × 160 with room for the full-map label; finished boat rests at the last island. Flag delays shrink for large batches so rises plus sailing finish within 2 seconds; reduced motion shows final positions through CSS. Kept placement separate from mastery timestamps and weekly reward calculations, with a report regression test. Added `.or(...)` to query mocks and the required `map` field to three existing test fixtures; no assertions removed or weakened. No screen integration, git writes, network access, or port 3000 use; protected paths left untouched.
+- Open questions: none. Claude still needs to run the DB suite.
+
 <!-- Template:
 ### T1 — <title>
 - **Branch:** `codex/<slug>`
@@ -104,3 +110,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T16 — Fill the frame: flag + interactive ten-frame | `codex/fill-frame` | (this commit) | Stopped once to ask about tightening an exact-object test (allowed: adds `fill: true`). Claude added `data-frame` marker. unit 1382, e2e 65 |
 | T17 — Fill the frame: e2e + kid-shots | `codex/fill-frame` | (this commit) | 1 fix round: template search by playing was luck (Make 10 mastered first) → `forcePending` helper writes a fixed make-ten-frame pending. e2e 66, new specs 14/14 on repeat |
 | T18 — Pocket Planet: tokens, Nova, play screen | `codex/pocket-planet` | (this commit) | First try. Claude fix: ink casing on the number-line jump (yellow on sand too faint). unit 1408, e2e 66 |
+| T19 — Pocket Planet: map rules, data, IslandMap | `codex/pocket-planet` | (this commit) | First try. Claude fixes: "1 island" label, flags grow from their foot, db test for placed rows. unit 1419, db 136 |

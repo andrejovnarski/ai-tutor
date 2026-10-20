@@ -153,3 +153,17 @@ it("no finished sessions", () => {
   expect(p).toMatchObject({ xp: 0, level: 1, cubesInRod: 0, weekStreak: 0, goalWeeks: 0, stickers: [] });
   expect(p.week).toEqual({ days: [false, false, false, false, false, false, false], played: 0, goalMet: false });
 });
+
+it("maps placement without changing rewards and highlights only the latest ended session", () => {
+  const a = CLUSTERS[0]!.skills[0]!.id, b = CLUSTERS[0]!.skills[1]!.id;
+  const old = on("2026-10-12", { mastered: [a] });
+  const latest = on("2026-10-13", { mastered: [b] });
+  const open = on("2026-10-14", { endedAt: null, mastered: [a] });
+  const placed = new Set([a, b]);
+  const p = progress([latest, old, open], {}, clock, placed);
+  expect(p.map.islands[0]!.flags.slice(0, 2).map(f => [f.up, f.isNew])).toEqual([[true, false], [true, false]]);
+  const { map, ...rewards } = p;
+  const { map: unused, ...withoutPlacement } = progress([latest, old, open], {}, clock);
+  expect(rewards).toEqual(withoutPlacement);
+  expect(endRewards([latest, old, open], {}, clock, placed)!.map.islands[0]!.flags.slice(0, 2).map(f => f.isNew)).toEqual([false, true]);
+});

@@ -19,7 +19,7 @@ function fake(tables: Record<string, { data: unknown; error: unknown }>) {
   const from = vi.fn((t: string) => {
     const q: Record<string, unknown> = {};
     const chain = () => q;
-    q.select = chain; q.eq = chain; q.not = chain; q.abortSignal = chain;
+    q.select = vi.fn(chain); q.eq = chain; q.not = chain; q.or = vi.fn(chain); q.abortSignal = chain;
     q.then = (ok: (v: unknown) => unknown) => ok(tables[t]);
     return q;
   });
@@ -32,7 +32,7 @@ function hanging() {
     let signal: AbortSignal | undefined;
     const q: Record<string, unknown> = {};
     const chain = () => q;
-    q.select = chain; q.eq = chain; q.not = chain;
+    q.select = vi.fn(chain); q.eq = chain; q.not = chain; q.or = vi.fn(chain);
     q.abortSignal = (s: AbortSignal) => { signal = s; signals.push(s); return q; };
     q.then = (ok: (v: unknown) => unknown) =>
       signal?.addEventListener("abort", () => ok({ data: null, error: { message: "AbortError: aborted" } }));
@@ -149,4 +149,20 @@ describe("withRewards", () => {
       expect(t.kind === "end" && t.rewards?.xp).toBe(75);
     } finally { vi.useRealTimers(); }
   });
+});
+
+ it("reads placed-only rows without inventing mastery and passes placement to both kid rewards", async () => {
+  vi.stubEnv("REWARDS", "on");
+  const id = "count-to-20.objects-to-10";
+  const { db, from } = fake({ ...ok, skill_state: { data: [
+    { skill_id: id, mastered_at: null, placed: true },
+    { skill_id: "other", mastered_at: new Date(T).toISOString(), placed: false },
+  ], error: null } });
+  const rows = await loadRewardRows(db, KID);
+  expect(rows.placed).toEqual([id]);
+  expect(rows.masteredAt).toEqual({ other: T });
+  expect(from.mock.results[1]!.value.select).toHaveBeenCalledWith("skill_id, mastered_at, placed");
+  expect(from.mock.results[1]!.value.or).toHaveBeenCalledWith("mastered_at.not.is.null,placed.eq.true");
+  expect((await kidProgress(db, KID, T))!.map.islands[0]!.flags.find(f => f.skillId === id)?.up).toBe(true);
+  expect((await kidEndRewards(db, KID, T))!.map.islands[0]!.flags.find(f => f.skillId === id)?.up).toBe(true);
 });

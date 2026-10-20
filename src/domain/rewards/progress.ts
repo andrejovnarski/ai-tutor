@@ -1,3 +1,4 @@
+import { islandMap, type IslandMap } from "./map";
 import { CLUSTERS, SKILLS } from "../curriculum";
 import { nyDay } from "../../server/nyDay";
 import { CUBES_PER_LEVEL, GREAT_WEEKS, KEPT_TRYING, WEEK_GOAL_DAYS, XP, XP_PER_CUBE } from "./rules";
@@ -15,6 +16,7 @@ export type MasteredAt = Record<string, number>; // skillId -> ms of skill_state
 export type EarnedSticker = { id: string; at: number };
 export type Week = { days: boolean[]; played: number; goalMet: boolean }; // days[0] = Sunday
 export type Progress = {
+  map: IslandMap;
   xp: number;
   level: number;
   cubesInRod: number;
@@ -31,7 +33,7 @@ export type Gained = {
   cubesAfter: number;
   newStickers: string[];
 };
-export type EndRewards = Gained & { week: Week };
+export type EndRewards = Gained & { week: Week; map: IslandMap };
 
 const XP_PER_LEVEL = XP_PER_CUBE * CUBES_PER_LEVEL;
 const KNOWN_SKILLS = new Set(SKILLS.map((s) => s.id));
@@ -69,7 +71,7 @@ const addDays = (day: string, offset: number): string => {
 
 const sundayOf = (day: string): string => addDays(day, -weekday(day));
 
-export function progress(sessions: SessionFacts[], masteredAt: MasteredAt, now: number): Progress {
+export function progress(sessions: SessionFacts[], masteredAt: MasteredAt, now: number, placed: ReadonlySet<string> = new Set()): Progress {
   const done = sessions
     .map(finishedFacts)
     .filter((f): f is Finished => f !== null)
@@ -131,6 +133,7 @@ export function progress(sessions: SessionFacts[], masteredAt: MasteredAt, now: 
     .sort((a, b) => a.at - b.at || (CATALOGUE_ORDER.get(a.id) ?? 0) - (CATALOGUE_ORDER.get(b.id) ?? 0));
 
   return {
+    map: islandMap(masteredAt, placed, []),
     xp,
     level: 1 + Math.floor(xp / XP_PER_LEVEL),
     cubesInRod: Math.floor((xp % XP_PER_LEVEL) / XP_PER_CUBE),
@@ -154,7 +157,7 @@ export function gained(before: Progress, after: Progress): Gained {
 }
 
 /** Rewards for the latest finished session (by endedAt); null when there is none. */
-export function endRewards(sessions: SessionFacts[], masteredAt: MasteredAt, now: number): EndRewards | null {
+export function endRewards(sessions: SessionFacts[], masteredAt: MasteredAt, now: number, placed: ReadonlySet<string> = new Set()): EndRewards | null {
   let latest = -1;
   sessions.forEach((s, i) => {
     if (finishedFacts(s) === null) return;
@@ -166,7 +169,7 @@ export function endRewards(sessions: SessionFacts[], masteredAt: MasteredAt, now
   const masteredBefore = Object.fromEntries(
     Object.entries(masteredAt).filter(([, t]) => t < session.startedAt),
   );
-  const before = progress(others, masteredBefore, now);
-  const after = progress(sessions, masteredAt, now);
-  return { ...gained(before, after), week: after.week };
+  const before = progress(others, masteredBefore, now, placed);
+  const after = progress(sessions, masteredAt, now, placed);
+  return { ...gained(before, after), week: after.week, map: islandMap(masteredAt, placed, finishedFacts(session)!.mastered) };
 }

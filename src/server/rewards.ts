@@ -3,13 +3,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { endRewards, progress, type EndRewards, type MasteredAt, type Progress, type SessionFacts } from "../domain/rewards/progress";
 import { env } from "./env";
 
-export type RewardRows = { sessions: SessionFacts[]; masteredAt: MasteredAt };
+export type RewardRows = { sessions: SessionFacts[]; masteredAt: MasteredAt; placed: string[] };
 
 type SessionRow = {
   started_at: string; ended_at: string | null;
   problems: unknown; firstTryCorrect: unknown; mastered: unknown; lastActivity: unknown;
 };
-type SkillRow = { skill_id: string; mastered_at: string };
+type SkillRow = { skill_id: string; mastered_at: string | null; placed: boolean };
 
 /** Rewards are extra: a read slower than this is dropped rather than holding up the page. */
 const TIMEOUT_MS = 1500;
@@ -24,7 +24,7 @@ export async function loadRewardRows(db: SupabaseClient, kidId: string, timeoutM
       .select("started_at, ended_at, problems:state->problems, firstTryCorrect:state->firstTryCorrect, mastered:state->mastered, lastActivity:state->lastActivity")
       .eq("kid_id", kidId).not("ended_at", "is", null)
       .abortSignal(AbortSignal.timeout(timeoutMs)),
-    db.from("skill_state").select("skill_id, mastered_at").eq("kid_id", kidId).not("mastered_at", "is", null)
+    db.from("skill_state").select("skill_id, mastered_at, placed").eq("kid_id", kidId).or("mastered_at.not.is.null,placed.eq.true")
       .abortSignal(AbortSignal.timeout(timeoutMs)),
   ]);
   if (s.error) throw s.error;
@@ -40,8 +40,12 @@ export async function loadRewardRows(db: SupabaseClient, kidId: string, timeoutM
     };
   });
   const masteredAt: MasteredAt = {};
-  for (const r of (k.data ?? []) as SkillRow[]) masteredAt[r.skill_id] = Date.parse(r.mastered_at);
-  return { sessions, masteredAt };
+  const placed: string[] = [];
+  for (const r of (k.data ?? []) as SkillRow[]) {
+    if (r.mastered_at != null) masteredAt[r.skill_id] = Date.parse(r.mastered_at);
+    if (r.placed) placed.push(r.skill_id);
+  }
+  return { sessions, masteredAt, placed };
 }
 
 async function guarded<T>(
@@ -57,7 +61,7 @@ async function guarded<T>(
 }
 
 export const kidProgress = (db: SupabaseClient, kidId: string, now: number, timeoutMs?: number): Promise<Progress | null> =>
-  guarded(db, kidId, (r) => progress(r.sessions, r.masteredAt, now), timeoutMs);
+  guarded(db, kidId, (r) => progress(r.sessions, r.masteredAt, now, new Set(r.placed)), timeoutMs);
 
 export const kidEndRewards = (db: SupabaseClient, kidId: string, now: number, timeoutMs?: number): Promise<EndRewards | null> =>
-  guarded(db, kidId, (r) => endRewards(r.sessions, r.masteredAt, now), timeoutMs);
+  guarded(db, kidId, (r) => endRewards(r.sessions, r.masteredAt, now, new Set(r.placed)), timeoutMs);

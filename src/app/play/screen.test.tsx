@@ -1,3 +1,4 @@
+import { islandMap } from "@/domain/rewards/map";
 import { vi } from "vitest";
 import type { PlayState } from "./playMachine";
 import { PlayScreen } from "./PlayScreen";
@@ -60,7 +61,7 @@ describe("EndCard", () => {
     );
   });
   it("with rewards shows the strip after the counts", () => {
-    const rewards = { xp: 60, levelBefore: 1, levelAfter: 1, cubesBefore: 0, cubesAfter: 1, newStickers: ["first-game"],
+    const rewards = { map: islandMap({}, new Set(), []), xp: 60, levelBefore: 1, levelAfter: 1, cubesBefore: 0, cubesAfter: 1, newStickers: ["first-game"],
       week: { days: [false, true, false, false, false, false, false], played: 1, goalMet: false } };
     const withR = renderToStaticMarkup(<EndCard summary={{ problems: 7, firstTryCorrect: 5 }} rewards={rewards} onPlayAgain={() => {}} />);
     expect(withR).toContain('data-testid="rewards-strip"');

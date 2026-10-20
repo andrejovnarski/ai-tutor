@@ -1,3 +1,4 @@
+import { islandMap } from "@/domain/rewards/map";
 import { describe, it, expect } from "vitest";
 import { MISTAKE_TAGS } from "../../domain/types";
 import type { Progress } from "../../domain/rewards/progress";
@@ -55,7 +56,7 @@ describe("buildWeeklyReport", () => {
 });
 
 const prog = (o: Partial<Progress> & { n?: number } = {}): Progress => ({
-  xp: 0, level: 1, cubesInRod: 0, goalWeeks: 0, weekStreak: 0,
+  map: islandMap({}, new Set(), []), xp: 0, level: 1, cubesInRod: 0, goalWeeks: 0, weekStreak: 0,
   week: { days: [], played: 0, goalMet: false },
   stickers: Array.from({ length: o.n ?? 0 }, (_, i) => ({ id: `s${i}`, at: i })), ...o,
 });

@@ -80,3 +80,15 @@ describe("collectWeek (the email)", () => {
     expect(logged).not.toContain("boom");
   });
 });
+
+it("placement-only reward rows leave the weekly report unchanged", async () => {
+  vi.stubEnv("REWARDS", "on");
+  const tables = { kids: { data: [kid], error: null }, sessions: { data: [session], error: null } };
+  const baseline = await collectWeek(fake(tables).db, "parent-1", FROM, NOW);
+  const placed = await collectWeek(fake({ ...tables, skill_state: { data: [{
+    skill_id: "count-to-20.objects-to-10", placed: true, mastered_at: null,
+    p_known: 0.99, attempts: 0, level: 1, correct_streak: 0, wrong_streak: 0, recent_tags: [],
+  }], error: null } }).db, "parent-1", FROM, NOW);
+  expect(placed[0]!.rewards).toEqual(baseline[0]!.rewards);
+  expect(placed[0]!.mastered).toEqual(baseline[0]!.mastered);
+});
