@@ -40,33 +40,21 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T11 — Progress lines, part 1: counters, summary, words
-- **Branch:** `codex/progress-lines` (already checked out, from `main`; T12 follows on the same branch)
-- **Goal:** the end turn carries two kid-word lines, `progress.today` and `progress.next`.
-- **Read first:** spec `docs/superpowers/specs/2026-10-20-progress-lines-design.md` and plan
-  `docs/superpowers/plans/2026-10-20-progress-lines.md` — do **Task 1 (T11)** exactly, steps 1–5, with the
-  Global Constraints (exact copy, verbatim kidName table) and Review Focus items 1, 2, 3 and 5.
-- **Don't:** touch `src/app` (T12). Fix only type fallout elsewhere (list it under Choices). No new deps.
-- **Acceptance:** new tests pass; `npm run typecheck`, `npm test` green.
+### T12 — Progress lines, part 2: end card and e2e
+- **Branch:** `codex/progress-lines` (checked out; T11 committed — end turns carry `progress: { today, next }`)
+- **Goal:** the end card shows the two lines.
+- **Read first:** spec section "Client"; `DESIGN.md`; plan `docs/superpowers/plans/2026-10-20-progress-lines.md`
+  — do **Task 2 (T12)** steps 1–5 exactly, with Review Focus items 3 and 4.
+- **Also write** the e2e (reload keeps the lines) and the kid-shots no-clip guard for `progress-today` /
+  `progress-next` (Claude runs them — you can't). Reuse the `SLACK` pattern already in `kid-shots.spec.ts`.
+- **Don't:** touch `src/domain` or `src/server`. No new deps.
+- **Acceptance:** new unit tests pass; `npm run typecheck`, `npm test` green. Claude runs e2e and checks screenshots.
 
 #### Codex report
 - Files changed:
-  - `src/domain/types.ts`; curriculum `add-subtract-within-100.ts`, `add-subtract-within-20.ts`, `place-value.ts`, `subtract-within-10.ts`: optional kidName and all eight verbatim names.
-  - `src/domain/session/types.ts`, `engine.ts`, `engine.test.ts`; new `progressLines.ts`, `progressLines.test.ts`: counters, summary selection, exact copy, and regression coverage.
-  - `src/server/publicTurn.ts`, `publicTurn.test.ts`: end-turn progress text; summary omits today/next ids.
-  - `src/app/play/screen.test.tsx`, `src/app/api/kids/[kidId]/help/route.test.ts`: authorized fixture-only progress additions.
-  - `docs/codex/HANDOFF.md`: this report.
 - Test results:
-  - Tests written first: initial targeted run failed as expected (3 files failed; 14 tests failed, 36 passed).
-  - `npm run typecheck`: `> tsc --noEmit` — exit 0.
-  - `npm test`: `Test Files  82 passed (82)`; `Tests  1324 passed (1324)` — exit 0.
-  - `git diff --check`: clean. DB/e2e suites not run, per instructions.
 - Choices I made:
-  - Move a skill's practiced key to the end whenever served, so equal counts select the most recently served skill, including after JSON reload.
-  - Recognize completed placement-only sessions using existing count/windDown/check state; no additional persisted field or migration.
-  - Updated only the two src/app fixtures explicitly authorized in the follow-up; no application behavior/UI changes there.
-  - Left all changes uncommitted; no git writes. Pre-existing untracked `.superpowers/` left untouched.
-- Open questions: None. T12 UI work remains out of scope.
+- Open questions:
 
 <!-- Template:
 ### T1 — <title>
@@ -98,3 +86,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T8 — Help me button + e2e | `codex/help-me` | 0fd8693 | 2 fix rounds (48px in tray → 88px next to Nova; phone bubble clipped → own row ≤720px). e2e 63 |
 | T9 — Help me: parent page, download text, lawyer line | `codex/help-me` | f4a3c89 | First try. unit 1289, db 134, e2e 63. Final review: nothing serious, 2 small fixes → T10 |
 | T10 — Help me review fixes (focus, retry notice) | `codex/help-me` | 94acc5c | First try. unit 1293, e2e 63 ×2 |
+| T11 — Progress lines: counters, summary, words | `codex/progress-lines` | 9f911b0 | Asked before touching 2 out-of-scope fixtures (OK given). unit 1324, db 134 |
