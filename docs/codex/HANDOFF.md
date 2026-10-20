@@ -40,38 +40,7 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T5 — Check login locally (getClaims) in the proxy and kid play API
-- **Branch:** `codex/auth-claims` (already checked out, from `main`)
-- **Goal:** far fewer calls to the Supabase auth server. Today the proxy calls `auth.getUser()` on
-  every request (a network round trip), and each kid play API call calls it again in `parentRepo()`.
-  Under e2e that was ~1200 calls/min and the local auth container ran out of ports. Both local and
-  hosted projects use asymmetric ES256 signing keys (JWKS checked by Claude), so `auth.getClaims()`
-  verifies the JWT locally with no network call.
-- **Owner ruling:** kid play → local check; parent pages → keep `getUser()` (it catches "signed out on
-  another device" at once). Accepted risk: after a sign-out elsewhere, kid play keeps working until
-  the access token expires (≤ 1 h), only on that family's own data (RLS still applies).
-- **Context:** `src/proxy.ts` (session refresh; Supabase's own Next.js example uses `getClaims()` here —
-  keep "no code between createServerClient and the auth call"); `src/server/playApi.ts`
-  `parentRepo()` used by `src/app/api/kids/[kidId]/*/route.ts`; `src/server/parentGate.ts`
-  `requireUser()` (leave on `getUser()`). `getClaims()` returns `{ data: { claims } | null, error }`;
-  the user id is `claims.sub`. Read the installed `@supabase/supabase-js` / `@supabase/ssr` types in
-  `node_modules` for the exact shape — don't guess.
-- **Do:**
-  1. Tests first: unit tests that `parentRepo()` returns null when `getClaims()` has no claims or an
-     error, returns a repo when claims exist, and **never calls `getUser()`**. Mock the server client the
-     way existing tests in `src/server` do. Same idea for the proxy if it is unit-testable; if not, say why.
-  2. `src/proxy.ts`: `getUser()` → `getClaims()`. Update its comment.
-  3. `parentRepo()`: `getUser()` → `getClaims()`; signed out = no claims or error. Keep `touchActivity`.
-  4. Don't change `requireUser()`/`requireParent()`, `retention.ts`, report/distress code.
-- **Don't:** change cookies, RLS, sign-in flow, middleware matcher, or env vars. No new deps.
-- **Acceptance:** `npm run typecheck`, `npm test` green. Claude runs db + e2e twice and counts auth
-  `/user` calls before/after.
-
-#### Codex report
-- Files changed:
-- Test results:
-- Choices I made:
-- Open questions:
+_None — waiting for the next task._
 
 <!-- Template:
 ### T1 — <title>
@@ -97,3 +66,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T2 — Placement step cap (6 per probe) | `codex/placement-step-cap` | af8bade | 1 fix round (old sim tests assumed K kid knows ~all; ruled grade-matched). unit 1220, db 133, e2e 62 (4 flaky reruns) |
 | T3 — e2e flakes: mail wait + rewards XP seed | `codex/e2e-flakes` | db3696f | rewards.spec 20/20 repeated. Remaining flakes: journey weekly-report cron loops over all leftover local test parents and slows the server |
 | T4 — e2e deletes leftover @example.com users | `codex/e2e-flakes` | 8118237 | parents stay flat between runs. Remaining flakes: local auth container runs out of ports (`cannot assign requested address`) under ~1200 getUser calls/min |
+| T5 — getClaims in proxy + kid play API | `codex/auth-claims` | b3ec752 | First try. Auth /user calls per e2e run ~3100 → ~600–800; e2e 62/62 twice in 1.3 min |
