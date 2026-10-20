@@ -9,6 +9,7 @@ try {
 
 export default defineConfig({
   testDir: "tests/e2e",
+  globalSetup: "./tests/e2e/globalSetup.ts",
   webServer: {
     command: "npm run build && npm run start",
     port: 3000,

@@ -5,8 +5,8 @@ export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   test: {
     // Node environment; components are tested as static markup via react-dom/server.
-    include: ["src/**/*.test.{ts,tsx}"],
-    exclude: ["tests/**", "node_modules/**"],
+    include: ["src/**/*.test.{ts,tsx}", "tests/helpers/**/*.test.ts"],
+    exclude: ["node_modules/**"],
     globals: true,
   },
 });
