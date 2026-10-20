@@ -36,7 +36,7 @@ export function startSession(kid: Session["kid"], seed: number, now: number): Se
 
 const problemTurn = (p: Pending, logs: LogEntry[]): Turn => ({
   kind: "problem", problem: p.problem, skillId: p.skillId, templateId: p.templateId,
-  seed: p.seed, level: p.level, mode: p.mode, try: p.try, logs, style: p.style ?? null, // older sessions: no style key
+  seed: p.seed, level: p.level, mode: p.mode, try: p.try, help: p.help ?? 0, logs, style: p.style ?? null, // older sessions: no style key
 });
 
 /** The end-turn summary of a session that ends at `now`. */
@@ -120,9 +120,20 @@ function windDown(s: Session, now: number, deps: Deps) {
 }
 
 export function answer(s: Session, given: number, now: number): { session: Session; feedback: Feedback; writes: Writes } | null {
+  return respond(s, given, now);
+}
+
+/** Request a hint, then a worked answer, without treating the request as a submitted answer. */
+export function help(s: Session, now: number): { session: Session; feedback: Feedback; writes: Writes } | null {
+  if (s.pending?.help === 2) return null;
+  return respond(s, null, now);
+}
+
+function respond(s: Session, given: number | null, now: number): { session: Session; feedback: Feedback; writes: Writes } | null {
   const p = s.pending;
   if (!p || !p.shown || s.ended) return null;
-  const result = check(p.problem, given);
+  const helping = given === null;
+  const result = helping ? { kind: "helped" as const } : check(p.problem, given);
   const correct = result.kind === "correct";
   const attempt: Attempt = {
     kidId: s.kid.kidId, skillId: p.skillId, templateId: p.templateId, seed: p.seed, level: p.level,
@@ -133,16 +144,33 @@ export function answer(s: Session, given: number, now: number): { session: Sessi
   const feedback: Feedback = { result, then: "next", style: null, reveal: false, mastered: [], logs: [] };
   let next: Session = { ...s, lastActivity: now, lastCorrect: correct, pending: null };
 
-  if (p.mode === "placement") {
+  if (helping && p.try === 2) {
+    return {
+      session: { ...s, lastActivity: now, pending: { ...p, help: 2, shown: false } },
+      feedback: { ...feedback, then: "retry", style: p.style, reveal: true }, writes,
+    };
+  }
+
+  if (p.mode === "placement" && p.try === 1) {
     next = placementAnswer(next, correct, writes);
     const counted = { ...next, problems: next.problems + 1, firstTryCorrect: next.firstTryCorrect + (correct ? 1 : 0) };
-    return { session: counted, feedback, writes };
+    if (!helping) return { session: counted, feedback, writes };
+    next = counted;
+  } else if (p.try === 1) {
+    next = firstTry(next, p, correct, attempt.mistakeTag, now, writes, feedback);
+    if (p.mode === "check") {
+      const out = checkAnswer(next, p, correct, attempt.mistakeTag, writes, feedback);
+      if (!helping) return out;
+      return {
+        ...out,
+        session: { ...out.session, pending: { ...p, try: 2, help: 1, style: out.feedback.style, presentedAt: now, shown: false } },
+        feedback: { ...out.feedback, then: "retry", reveal: false },
+      };
+    }
+    if (!correct && p.mode === "practice") next = struggle(next, p.skillId, writes);
   }
 
   if (p.try === 1) {
-    next = firstTry(next, p, correct, result.kind === "known-mistake" ? result.tag : null, now, writes, feedback);
-    if (p.mode === "check") return checkAnswer(next, p, correct, attempt.mistakeTag, writes, feedback);
-    if (!correct && p.mode === "practice") next = struggle(next, p.skillId, writes);
     if (!correct) {
       const style = pickStyle(stepRng(next, 1), getSkill(p.skillId).styles, next.kid.styles, {
         tag: attempt.mistakeTag,
@@ -150,7 +178,7 @@ export function answer(s: Session, given: number, now: number): { session: Sessi
       });
       next = {
         ...next,
-        pending: { ...p, try: 2, style, presentedAt: now, shown: false },
+        pending: { ...p, try: 2, ...(helping ? { help: 1 as const } : {}), style, presentedAt: now, shown: false },
         lastStyle: { ...next.lastStyle, [p.skillId]: style },
         switchStyle: next.switchStyle.filter((id) => id !== p.skillId),
       };
@@ -159,7 +187,8 @@ export function answer(s: Session, given: number, now: number): { session: Sessi
     return { session: next, feedback, writes };
   }
 
-  // Second try: only the style learns from it.
+  // Second try: only the style learns, unless the child was copying Help 2.
+  if (p.help === 2) return { session: next, feedback: { ...feedback, style: p.style, reveal: !correct }, writes };
   const styles = recordStyle(next.kid.styles, p.style!, correct);
   writes.styleStats.push(styles[p.style!] as StyleStat);
   next = { ...next, kid: { ...next.kid, styles } };

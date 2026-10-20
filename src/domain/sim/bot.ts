@@ -3,11 +3,11 @@ import { getSkill } from "../curriculum/index";
 import { newKidState } from "../kid/state";
 import type { KidGrade, KidState, Mode } from "../kid/types";
 import { createRng } from "../rng";
-import { answer, nextTurn, startSession } from "../session/engine";
+import { answer, help, nextTurn, startSession } from "../session/engine";
 import type { Feedback, LogEntry, Turn } from "../session/types";
 import type { AgeBand, MistakeTag, Style } from "../types";
 
-export type BotProfile = { knows: Set<string>; slip: number; guess: number; learn: number; habit?: MistakeTag };
+export type BotProfile = { knows: Set<string>; slip: number; guess: number; learn: number; habit?: MistakeTag; stuck?: { share: number; action: "help" | "wrong" } };
 
 type ProblemTurn = Extract<Turn, { kind: "problem" }>;
 
@@ -21,7 +21,11 @@ export function makeBot(profile: BotProfile, seed: number) {
   };
   return {
     knows,
-    respond(t: ProblemTurn): number {
+    respond(t: ProblemTurn): number | "help" {
+      // A neutral wrong answer has no mistake tag, matching Help 1's learning signal.
+      if (t.try === 1 && profile.stuck && rng.chance(profile.stuck.share)) {
+        return profile.stuck.action === "help" ? "help" : t.problem.answer + 1000;
+      }
       const p = t.problem;
       if (knows.has(t.skillId)) return rng.chance(profile.slip) ? wrongAnswer(t) : p.answer;
       if (rng.chance(profile.guess) && p.choices?.length) return rng.pick(p.choices);
@@ -75,7 +79,8 @@ export function simulate(
       r.logs.push(...turn.logs);
       if (turn.try === 1) r.modes.push(turn.mode);
       now += ANSWER_MS;
-      const out = answer(s, bot.respond(turn), now)!;
+      const response = bot.respond(turn);
+      const out = (response === "help" ? help(s, now) : answer(s, response, now))!;
       s = out.session;
       answered++;
       const fb = out.feedback;

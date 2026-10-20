@@ -1,9 +1,11 @@
+import { nextTurn } from "../session/engine";
+import { fresh, placedKid, type ProblemTurn } from "../session/testkit";
 import { SKILLS } from "../curriculum/index";
 import { isMastered } from "../kid/bkt";
 import { newKidState } from "../kid/state";
 import type { KidState } from "../kid/types";
 import { createRng } from "../rng";
-import { simulate, type BotProfile } from "./bot";
+import { makeBot, simulate, type BotProfile } from "./bot";
 
 const idx = (id: string) => SKILLS.findIndex((s) => s.id === id);
 const prefix = (k: number) => new Set(SKILLS.slice(0, k).map((s) => s.id));
@@ -84,4 +86,23 @@ it("a counting habit pulls explanations toward the number line", () => {
     return styles.filter((s) => s === "number-line").length / styles.length;
   };
   expect(share("off-by-one-counting")).toBeGreaterThan(share("gave-total") + 0.2);
+});
+
+it("a bot stuck on 30% of first tries masters no more skills by asking for help than by answering wrong", () => {
+  const totals = { help: 0, wrong: 0 };
+  for (let seed = 0; seed < 10; seed++) {
+    for (const action of ["help", "wrong"] as const) {
+      const r = simulate(bot({ knows: prefix(5), learn: 0.3, slip: 0.05, guess: 0.25,
+        stuck: { share: 0.3, action } }), { grade: "K", ageBand: "5-7", seed, problems: 200 });
+      totals[action] += Object.values(r.kid.skills).filter(isMastered).length;
+    }
+  }
+  expect(totals.help).toBeLessThanOrEqual(totals.wrong);
+});
+
+it("the stuck profile requests help only on first tries", () => {
+  const turn = nextTurn(fresh(placedKid([])), 0).turn as ProblemTurn;
+  const b = makeBot(bot({ knows: prefix(30), stuck: { share: 1, action: "help" } }), 1);
+  expect(b.respond(turn)).toBe("help");
+  expect(b.respond({ ...turn, try: 2 })).toBe(turn.problem.answer);
 });

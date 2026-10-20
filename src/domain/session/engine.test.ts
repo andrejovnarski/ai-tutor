@@ -1,7 +1,8 @@
+import { recordPlacement } from "../kid/placement";
 import { getSkill } from "../curriculum/index";
 import { newKidState } from "../kid/state";
-import { answer, nextTurn, startSession, summaryOf } from "./engine";
-import { MIN, SEC, firstSkills, fresh, generate, placedKid, play, rightFor, wrongFor, type ProblemTurn } from "./testkit";
+import { answer, help, nextTurn, startSession, summaryOf } from "./engine";
+import { MIN, SEC, firstSkills, fresh, generate, placedKid, play, rightFor, setSkill, wrongFor, type ProblemTurn } from "./testkit";
 import type { Session } from "./types";
 
 const turnOf = (s: Session, now: number) => {
@@ -191,4 +192,105 @@ it("summaryOf a finished session is the summary of the end turn nextTurn gives i
     if (end.kind !== "end") throw new Error("no end");
     expect(summaryOf(session, at)).toEqual(end.summary);
   }
+});
+
+describe("Help me", () => {
+  const start = () => turnOf(fresh(placedKid(firstSkills(3))), 0);
+  const wrong = (s: Session) => answer(s, s.pending!.problem.answer + 1000, 5000)!;
+
+  it("ignores unavailable, unshown, ended and fully helped problems", () => {
+    const { s } = start();
+    for (const session of [
+      { ...s, pending: null }, { ...s, ended: true },
+      { ...s, pending: { ...s.pending!, shown: false } },
+      { ...s, pending: { ...s.pending!, help: 2 as const } },
+    ]) expect(help(session, 5000)).toBeNull();
+  });
+
+  it.each(["practice", "review", "wind-down"] as const)("Help 1 in %s is a quiet miss", (mode) => {
+    const initial = start().s;
+    const s = { ...initial, pending: { ...initial.pending!, mode } };
+    const h = help(s, 5000)!;
+    const w = wrong(s);
+    expect(h.session.kid).toEqual(w.session.kid);
+    expect(h.session).toMatchObject({ problems: 1, firstTryCorrect: 0, recent: [false], lastCorrect: false,
+      pending: { try: 2, help: 1, shown: false } });
+    expect(h.writes.attempts[0]).toMatchObject({ result: "helped", answer: null, mistakeTag: null, try: 1,
+      style: s.pending.style, timeMs: 5000 });
+    expect(h.feedback).toMatchObject({ result: { kind: "helped" }, then: "retry", reveal: false });
+    expect(getSkill(s.pending.skillId).styles).toContain(h.feedback.style);
+    expect(help(h.session, 5001)).toBeNull();
+  });
+
+  it("struggle schedules the same check, after the supported try", () => {
+    const initial = start().s;
+    const s = { ...initial, kid: setSkill(initial.kid, initial.pending!.skillId, { wrongStreak: 1 }) };
+    const h = help(s, 5000)!;
+    expect(h.session.check).not.toBeNull();
+    expect(h.session.check).toEqual(wrong(s).session.check);
+    const retry = turnOf(h.session, 6000);
+    expect(retry.t).toMatchObject({ try: 2, help: 1, mode: "practice" });
+    const a = answer(retry.s, rightFor(retry.t), 7000)!;
+    expect(turnOf(a.session, 8000).t.mode).toBe("check");
+  });
+
+  it.each([false, true])("placement miss, final item = %s; supported answer never updates placement", (last) => {
+    const initial = turnOf(fresh(newKidState("k", "5-7", "1")), 0).s;
+    const s = last ? { ...initial, placement: { ...initial.placement!, probes: 4, inProbe: 1 } } : initial;
+    const h = help(s, 5000)!;
+    expect(h.session.placement).toEqual(last ? null : recordPlacement(s.placement!, false));
+    expect(h.session.kid.placed).toBe(last);
+    expect(h.writes.kidPlaced).toBe(last ? true : undefined);
+    expect(h.session.problems).toBe(1);
+    expect(h.session.firstTryCorrect).toBe(0);
+    const retry = turnOf(h.session, 6000);
+    const a = answer(retry.s, rightFor(retry.t), 7000)!;
+    expect(a.session.placement).toEqual(h.session.placement);
+    expect(a.session.kid.skills).toEqual(h.session.kid.skills);
+    expect(a.writes.skillStates).toEqual([]);
+    expect(a.writes.kidPlaced).toBeUndefined();
+    expect(a.session.problems).toBe(1);
+  });
+
+  it.each([0, 3])("check follows wrong step-back / loop guard at %i step-backs", (stepBacksInRow) => {
+    const initial = start().s;
+    const s = { ...initial, check: { prereqId: initial.pending!.skillId, returnTo: "compare-numbers.to-10", done: 0 },
+      stepBacksInRow, pending: { ...initial.pending!, mode: "check" as const } };
+    const h = help(s, 5000)!;
+    const w = wrong(s);
+    expect({ ...h.session, pending: null }).toEqual(w.session);
+    expect(h.feedback).toMatchObject({ then: "retry", reveal: false, style: w.feedback.style, logs: w.feedback.logs });
+    expect(h.session.pending).toMatchObject({ try: 2, help: 1 });
+  });
+
+  it.each(["help", "wrong"] as const)("Help 2 after %s keeps learning unchanged, and copied answers never teach style", (first) => {
+    const s = start().s;
+    const one = first === "help" ? help(s, 5000)! : wrong(s);
+    const retry = turnOf(one.session, 6000);
+    const two = help(retry.s, 7000)!;
+    expect(two.writes.attempts[0]).toMatchObject({ result: "helped", answer: null, mistakeTag: null, try: 2 });
+    expect(two.writes.skillStates).toEqual([]);
+    expect(two.writes.styleStats).toEqual([]);
+    expect(two.session.kid).toEqual(one.session.kid);
+    expect(two.session.pending).toMatchObject({ try: 2, help: 2, shown: false, style: retry.t.style });
+    expect(two.feedback).toMatchObject({ then: "retry", reveal: true, style: retry.t.style });
+    const shown = turnOf(JSON.parse(JSON.stringify(two.session)), 8000);
+    expect(shown.t.help).toBe(2);
+    for (const correct of [true, false]) {
+      const a = answer(shown.s, shown.t.problem.answer + (correct ? 0 : 1000), 9000)!;
+      expect(a.feedback).toMatchObject({ then: "next", reveal: !correct });
+      expect(a.writes.styleStats).toEqual([]);
+      expect(a.session.kid).toEqual(two.session.kid);
+    }
+  });
+
+  it("Help 1 survives reload and its answer teaches style; legacy pending is level 0", () => {
+    const s = start().s;
+    expect(turnOf(s, 0).t.help).toBe(0);
+    const one = help(s, 5000)!;
+    const shown = turnOf(JSON.parse(JSON.stringify(one.session)), 6000);
+    expect(shown.t.help).toBe(1);
+    expect(shown.t.problem).toEqual(s.pending!.problem);
+    expect(answer(shown.s, rightFor(shown.t), 7000)!.writes.styleStats).toHaveLength(1);
+  });
 });

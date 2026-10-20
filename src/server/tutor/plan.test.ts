@@ -10,7 +10,7 @@ const problem: Problem = {
   answer: 7, input: "tap-choice", choices: [6, 7, 8], mistakes: [{ answer: 6, tag: "off-by-one-counting" }],
 };
 const turn = (mode: ProblemTurn["mode"] = "practice", p: Problem = problem): ProblemTurn => ({
-  kind: "problem", problem: p, skillId: skill.id, templateId: "t", seed: 1, level: 1, mode, try: 1, logs: [], style: null,
+  kind: "problem", problem: p, skillId: skill.id, templateId: "t", seed: 1, level: 1, mode, try: 1, help: 0, logs: [], style: null,
 });
 const fb = (o: Partial<Feedback>): Feedback => ({
   result: { kind: "correct" }, then: "next", style: null, reveal: false, mastered: [], logs: [], ...o,

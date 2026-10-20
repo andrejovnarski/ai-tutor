@@ -10,14 +10,14 @@ export type SessionSummary = { problems: number; firstTryCorrect: number; minute
 export type Turn =
   | {
     kind: "problem"; problem: Problem; skillId: string; templateId: string; seed: number;
-    level: Level; mode: Mode; try: 1 | 2; logs: LogEntry[];
+    level: Level; mode: Mode; try: 1 | 2; help: 0 | 1 | 2; logs: LogEntry[];
     /** The retry's teaching style (see Pending). */
     style: Style | null;
   }
   | { kind: "end"; summary: SessionSummary };
 
 export type Feedback = {
-  result: CheckResult;
+  result: CheckResult | { kind: "helped" };
   then: "retry" | "next";
   /** Style to explain in (before a retry, or with the reveal). */
   style: Style | null;
@@ -34,6 +34,7 @@ export type Deps = { generate: (templateId: string, seed: number, level: Level) 
 
 export type Pending = {
   skillId: string; templateId: string; seed: number; level: Level; mode: Mode;
+  help?: 0 | 1 | 2;
   try: 1 | 2; presentedAt: number; style: Style | null; problem: Problem;
   /** False between a wrong first try and nextTurn showing the retry: blocks double taps. */
   shown: boolean;

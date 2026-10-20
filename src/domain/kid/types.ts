@@ -33,8 +33,8 @@ export type Attempt = {
   templateId: string;
   seed: number;
   level: Level;
-  answer: number;
-  result: "correct" | "known-mistake" | "wrong";
+  answer: number | null;
+  result: "correct" | "known-mistake" | "wrong" | "helped";
   mistakeTag: MistakeTag | null;
   style: Style | null;
   timeMs: number;

@@ -12,7 +12,7 @@ export type SkillRow = {
 export type StyleRow = { kid_id: string; style: Style; tries: number; wins: number };
 export type AttemptRow = {
   kid_id: string; session_id: string; skill_id: string; template_id: string; seed: number; level: Level;
-  answer: number; result: Attempt["result"]; mistake_tag: MistakeTag | null; style: Style | null;
+  answer: Attempt["answer"]; result: Attempt["result"]; mistake_tag: MistakeTag | null; style: Style | null;
   time_ms: number; at: string; try: 1 | 2; mode: Attempt["mode"];
 };
 

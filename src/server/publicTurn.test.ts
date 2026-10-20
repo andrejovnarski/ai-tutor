@@ -34,7 +34,7 @@ describe("the retry board", () => {
   type ProblemTurn = Extract<Parameters<typeof publicTurn>[0], { kind: "problem" }>;
   const show = { kind: "equation", text: "3 + 4 = ?" } as const;
   const retry = (o: Partial<ProblemTurn>, sum: [number, number] | null = [3, 4]): ProblemTurn => ({
-    kind: "problem", skillId: "s", templateId: "t", seed: 1, level: 1, mode: "practice", try: 2, logs: [],
+    kind: "problem", skillId: "s", templateId: "t", seed: 1, level: 1, mode: "practice", try: 2, help: 0, logs: [],
     style: "number-line", ...o,
     problem: { prompt: { say: "What is 3 + 4?", show }, answer: 7, input: "tap-choice", choices: [6, 7, 8], mistakes: [], ...(sum && { sum }) },
   });
