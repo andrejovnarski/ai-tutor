@@ -40,30 +40,7 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T1 — Number guard reads "-es" plurals ("sixes", "zeroes")
-- **Branch:** `codex/es-plurals` (already checked out)
-- **Goal:** the tutor-line guard in `src/server/tutor/guards.ts` sees "sixes" as 6 and "zeroes" as 0
-  (also upper case, e.g. "SIXES"), so an AI line can't say the answer early by using an "-es" plural.
-- **Context:** `wordNumber()` tries `SUFFIXES = ["ths","th","st","nd","rd","s"]`. "sixes" strips "s" to
-  "sixe", which is not a number, so it is missed. Same for "zeroes" → "zeroe". Tests live in
-  `src/server/tutor/guards.test.ts` — copy the style of the existing `numbersIn` / `checkLine` plural tests.
-- **Do:**
-  1. Add failing tests first: `numbersIn("two sixes")` contains 6, `numbersIn("zeroes")` contains 0,
-     and a `checkLine` case where the answer is 6 and the line says "sixes" → rejected the same way
-     "sevens" is rejected when the answer is 7.
-  2. Run `npm test -- src/server/tutor/guards.test.ts` and confirm they fail.
-  3. Make the smallest change in `wordNumber()` so "-es" plurals are cardinals (not ordinals).
-     Keep "fives", "threes", "hundreds", "dozens", "seconds" working exactly as now.
-  4. Add a regression test that ordinary words ending in "es" (e.g. "yes", "times", "ones" if it is not
-     already a number word) are not new false positives — check what `WORD_VALUES` holds first.
-- **Don't:** touch other guards, the prompt, or other files.
-- **Acceptance:** new tests pass; `npm run typecheck` and `npm test` all green.
-
-#### Codex report
-- Files changed:
-- Test results:
-- Choices I made:
-- Open questions:
+_None — waiting for the next task._
 
 <!-- Template:
 ### T1 — <title>
@@ -85,3 +62,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 | Task | Branch | Commits | Result |
 |------|--------|---------|--------|
+| T1 — "-es" plurals in number guard | `codex/es-plurals` | 0b6e0d4 | Done first try; unit 1214 green, typecheck clean |
