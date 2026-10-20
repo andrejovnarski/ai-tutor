@@ -59,6 +59,16 @@ back under the task. The owner (Andrej) has the final say on everything.
   sticker art; no new dependencies. Rule 9 — replacing an assertion's old token with the new one is fine, list it.
 - **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count. Claude runs e2e + grown-up shots.
 
+#### Codex report
+- Files changed: `src/app/play/tokens.css`, `src/app/play/tokens.test.ts`; `src/app/parent/ui/grownup.module.css`, `GrownupFrame.tsx`, `IndexCard.tsx`, `ui.test.tsx`; `src/app/parent/consent/page.tsx`, `src/app/parent/page.tsx`; this handoff.
+- Test results:
+  - Tests first: `npm test -- tokens ui` → `Tests 13 failed | 45 passed (58)`; after implementation → `Test Files 4 passed (4)`, `Tests 58 passed (58)`.
+  - `npm run typecheck` → `tsc --noEmit`, exit 0 (no errors).
+  - `npm test` → `Test Files 87 passed (87)`, `Tests 1436 passed (1436)`.
+  - `git diff --check` → clean. No db/e2e runs, network, git writes or port 3000 access. Existing `.impeccable/config.json` and `.superpowers/` changes left alone.
+- Choices I made: kept `IndexCard.color` accepted but ignored; replaced its old colour-presence assertion with no-tab/no-colour assertions, and updated old PIN/link and strip/chalk focus assertions to `--pp-link` as authorized. Used a still decorative SVG sea wave on bare pages, and hard-line PIN dividers instead of a gradient. Linked cards share the button press treatment and reduced-motion still state. Shared CSS restyles every listed page; maps, shells and sun dots remain for T23.
+- Open questions: none. Claude still needs to run e2e and grown-up screenshots for visual review.
+
 <!-- Template:
 ### T1 — <title>
 - **Branch:** `codex/<slug>`
@@ -100,3 +110,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T19 — Pocket Planet: map rules, data, IslandMap | `codex/pocket-planet` | (this commit) | First try. Claude fixes: "1 island" label, flags grow from their foot, db test for placed rows. unit 1419, db 136 |
 | T20 — Pocket Planet: picker and end card | `codex/pocket-planet` | (this commit) | 1 fix round: end-card map collapsed to a line → height floors (140/90 px) + e2e guards; names broke mid-word → ellipsis; level line kept whole. Claude moved e2e wording Lv→Level, cubes→shells. unit 1425, e2e 66 |
 | T21 — Pocket Planet: kid-shots, DESIGN.md | `codex/pocket-planet` | (this commit) | 1 fix round: 3 stickers overflowed landscape end card → one-line labels, map frame fits art. Claude fixes: grown-up NovaMark → planet (dead antenna CSS + its assertion removed), phone stickers/week stacked (overlapped). unit 1425, db 136, e2e 66 |
+| T22 — Grown-up Logbook: tokens and pages | `codex/grownup-logbook` | (this commit) | First try. Old colour assertions moved to new tokens (allowed). unit 1436, e2e 66, grown-up shots 4 |

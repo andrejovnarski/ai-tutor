@@ -26,6 +26,8 @@ it("GrownupFrame shows the strip and back link, or the big title when bare", () 
   expect(strip).toContain("For grown-ups"); expect(strip).toContain('href="/"'); expect(strip).toContain("Back to kids");
   const bare = renderToStaticMarkup(<GrownupFrame bare><h1>X</h1></GrownupFrame>);
   expect(bare).toContain("Brightling AI"); expect(bare).not.toContain("For grown-ups");
+  expect(bare).toContain('data-wave="true"'); expect(bare).toContain('fill="var(--pp-sea)"');
+  expect(strip).not.toContain('data-wave="true"');
 });
 it("PinField keeps a labelled 4-digit numeric input", () => {
   const html = renderToStaticMarkup(<PinField name="pin" label="New PIN" />);
@@ -33,19 +35,19 @@ it("PinField keeps a labelled 4-digit numeric input", () => {
 });
 it("IndexCard with href is one link", () => {
   const html = renderToStaticMarkup(<IndexCard color="#e4413b" href="/parent/kids/1">Mia</IndexCard>);
-  expect(html.match(/<a /g)).toHaveLength(1); expect(html).toContain("#e4413b");
+  expect(html.match(/<a /g)).toHaveLength(1); expect(html).not.toContain("--tab"); expect(html).not.toContain("#e4413b");
 });
 
 it("link colour rule does not override classed links", () => {
   const css = readFileSync(join(__dirname, "grownup.module.css"), "utf8");
   expect(css).not.toContain("!important");
   expect(css).not.toMatch(/\.frame a\s*\{/);
-  expect(css).toMatch(/\.pinBox:focus-within\s*\{[^}]*outline: 3px solid var\(--link\)/);
+  expect(css).toMatch(/\.pinBox:focus-within\s*\{[^}]*outline: 3px solid var\(--pp-link\)/);
 });
 
-it("strip focus ring is chalk, sticky tilts, record lists wrap long text", () => {
+it("strip focus ring is blue, sticky tilts, record lists wrap long text", () => {
   const css = readFileSync(join(__dirname, "grownup.module.css"), "utf8");
-  expect(css).toMatch(/\.strip :focus-visible\s*\{[^}]*outline-color: var\(--chalk\)/);
+  expect(css).toMatch(/\.strip :focus-visible\s*\{[^}]*outline-color: var\(--pp-link\)/);
   expect(css).toMatch(/\.sticky\s*\{[^}]*transform: rotate\(-1\.2deg\)/);
   expect(css).toMatch(/\.recordList li\s*\{[^}]*overflow-wrap: anywhere/);
 });
@@ -81,4 +83,33 @@ describe("RewardsSection", () => {
     expect(zero).toContain("Week goal: 3 days a week"); expect(zero).toContain("No stickers yet. They show up as Mia plays.");
     expect(renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({ weekStreak: 1 })} />)).toContain("Week goal met 1 week in a row");
   });
+});
+
+it("uses the Logbook surfaces, ink edges and orange actions", () => {
+  const css = readFileSync(join(__dirname, "grownup.module.css"), "utf8");
+  expect(css).toMatch(/\.frame\s*\{[^}]*background-color: var\(--pp-page\)/);
+  expect(css).toMatch(/\.strip\s*\{[^}]*background: var\(--pp-white\)/);
+  expect(css).toMatch(/\.strip\s*\{[^}]*border-bottom: 2px solid var\(--pp-ink\)/);
+  expect(css).toMatch(/\.frame :focus-visible\s*\{[^}]*outline: 3px solid var\(--pp-link\)/);
+  expect(css).toMatch(/\.btn, \.btnDanger\s*\{[^}]*background: var\(--pp-go\)/);
+  expect(css).toMatch(/\.btn, \.btnDanger\s*\{[^}]*color: var\(--pp-ink\)/);
+  expect(css).toMatch(/\.card\s*\{[^}]*border: 1.5px solid var\(--pp-ink\)/);
+  expect(css).toMatch(/\.card\s*\{[^}]*border-radius: 14px/);
+  expect(css).toMatch(/\.card\s*\{[^}]*box-shadow: 0 3px 0 var\(--pp-ink\)/);
+  expect(css).not.toMatch(/--(?:felt|paper|grid|chalk|sticky)\b/);
+  expect(css).not.toContain(".card::before");
+  expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.btn:active, \.btnDanger:active, \.cardLink:active\s*\{[^}]*transform: none/);
+});
+
+it("renders the consent page without a felt tab", async () => {
+  vi.doMock("@/server/parentGate", () => ({ requireParent: async () => ({
+    user: { id: "parent" }, supabase: { from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: { consent_at: null } }) }) }) }) },
+  }) }));
+  vi.doMock("../consent/actions", () => ({ startConsent: async () => {} }));
+  const { default: ConsentPage } = await import("../consent/page");
+  const html = renderToStaticMarkup(await ConsentPage({ searchParams: Promise.resolve({}) }));
+  expect(html).toContain("One step before your child plays");
+  expect(html).toContain("Read the full privacy notice");
+  expect(html).not.toContain("--felt");
+  expect(html).not.toContain("--tab");
 });

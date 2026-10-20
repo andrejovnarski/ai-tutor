@@ -5,6 +5,7 @@ const palette = {
   sky: "#bfe9f5", "sky-deep": "#7fd3f0", sea: "#4fb6c9", "sea-deep": "#2f8aa0",
   sand: "#f6e3a8", grass: "#7cc36a", ink: "#12324a", white: "#ffffff",
   go: "#ff8a3d", sun: "#ffcf3d", nova: "#7a6cf0",
+  page: "#eef8fb", quiet: "#3f5a6c", link: "#1f5fa8",
 };
 const tokens = Object.fromEntries([...css.matchAll(/--pp-([\w-]+):\s*(#[\da-f]{6})/gi)].map((m) => [m[1], m[2]]));
 function luminance(hex: string) {
@@ -21,4 +22,16 @@ describe("Pocket Planet tokens", () => {
     expect(tokens.ink).toBeDefined();
     if (tokens[name] && tokens.ink) expect((luminance(tokens[name]) + 0.05) / (luminance(tokens.ink) + 0.05)).toBeGreaterThanOrEqual(4.5);
   });
+});
+
+describe("Logbook contrast", () => {
+  it.each(["ink", "quiet", "link"].flatMap((foreground) =>
+    ["page", "white"].map((background) => [foreground, background])))(
+    "%s on %s meets AA", (foreground, background) => {
+      expect(tokens[foreground]).toBeDefined();
+      expect(tokens[background]).toBeDefined();
+      if (tokens[foreground] && tokens[background]) {
+        expect((luminance(tokens[background]) + 0.05) / (luminance(tokens[foreground]) + 0.05)).toBeGreaterThanOrEqual(4.5);
+      }
+    });
 });

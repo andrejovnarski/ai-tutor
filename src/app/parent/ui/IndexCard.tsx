@@ -1,18 +1,18 @@
 import Link from "next/link";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import styles from "./grownup.module.css";
 
-export function IndexCard({ color, href, children }: { color: string; href?: string; children: ReactNode }) {
-  const style = { "--tab": color } as CSSProperties;
+// Keep the color prop for existing callers; Logbook cards have no coloured tab.
+export function IndexCard({ href, children }: { color: string; href?: string; children: ReactNode }) {
   if (href) {
     return (
-      <Link href={href} className={`${styles.card} ${styles.cardLink}`} style={style}>
+      <Link href={href} className={`${styles.card} ${styles.cardLink}`}>
         {children}
       </Link>
     );
   }
   return (
-    <div className={styles.card} style={style}>
+    <div className={styles.card}>
       {children}
     </div>
   );

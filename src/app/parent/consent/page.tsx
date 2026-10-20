@@ -22,7 +22,7 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
         </p>
       </StickyNote>
       <h1>One step before your child plays</h1>
-      <IndexCard color="var(--felt)">
+      <IndexCard color="var(--pp-white)">
         <p style={{ margin: "0 0 8px" }}>{NOTICE_SUMMARY}</p>
         <p style={{ margin: 0 }}>
           <Link href="/parent/privacy">Read the full privacy notice</Link>

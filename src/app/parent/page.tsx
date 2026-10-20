@@ -28,7 +28,7 @@ export default async function ParentPage() {
     <GrownupFrame back={{ href: "/", label: "Back to kids" }}>
       <h1>Your kids</h1>
       {!consented && (
-        <IndexCard color="var(--sticky)">
+        <IndexCard color="var(--pp-white)">
           <p className={styles.lede}>
             Before your kid can play, we need a parent&apos;s consent.
           </p>

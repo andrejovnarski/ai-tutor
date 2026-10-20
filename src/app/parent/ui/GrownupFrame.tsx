@@ -27,7 +27,7 @@ export function GrownupFrame({
   children: ReactNode;
 }) {
   return (
-    <main className={`${styles.frame} ${atkinson.variable}`}>
+    <main className={`${styles.frame} ${atkinson.variable} ${bare ? styles.frameBare : ""}`}>
       {bare ? (
         <div className={styles.bareHead}>
           <NovaMark className={styles.novaBig} />
@@ -47,6 +47,11 @@ export function GrownupFrame({
         </div>
       )}
       <div className={styles.col}>{children}</div>
+      {bare ? (
+        <svg data-wave="true" aria-hidden="true" className={styles.wave} viewBox="0 0 400 32" preserveAspectRatio="none">
+          <path d="M0 16 Q50 0 100 16 T200 16 T300 16 T400 16 V32 H0Z" fill="var(--pp-sea)" />
+        </svg>
+      ) : null}
     </main>
   );
 }
