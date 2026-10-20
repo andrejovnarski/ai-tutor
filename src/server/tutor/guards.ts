@@ -18,7 +18,7 @@ const IRREGULAR_ORDINALS = new Map<string, number>([
 ]);
 /** Place-value nouns ("the tens and the ones") are not the numbers 10 and 1. */
 const PLACE_VALUE = new Set(["ones", "tens", "hundreds", "dozens"]);
-const SUFFIXES = ["ths", "th", "st", "nd", "rd", "s"]; // longest first
+const SUFFIXES = ["ths", "th", "st", "nd", "rd", "es", "s"]; // longest first
 
 type Word = { value: number; ordinal: boolean };
 
@@ -34,7 +34,7 @@ function wordNumber(w: string): Word | null {
     const base = w.slice(0, -suf.length);
     if (base === "hundred" || base === "dozen") continue; // "hundreds", "dozens" are vague amounts
     const v = WORD_VALUES.get(base);
-    if (v !== undefined) return { value: v, ordinal: suf !== "s" };
+    if (v !== undefined) return { value: v, ordinal: suf !== "s" && suf !== "es" };
   }
   return null;
 }

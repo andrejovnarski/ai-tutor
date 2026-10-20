@@ -13,6 +13,22 @@ const reason = (say: string, p: TurnPlan) => {
 };
 
 describe("numbersIn", () => {
+  it("reads sixes as six", () => {
+    expect(numbersIn("two sixes")).toEqual([2, 6]);
+  });
+  it("reads zeroes as zero", () => {
+    expect(numbersIn("zeroes")).toEqual([0]);
+  });
+  it("reads uppercase -es plurals as cardinals, not ordinals", () => {
+    expect(numbersIn("SIXES and ZEROES")).toEqual([6, 0]);
+    expect(ordinalsIn("sixes and zeroes")).toEqual([]);
+  });
+  it("keeps existing plurals and ordinary -es words unchanged", () => {
+    expect(numbersIn("fives, threes, hundreds, dozens, seconds")).toEqual([5, 3]);
+    expect(ordinalsIn("fives, threes, hundreds, dozens, seconds")).toEqual([2]);
+    expect(numbersIn("yes, times, ones")).toEqual([]);
+    expect(ordinalsIn("yes, times, ones")).toEqual([]);
+  });
   it("reads digits and number words, whole words only", () => {
     expect(numbersIn("3 and four, then 12 and Twenty")).toEqual([3, 4, 12, 20]);
     expect(numbersIn("someone is gone, none left")).toEqual([]);
@@ -88,6 +104,10 @@ describe("checkLine", () => {
     expect(reason("Try xc.", plan())).toBe("number-form");
     expect(reason("It is \u0667!", plan())).toBe("number-form"); // Arabic-Indic seven
     expect(reason("It is \u096d!", plan())).toBe("number-form"); // Devanagari seven
+  });
+  it("rejects an early answer using sixes", () => {
+    expect(reason("Sixes are fun", plan({ problem: "What is 2 + 4?", problemNumbers: [2, 4], answer: 6 })))
+      .toBe("early-answer");
   });
   it("ordinals are sequencing words: only the answer is held back", () => {
     expect(reason("Try the tens first, then the ones.", plan())).toBe("ok");
