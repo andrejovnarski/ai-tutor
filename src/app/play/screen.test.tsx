@@ -148,7 +148,7 @@ describe("Help me next to Nova", () => {
     expect(screen(2)).not.toContain('data-testid="help"');
     play.state = { phase: "loading" };
     expect(renderToStaticMarkup(<PlayScreen kidId="kid1" ageBand="5-7" />)).not.toContain('data-testid="help"');
-    play.state = { phase: "ended", turn: { kind: "end", summary: { problems: 1, firstTryCorrect: 0, minutes: 1, mastered: [] } },
+    play.state = { phase: "ended", turn: { kind: "end", summary: { problems: 1, firstTryCorrect: 0, minutes: 1, mastered: [] }, progress: { today: null, next: null } },
       summary: { problems: 1, firstTryCorrect: 0, minutes: 1, mastered: [] } };
     expect(renderToStaticMarkup(<PlayScreen kidId="kid1" ageBand="5-7" />)).not.toContain('data-testid="help"');
   });

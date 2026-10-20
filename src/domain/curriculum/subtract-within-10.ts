@@ -125,7 +125,7 @@ export const subtractWithin10Cluster: Cluster = {
       templates: ["sub-facts-10", "sub-count-back"],
     },
     {
-      id: "subtract-within-10.break-apart", name: "Break apart", grade: "K", commonCore: ["K.OA.A.3"],
+      id: "subtract-within-10.break-apart", name: "Break apart", kidName: "Splitting numbers", grade: "K", commonCore: ["K.OA.A.3"],
       needs: ["subtract-within-10.within-10", "add-within-10.within-5"], styles: ["blocks", "ten-frame", "drawing"],
       templates: ["break-apart", "break-apart-frame"],
     },

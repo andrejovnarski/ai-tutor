@@ -12,7 +12,7 @@ import { createRng, type Rng } from "../rng";
 import type { Level, Problem } from "../types";
 import {
   MAX_TIME_MS, REVIEW_EVERY, SESSION_MINUTES, STALE_MS,
-  type Deps, type Feedback, type LogEntry, type Pending, type Session, type SessionSummary, type Turn, type Writes,
+  type Deps, type Feedback, type LogEntry, type Pending, type Session, type SessionSummary, type Today, type Next, type Turn, type Writes,
 } from "./types";
 
 const DEFAULT_DEPS: Deps = { generate };
@@ -30,7 +30,7 @@ export function startSession(kid: Session["kid"], seed: number, now: number): Se
     seed, step: 0, startedAt: now, lastActivity: now, kid,
     pending: null, current: null, placement: null, check: null, windDown: null, stepBacksInRow: 0,
     count: 0, recent: [], lastStyle: {}, switchStyle: [], lastCorrect: false, lastMode: null,
-    problems: 0, firstTryCorrect: 0, mastered: [], ended: false,
+    problems: 0, firstTryCorrect: 0, mastered: [], recovered: 0, practiced: {}, ended: false,
   };
 }
 
@@ -41,7 +41,26 @@ const problemTurn = (p: Pending, logs: LogEntry[]): Turn => ({
 
 /** The end-turn summary of a session that ends at `now`. */
 export function summaryOf(s: Session, now: number): SessionSummary {
+  let today: Today | null = null;
+  let next: Next | null = null;
+  if (s.problems > 0) {
+    const learned = s.mastered.at(-1);
+    let practiced: string | null = null;
+    let most = 0;
+    for (const [id, count] of Object.entries(s.practiced ?? {})) {
+      if (count > 0 && count >= most) { practiced = id; most = count; }
+    }
+    today = learned ? { kind: "learned", skillId: learned }
+      : (s.recovered ?? 0) > 0 ? { kind: "kept-going" }
+      : practiced ? { kind: "practiced", skillId: practiced }
+      : s.placement || (s.count === 0 && s.windDown === null && s.check === null) ? { kind: "placement" }
+      : null;
+    const skillId = frontier(s.kid);
+    next = skillId === null ? { kind: "mix" }
+      : { kind: today?.kind === "practiced" && today.skillId === skillId ? "more" : "skill", skillId };
+  }
   return {
+    today, next,
     problems: s.problems, firstTryCorrect: s.firstTryCorrect,
     minutes: Math.round((now - s.startedAt) / 60_000), mastered: s.mastered,
   };
@@ -68,7 +87,13 @@ function serve(s: Session, now: number, deps: Deps, skillId: string, level: Leve
       skillId, templateId, seed, level, mode, try: 1, presentedAt: now, style: null,
       problem: adaptInput(problem, s.kid.ageBand), shown: true,
     };
-    return { session: { ...next, pending, lastActivity: now }, turn: problemTurn(pending, logs) };
+    const practiced = { ...(s.practiced ?? {}) };
+    if (mode !== "placement") {
+      const count = practiced[skillId] ?? 0;
+      delete practiced[skillId];
+      practiced[skillId] = count + 1;
+    }
+    return { session: { ...next, practiced, pending, lastActivity: now }, turn: problemTurn(pending, logs) };
   }
   return end(next, now);
 }
@@ -189,6 +214,7 @@ function respond(s: Session, given: number | null, now: number): { session: Sess
 
   // Second try: only the style learns, unless the child was copying Help 2.
   if (p.help === 2) return { session: next, feedback: { ...feedback, style: p.style, reveal: !correct }, writes };
+  if (correct) next = { ...next, recovered: (next.recovered ?? 0) + 1 };
   const styles = recordStyle(next.kid.styles, p.style!, correct);
   writes.styleStats.push(styles[p.style!] as StyleStat);
   next = { ...next, kid: { ...next.kid, styles } };

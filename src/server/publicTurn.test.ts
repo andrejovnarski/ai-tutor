@@ -13,9 +13,14 @@ it("keeps prompt, input, choices, mode and try, and drops the rest", () => {
   expect(JSON.stringify(pub)).not.toMatch(/"(answer|mistakes|templateId|seed|skillId|logs)"\s*:/);
 });
 
-it("passes an end summary through", () => {
-  const summary = { problems: 3, firstTryCorrect: 2, minutes: 11, mastered: [] };
-  expect(publicTurn({ kind: "end", summary })).toEqual({ kind: "end", summary });
+it("turns summary ids into progress text only", () => {
+  const summary = { problems: 3, firstTryCorrect: 2, minutes: 11, mastered: [],
+    today: { kind: "practiced" as const, skillId: "add-subtract-within-100.add-regroup" }, next: { kind: "mix" as const } };
+  const pub = publicTurn({ kind: "end", summary });
+  expect(pub).toEqual({ kind: "end", summary: { problems: 3, firstTryCorrect: 2, minutes: 11, mastered: [] },
+    progress: { today: "You practiced Big adding with carrying.", next: "Next time: a mix of your skills" } });
+  expect(pub.kind === "end" && pub.summary).not.toHaveProperty("today");
+  expect(pub.kind === "end" && pub.summary).not.toHaveProperty("next");
 });
 
 describe("revealNote", () => {

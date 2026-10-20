@@ -36,7 +36,7 @@ it("returns 404 for another family's kid and 503 for a server failure", async ()
 });
 it("returns the current turn on 409", async () => {
   vi.mocked(parentRepo).mockResolvedValue({} as NonNullable<Awaited<ReturnType<typeof parentRepo>>>);
-  const turn = { kind: "end" as const, summary: { problems: 1, firstTryCorrect: 0, minutes: 1, mastered: [] } };
+  const turn = { kind: "end" as const, summary: { problems: 1, firstTryCorrect: 0, minutes: 1, mastered: [] }, progress: { today: null, next: null } };
   vi.mocked(playHelp).mockResolvedValue({ status: 409, version: 2, turn });
   const r = await call({ version: 1 });
   expect(r.status).toBe(409);

@@ -113,22 +113,22 @@ export const addSubtractWithin100Cluster: Cluster = {
       templates: ["add-tens", "sub-tens"],
     },
     {
-      id: "add-subtract-within-100.add", name: "Add without regrouping", grade: "2", commonCore: ["2.NBT.B.5"],
+      id: "add-subtract-within-100.add", name: "Add without regrouping", kidName: "Adding big numbers", grade: "2", commonCore: ["2.NBT.B.5"],
       needs: ["add-subtract-within-100.tens", "add-subtract-within-20.make-ten"], styles: ["blocks", "number-line"],
       templates: ["add-2d-1d", "add-2d-2d"],
     },
     {
-      id: "add-subtract-within-100.add-regroup", name: "Add with regrouping", grade: "2", commonCore: ["2.NBT.B.5"],
+      id: "add-subtract-within-100.add-regroup", name: "Add with regrouping", kidName: "Big adding with carrying", grade: "2", commonCore: ["2.NBT.B.5"],
       needs: ["add-subtract-within-100.add"], styles: ["blocks", "number-line"],
       templates: ["add-2d-1d-regroup", "add-2d-2d-regroup"],
     },
     {
-      id: "add-subtract-within-100.subtract", name: "Subtract without regrouping", grade: "2", commonCore: ["2.NBT.B.5"],
+      id: "add-subtract-within-100.subtract", name: "Subtract without regrouping", kidName: "Taking away big numbers", grade: "2", commonCore: ["2.NBT.B.5"],
       needs: ["add-subtract-within-100.tens", "add-subtract-within-20.subtract"], styles: ["blocks", "number-line"],
       templates: ["sub-2d-1d", "sub-2d-2d"],
     },
     {
-      id: "add-subtract-within-100.subtract-regroup", name: "Subtract with regrouping", grade: "2", commonCore: ["2.NBT.B.5"],
+      id: "add-subtract-within-100.subtract-regroup", name: "Subtract with regrouping", kidName: "Big taking away with borrowing", grade: "2", commonCore: ["2.NBT.B.5"],
       needs: ["add-subtract-within-100.subtract"], styles: ["blocks", "number-line"],
       templates: ["sub-2d-1d-regroup", "sub-2d-2d-regroup"],
     },

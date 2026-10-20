@@ -1,3 +1,4 @@
+import { progressLines } from "../domain/session/progressLines";
 import { styleView } from "../domain/problems/styleView";
 import type { Turn } from "../domain/session/types";
 import type { EndRewards } from "../domain/rewards/progress";
@@ -18,10 +19,14 @@ export type PublicTurn =
     kind: "problem"; mode: ProblemTurn["mode"]; try: 1 | 2; help: 0 | 1 | 2;
     prompt: ProblemTurn["problem"]["prompt"]; input: ProblemTurn["problem"]["input"]; choices?: number[];
   }
-  | (Extract<Turn, { kind: "end" }> & { rewards?: EndRewards });
+  | { kind: "end"; summary: Omit<Extract<Turn, { kind: "end" }>["summary"], "today" | "next">;
+    progress: ReturnType<typeof progressLines>; rewards?: EndRewards };
 
 export function publicTurn(t: Turn): PublicTurn {
-  if (t.kind === "end") return t;
+  if (t.kind === "end") {
+    const { today, next, ...summary } = t.summary;
+    return { kind: "end", summary, progress: progressLines({ today, next }) };
+  }
   const { prompt, input, choices } = t.problem;
   return {
     kind: "problem", mode: t.mode, try: t.try, help: t.help, prompt: { ...prompt, show: boardView(t) }, input, ...(choices ? { choices } : {}),

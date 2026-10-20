@@ -38,6 +38,7 @@ export type Template = { id: string; make: (seed: number, level: Level) => Probl
 export type Skill = {
   id: string;
   name: string;
+  kidName?: string;
   grade: Grade;
   commonCore: string[];
   needs: string[];

@@ -294,3 +294,95 @@ describe("Help me", () => {
     expect(answer(shown.s, rightFor(shown.t), 7000)!.writes.styleStats).toHaveLength(1);
   });
 });
+
+
+describe("progress summary", () => {
+  const a = firstSkills(1)[0]!;
+  const b = firstSkills(2)[1]!;
+  it.each(["wrong", "help", "copy", "first"])("recovery after %s", (kind) => {
+    const initial = turnOf(fresh(placedKid([])), 0);
+    if (kind === "first") {
+      expect(answer(initial.s, rightFor(initial.t), 1)!.session.recovered).toBe(0);
+      return;
+    }
+    const one = kind === "wrong" ? answer(initial.s, wrongFor(initial.t), 1)! : help(initial.s, 1)!;
+    let retry = turnOf(one.session, 2);
+    if (kind === "copy") retry = turnOf(help(retry.s, 3)!.session, 4);
+    const result = answer(retry.s, rightFor(retry.t), 5)!;
+    expect(result.session.recovered).toBe(kind === "copy" ? 0 : 1);
+  });
+  it.each(["practice", "review", "check", "wind-down", "placement"] as const)("counts served %s once", (mode) => {
+    let s = fresh(placedKid(mode === "review" ? [a] : []));
+    if (mode === "placement") s = fresh(newKidState("k", "5-7", "K"));
+    if (mode === "review") s = { ...s, count: 4 };
+    if (mode === "check") s = { ...s, check: { prereqId: a, returnTo: b, done: 0 } };
+    if (mode === "wind-down") s = { ...s, windDown: 0 };
+    const first = turnOf(s, 0);
+    expect(first.t.mode).toBe(mode);
+    expect(first.s.practiced).toEqual(mode === "placement" ? {} : { [first.t.skillId]: 1 });
+    expect(turnOf(first.s, 1).s.practiced).toEqual(first.s.practiced);
+    if (mode === "practice") {
+      const retry = turnOf(answer(first.s, wrongFor(first.t), 2)!.session, 3);
+      expect(retry.s.practiced).toEqual(first.s.practiced);
+      const next = turnOf(answer(retry.s, rightFor(retry.t), 4)!.session, 5);
+      expect(next.s.practiced[first.t.skillId]).toBe(2);
+    }
+  });
+  it("chooses today by priority and next by the frontier", () => {
+    const s = { ...fresh(placedKid([])), problems: 2, practiced: { [b]: 1, [a]: 1 } };
+    expect(summaryOf(s, 0)).toMatchObject({ today: { kind: "practiced", skillId: a }, next: { kind: "more", skillId: a } });
+    expect(summaryOf({ ...s, practiced: { [a]: 1, [b]: 2 } }, 0)).toMatchObject({ today: { kind: "practiced", skillId: b }, next: { kind: "skill", skillId: a } });
+    expect(summaryOf({ ...s, recovered: 1 }, 0).today).toEqual({ kind: "kept-going" });
+    expect(summaryOf({ ...s, recovered: 1, mastered: [a, b] }, 0).today).toEqual({ kind: "learned", skillId: b });
+    expect(summaryOf({ ...s, kid: placedKid(firstSkills(100)) }, 0).next).toEqual({ kind: "mix" });
+    expect(summaryOf(fresh(placedKid([])), 0)).toMatchObject({ today: null, next: null });
+  });
+  it("moves a served skill to the newest position for ties", () => {
+    const s = { ...fresh(placedKid([])), practiced: { [a]: 1, [b]: 2 } };
+    const served = turnOf(s, 0).s;
+    expect(Object.keys(served.practiced)).toEqual([b, a]);
+    expect(summaryOf({ ...served, problems: 1 }, 0).today).toEqual({ kind: "practiced", skillId: a });
+  });
+  it("placement mastery followed by practice and wind-down-only both say practiced", () => {
+    for (const windDown of [null, 0]) {
+      const served = turnOf({ ...fresh(placedKid([a])), windDown }, 0);
+      const s = answer(served.s, rightFor(served.t), 1)!.session;
+      expect(s.mastered).toEqual([]);
+      expect(summaryOf(s, 2).today).toEqual({ kind: "practiced", skillId: served.t.skillId });
+    }
+  });
+  it("a completed placement with no mastered skills still gets the neutral line", () => {
+    let s = fresh(newKidState("k", "5-7", "K"));
+    for (let i = 0; !s.kid.placed; i++) {
+      const served = turnOf(s, i * 2);
+      s = answer(served.s, wrongFor(served.t), i * 2 + 1)!.session;
+    }
+    expect(s.placement).toBeNull();
+    expect(s.mastered).toEqual([]);
+    expect(summaryOf(s, 10).today).toEqual({ kind: "placement" });
+  });
+  it("defaults missing counters while resuming an old saved session", () => {
+    const legacy = JSON.parse(JSON.stringify(fresh(placedKid([]))));
+    delete legacy.recovered;
+    delete legacy.practiced;
+    const served = turnOf(legacy, 0);
+    expect(served.s.practiced).toEqual({ [served.t.skillId]: 1 });
+    const retry = turnOf(answer(served.s, wrongFor(served.t), 1)!.session, 2);
+    expect(answer(retry.s, rightFor(retry.t), 3)!.session.recovered).toBe(1);
+  });
+  it("round trips the summary and supports old saved sessions", () => {
+    const s = { ...fresh(placedKid([])), problems: 2, count: 2, practiced: { [a]: 2 }, recovered: 1 };
+    expect(summaryOf(JSON.parse(JSON.stringify(s)), 10)).toEqual(summaryOf(s, 10));
+    const legacy = JSON.parse(JSON.stringify(s));
+    delete legacy.recovered;
+    delete legacy.practiced;
+    expect(summaryOf(legacy, 10).today).toBeNull();
+    legacy.mastered = [a];
+    expect(summaryOf(legacy, 10).today).toEqual({ kind: "learned", skillId: a });
+    legacy.mastered = [];
+    legacy.placement = { probes: 0 };
+    expect(summaryOf(legacy, 10).today).toEqual({ kind: "placement" });
+    const placement = play(fresh(newKidState("k", "5-7", "K")), 0, rightFor, { max: 1 }).session;
+    expect(summaryOf(placement, 10).today).toEqual({ kind: "placement" });
+  });
+});

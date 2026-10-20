@@ -5,7 +5,12 @@ import type { AgeBand, Level, Problem, Style } from "../types";
 
 export type LogEntry = { type: "template-failed" | "step-back" | "loop-guard" | "check-passed"; skillId: string; detail?: string };
 
-export type SessionSummary = { problems: number; firstTryCorrect: number; minutes: number; mastered: string[] };
+export type Today = { kind: "learned" | "practiced"; skillId: string } | { kind: "kept-going" | "placement" };
+export type Next = { kind: "skill" | "more"; skillId: string } | { kind: "mix" };
+export type SessionSummary = {
+  problems: number; firstTryCorrect: number; minutes: number; mastered: string[];
+  today: Today | null; next: Next | null;
+};
 
 export type Turn =
   | {
@@ -67,6 +72,10 @@ export type Session = {
   problems: number;
   firstTryCorrect: number;
   mastered: string[];
+  /** Solved on try 2 without copying Help 2. */
+  recovered: number;
+  /** Non-placement first tries served; most recently served skill last. */
+  practiced: Record<string, number>;
   ended: boolean;
 };
 

@@ -111,7 +111,7 @@ export const placeValueCluster: Cluster = {
       templates: ["compare-bigger-100", "compare-smaller-100"],
     },
     {
-      id: "place-value.ten-more-less", name: "10 more, 10 less", grade: "1", commonCore: ["1.NBT.C.5"],
+      id: "place-value.ten-more-less", name: "10 more, 10 less", kidName: "Ten more, ten less", grade: "1", commonCore: ["1.NBT.C.5"],
       needs: ["place-value.tens-ones"], styles: ["blocks", "number-line"],
       templates: ["ten-more", "ten-less"],
     },

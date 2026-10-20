@@ -121,7 +121,7 @@ export const addSubtractWithin20Cluster: Cluster = {
   name: "Add and subtract within 20",
   skills: [
     {
-      id: "add-subtract-within-20.doubles", name: "Doubles and near doubles", grade: "1", commonCore: ["1.OA.C.6"],
+      id: "add-subtract-within-20.doubles", name: "Doubles and near doubles", kidName: "Doubles", grade: "1", commonCore: ["1.OA.C.6"],
       needs: ["add-within-10.count-on"], styles: ["blocks", "ten-frame", "drawing"],
       templates: ["doubles", "near-doubles"],
     },
@@ -136,7 +136,7 @@ export const addSubtractWithin20Cluster: Cluster = {
       templates: ["sub-teen-no-cross", "sub-across-ten"],
     },
     {
-      id: "add-subtract-within-20.related-facts", name: "Related facts", grade: "1", commonCore: ["1.OA.B.4"],
+      id: "add-subtract-within-20.related-facts", name: "Related facts", kidName: "Number families", grade: "1", commonCore: ["1.OA.B.4"],
       needs: ["add-subtract-within-20.make-ten", "add-subtract-within-20.subtract"],
       styles: ["blocks", "number-line", "story"],
       templates: ["think-addition", "fact-family"],
