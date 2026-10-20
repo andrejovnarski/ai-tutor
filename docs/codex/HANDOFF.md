@@ -42,30 +42,33 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-### T14 — Recall checks: migration, rows, parent words
-- **Branch:** `codex/recall-checks` (T13 already committed there; you are on it)
-- **Goal:** the three recall fields are stored in the database, and parents read "learned" apart from
-  "remembered" on the kid page, in the week summary, and in the weekly email.
-- **Context:** spec `docs/superpowers/specs/2026-10-20-recall-checks-design.md` (sections "Persistence",
-  "Parents"); plan `docs/superpowers/plans/2026-10-20-recall-checks.md` **Task 2** — read both.
-  T13 already did `src/server/persist/rows.ts` mapping (optional row fields) and its round-trip test; keep it,
-  just make the `SkillRow` fields non-optional if that typechecks cleanly, otherwise leave them.
-  The db tests are red right now only because the columns don't exist yet (PGRST204 "check_due") — your migration fixes that.
-- **Do:** plan Task 2 Steps 1–6. Migration `supabase/migrations/0010_recall.sql`: copy `save_step` from
-  `0002_save_step_hardening.sql` exactly, add the three columns to its insert list and update-set list; keep
-  revoke/grant. Exact parent copy from the plan's Global Constraints (separator ` · ` U+00B7). Cover Review
-  Focus 5. Write the `repo.db.test.ts` round-trip test (Step 3) but don't run it (Claude runs db).
-- **Don't:** no engine/domain behaviour changes, no kid-visible changes, no rewards changes, don't touch
-  `mastered_at` trigger. Don't remove or weaken tests (rule 9): changing an old expected string from
-  `Mastered` to the new `Learned` wording is allowed because the spec changes that copy — list every such edit
-  in your report.
+### T15 — Recall checks: e2e
+- **Branch:** `codex/recall-checks` (T13, T14 committed; you are on it)
+- **Goal:** one Playwright test proves a due skill gets a two-problem recall in real play and the parent page
+  then says `remembered`.
+- **Context:** plan `docs/superpowers/plans/2026-10-20-recall-checks.md` **Task 3**. Copy patterns from
+  `tests/e2e/play.spec.ts` (test at ~line 157: `setUpMia`, `admin()` seeding of `skill_state`, reading the open
+  session's `state.pending.problem.answer` to answer right, tiles vs number pad) and `tests/e2e/rewards.spec.ts`
+  (finishing a session).
+- **Do:** create `tests/e2e/recall.spec.ts`:
+  1. `setUpMia`, mark kid `placed: true`. Seed `skill_state` rows for the first few K skills in curriculum order
+     as mastered (`p_known 0.99, attempts 10, placed false`) with `check_due` = `new Date(Date.UTC(9999,0,1))` (not
+     due), except ONE target skill: mastered the same way, `mastered_at`/`last_seen`/`check_due` = 2 days ago.
+     Leave later skills unseeded so there is a frontier to practice.
+  2. Play, answering right each time (from `state.pending`), until `attempts` (via `admin()`) has two rows
+     `mode = 'recall'` for the target skill, both `result = 'correct'`, `try = 1`. Cap the loop (e.g. 12 problems)
+     and fail clearly if not reached. Recall comes at the 5th problem (review slot).
+  3. Leave play ("I'm done for now" or however other specs reach the parent page), open Mia's parent kid page,
+     expect that skill's row text to contain `remembered`.
+- **Don't:** don't change app code or other specs. You cannot run e2e (no network/port) — write it carefully;
+  Claude runs it. Don't remove or weaken tests (rule 9).
 - **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count.
 
 #### Codex report
-- Files changed: `supabase/migrations/0010_recall.sql`; `src/server/kidRecord.ts` and `.test.ts`; `src/server/report/build.ts` and `.test.ts`; `src/server/exportFile.ts` and `.test.ts`; `src/app/parent/kids/[kidId]/page.tsx` and `page.test.tsx`; `src/app/parent/kids/[kidId]/WeekSummary.tsx` and `WeekSummary.test.tsx`; `tests/db/repo.db.test.ts`; `docs/codex/HANDOFF.md`.
-- Test results: `npm run typecheck` → `tsc --noEmit`, exit 0. `npm test` → `Test Files 82 passed (82)`; `Tests 1373 passed (1373)`. New wording tests failed before implementation. `git diff --check` clean. Database round-trip test written for insert and update, not run; no db/e2e tests, git writes, or port 3000 operations.
-- Choices I made: Kept T13's row mapper and tests unchanged. Making `SkillRow` recall fields required produced TS2790 in the existing old-row test, so left them optional as allowed. Used current `isMastered` status for parent lines and covered placement → forgotten → re-mastered (Review Focus 5). Preserved the migration's hardened function and revoke/grant; no trigger changes. Existing expected-copy edits: `kidRecord.test.ts`, `Mastered Oct 12` → `Learned Oct 12 · not checked yet`; `WeekSummary.test.tsx`, positive `Mastered: Counting to 20, Adding within 5` → `Learned: Counting to 20, Adding within 5`, and negative `Mastered:` → `Learned:`. Updated two existing mastered fixtures to satisfy current mastery (`p_known: 0.98`, `attempts: 5`), preserving all assertions. Added session-copy, email-copy and download-guide assertions.
-- Open questions: None. Claude still needs to apply the migration and run db/e2e validation.
+- Files changed: `tests/e2e/recall.spec.ts` (new recall flow test); `docs/codex/HANDOFF.md` (this report). No app code or other specs changed. No git writes; port 3000 untouched.
+- Test results: `npm run typecheck` → `tsc --noEmit`, exit 0. `npm test` → `Test Files 82 passed (82)`; `Tests 1373 passed (1373)`, exit 0. E2e and db tests not run, as instructed; Claude must run the new spec.
+- Choices I made: seeded the first three K skills in curriculum order, with the first (`Count to 10`) as the sole due target; other seeded skills use the year-9999 due date. Capped play at 12 problems, checked exactly two target recall rows with `result: correct` and `try: 1`, then used “I'm done for now” and checked `remembered` in that skill's parent-page row.
+- Open questions: None.
 
 <!-- Template:
 ### T1 — <title>
@@ -101,3 +104,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T12 — Progress lines: end card + e2e | `codex/progress-lines` | edea2f4 | 1 fix round: had deleted the end-card fit check (Claude restored it; card overflowed 79 px on phone) → tightened spacing. unit 1331, e2e 64 |
 | T13 — Recall checks: model, engine, sims | `codex/recall-checks` | (this commit) | 1 ruling round (old review tests kept via testkit `checkDue` far future; pair BKT per-answer guess; both-wrong cap 0.9). unit 1365; db red until T14 migration (missing columns, expected) |
 | T14 — Recall checks: migration, rows, parent words | `codex/recall-checks` | (this commit) | First try. Claude fixes: `coalesce(check_step,0)` in save_step (old payloads), testkit not-due date → year 9999 (Postgres range), null mastered_at guard, "recall" in download mode list. unit 1373, db 135, e2e 64 |
+| T15 — Recall checks: e2e | `codex/recall-checks` | (this commit) | First try; passed on first run. e2e 65 |
