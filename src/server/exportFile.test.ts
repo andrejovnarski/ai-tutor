@@ -28,6 +28,12 @@ describe("exportFile", () => {
     expect(rest).toEqual(data);
   });
 
+  it("explains helped results and their empty answer", () => {
+    expect(parsed.about.attempts).toContain(
+      "(correct, known-mistake, wrong or helped — helped means Mia tapped Help me; answer is empty then)",
+    );
+  });
+
   it("explains every table in plain words, using the child's nickname", () => {
     for (const key of ["kid", "skill_state", "style_stats", "attempts", "sessions", "distress_flags"]) {
       expect(typeof parsed.about[key]).toBe("string");

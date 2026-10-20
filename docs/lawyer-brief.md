@@ -28,6 +28,8 @@ Prepared 2026-10-10 for a COPPA-experienced lawyer, before a pilot with about 10
 | Answers to problems, skill estimates, which styles help | Adapt the teaching; weekly report to the parent | While the account is active |
 | A line the child said that matched a distress phrase | Alert the parent | 30 days |
 
+Help requests (taps on Help me) are stored with answers, as the same kind of learning data.
+
 We do **not** collect last name, photo, school, birthday, location, or contact details of the child. We do not keep audio or anything else the child says.
 
 ## Where data goes (vendors)

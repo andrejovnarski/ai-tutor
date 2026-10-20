@@ -85,9 +85,28 @@ describe("kidRecord sessions", () => {
       ],
     });
     expect(sessions).toEqual([
-      { when: "Sun, Oct 18, 4:12 PM", length: "14 min", problems: "20 problems, 15 right first time", mastered: ["Add without regrouping"] },
-      { when: "Sat, Oct 17, 4:12 PM", length: "under a minute", problems: "1 problem, 1 right first time", mastered: [] },
+      { when: "Sun, Oct 18, 4:12 PM", length: "14 min", problems: "20 problems, 15 right first time", mastered: ["Add without regrouping"], helped: 0 },
+      { when: "Sat, Oct 17, 4:12 PM", length: "under a minute", problems: "1 problem, 1 right first time", mastered: [], helped: 0 },
     ]);
+  });
+
+  it("counts helped attempts by session, separately from answers and mistakes", () => {
+    const { sessions } = kidRecord({
+      ...empty,
+      sessions: [
+        session(S1, "2026-10-18T20:12:00Z", { problems: 1 }),
+        session(S2, "2026-10-17T20:12:00Z", { problems: 1 }),
+      ],
+      attempts: [
+        { ...attempt(S1, "2026-10-18T20:12:10Z", 4_000), result: "helped", answer: null },
+        { ...attempt(S1, "2026-10-18T20:12:20Z", 4_000), result: "helped", answer: null, try: 2 },
+        attempt(S1, "2026-10-18T20:12:30Z", 4_000),
+        { ...attempt(S2, "2026-10-17T20:12:10Z", 4_000), result: "wrong" },
+        { ...attempt(S2, "2026-10-17T20:12:20Z", 4_000), result: "known-mistake" },
+        { ...attempt("other-session", "2026-10-17T20:12:30Z", 4_000), result: "helped", answer: null },
+      ],
+    });
+    expect(sessions.map((s) => s.helped)).toEqual([2, 0]);
   });
 
   it("leaves out sessions that were opened but had no problems", () => {

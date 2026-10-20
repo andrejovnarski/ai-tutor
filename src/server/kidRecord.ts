@@ -9,7 +9,7 @@ import { TAG_LABEL } from "./report/tips";
 // The download (exportKid) stays the complete record.
 
 export type SkillLine = { name: string; status: string; tricky: string | null };
-export type SessionLine = { when: string; length: string; problems: string; mastered: string[] };
+export type SessionLine = { when: string; length: string; problems: string; helped: number; mastered: string[] };
 export type FlagLine = { when: string; line: string; emailed: string };
 export type KidRecord = { skills: SkillLine[]; sessions: SessionLine[]; flags: FlagLine[] };
 
@@ -18,7 +18,7 @@ type SkillStateRow = {
   recent_tags: (MistakeTag | null)[]; mastered_at: string | null;
 };
 type SessionRow = { id: string; started_at: string; state: { problems?: number; firstTryCorrect?: number; mastered?: string[] } };
-type AttemptRow = { session_id: string; time_ms: number; at: string };
+type AttemptRow = { result: string; session_id: string; time_ms: number; at: string };
 
 const TZ = "America/New_York";
 const dateTime = new Intl.DateTimeFormat("en-US", {
@@ -47,11 +47,13 @@ export function kidRecord(data: Pick<KidExport, "skill_state" | "attempts" | "se
     .filter((s) => (s.state.problems ?? 0) > 0)
     .sort((a, b) => newestFirst(a.started_at, b.started_at))
     .map((s): SessionLine => {
-      const minutes = minutesOf(attempts.filter((a) => a.session_id === s.id));
+      const sessionAttempts = attempts.filter((a) => a.session_id === s.id);
+      const minutes = minutesOf(sessionAttempts);
       return {
         when: dateTime.format(new Date(s.started_at)),
         length: minutes === 0 ? "under a minute" : `${minutes} min`,
         problems: `${plural(s.state.problems ?? 0, "problem")}, ${s.state.firstTryCorrect ?? 0} right first time`,
+        helped: sessionAttempts.filter((a) => a.result === "helped").length,
         mastered: (s.state.mastered ?? []).map(nameOf),
       };
     });

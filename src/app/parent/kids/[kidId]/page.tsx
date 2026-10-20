@@ -62,6 +62,7 @@ export default async function KidPage({
               <li key={i}>
                 <b>{s.when}</b>
                 <span className={styles.block}>{`${s.length} · ${s.problems}`}</span>
+                {s.helped > 0 && <span className={styles.block}>{`Asked for help ${s.helped} ${s.helped === 1 ? "time" : "times"}`}</span>}
                 {s.mastered.length > 0 && <span className={styles.block}>{`Mastered: ${s.mastered.join(", ")}`}</span>}
               </li>
             ))}
