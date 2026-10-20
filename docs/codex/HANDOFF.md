@@ -63,6 +63,16 @@ back under the task. The owner (Andrej) has the final say on everything.
   questions". Rule 9. You can't run e2e; Claude runs it.
 - **Acceptance:** `npm run typecheck` clean; `npm test` green with a final count.
 
+
+#### Codex report
+- Files changed: `tests/e2e/grownup-shots.spec.ts` (all existing screens/sizes retained; added 320 px, Mia + Alexandrina list, Counting Cove + Compare Cliffs learned flags, per-screen horizontal overflow / 6 px text-clipping / 44 px control guards); `DESIGN.md` (grown-up tokens and components rewritten as The Logbook; kid-specific design preserved); `docs/codex/HANDOFF.md` (this report).
+- Test results:
+  - `npm run typecheck`: `> tsc --noEmit` — exit 0, no errors.
+  - `npm test`: `Test Files  88 passed (88)`; `Tests  1444 passed (1444)` — exit 0.
+  - `git diff --check`: clean. No db/e2e run; screenshots await Claude's e2e run.
+- Choices I made: kept the existing 20-capital-W stress screenshots and renamed that fixture to Alexandrina only afterward, preserving a two-kid family; added a 320 × 568 size per spec; seeded exact learned rows after the existing session screenshots, with recall due in year 9999; permitted vertical document scrolling while checking text ranges against clipping ancestors with SLACK = 6; checked visually hidden avatar radios through their visible labels. No app code changes, git writes, network or port 3000 access; `.impeccable/config.json` and `.superpowers/` left alone.
+- Open questions: stopped implementation changes on finding an existing guard violation by source inspection: `src/app/parent/consent/ConsentForm.tsx` explicitly sizes the visible consent checkbox to 24 × 24 px. The new ≥44 px input-height guard will fail on the consent screen at every size. Guard retained; app fix is outside T24. Claude needs to resolve this and run e2e to validate the screenshots and remaining guards.
+
 <!-- Template:
 ### T1 — <title>
 - **Branch:** `codex/<slug>`
@@ -106,3 +116,4 @@ back under the task. The owner (Andrej) has the final say on everything.
 | T21 — Pocket Planet: kid-shots, DESIGN.md | `codex/pocket-planet` | (this commit) | 1 fix round: 3 stickers overflowed landscape end card → one-line labels, map frame fits art. Claude fixes: grown-up NovaMark → planet (dead antenna CSS + its assertion removed), phone stickers/week stacked (overlapped). unit 1425, db 136, e2e 66 |
 | T22 — Grown-up Logbook: tokens and pages | `codex/grownup-logbook` | (this commit) | First try. Old colour assertions moved to new tokens (allowed). unit 1436, e2e 66, grown-up shots 4 |
 | T23 — Grown-up Logbook: map, shells, sun dots | `codex/grownup-logbook` | (this commit) | First try. unit 1444, db 136, e2e 66, grown-up shots 4 |
+| T24 — Grown-up Logbook: shots and DESIGN.md | `codex/grownup-logbook` | (this commit) | Stopped at a real find: consent checkbox 24 px. Claude: guard measures a checkbox by its label; label min-height 44. unit 1444, e2e 67 (1 kid-shots flake, passed on rerun + full rerun) |

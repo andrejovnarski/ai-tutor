@@ -14,7 +14,7 @@ export function ConsentForm({ action }: { action: (formData: FormData) => Promis
         window.location.assign(redirectUrl);
       }}
     >
-      <label className={styles.field} style={{ flexDirection: "row", alignItems: "flex-start", fontWeight: 400 }}>
+      <label className={styles.field} style={{ flexDirection: "row", alignItems: "flex-start", fontWeight: 400, minHeight: 44 }}>
         <input style={{ width: 24, height: 24, flex: "none" }} type="checkbox" name="agree" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
         I have read the privacy notice and I am this child&apos;s parent or guardian
       </label>

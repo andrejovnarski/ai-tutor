@@ -1,6 +1,6 @@
 ---
 name: Brightling AI
-description: A patient early-math tutor. Kids explore the Pocket Planet, and grown-ups read a squared exercise book.
+description: A patient early-math tutor. Kids explore the Pocket Planet, and grown-ups read The Logbook.
 colors:
   pp-sky: "#bfe9f5"
   pp-sky-deep: "#7fd3f0"
@@ -13,6 +13,9 @@ colors:
   pp-go: "#ff8a3d"
   pp-sun: "#ffcf3d"
   pp-nova: "#7a6cf0"
+  pp-page: "#eef8fb"
+  pp-quiet: "#3f5a6c"
+  pp-link: "#1f5fa8"
   felt: "#2e6b5e"
   felt-deep: "#23544a"
   chalk: "#f4f7f2"
@@ -78,7 +81,7 @@ rounded:
   pp-control: "22px"
   sticky: "2px"
   cube: "3px"
-  card: "6px"
+  card: "14px"
   input: "8px"
   button: "12px"
   tile: "16px"
@@ -128,32 +131,72 @@ components:
     typography: "{typography.kid-title}"
     rounded: "{rounded.tray-card}"
     padding: "24px 24px 20px"
+  grownup-strip:
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
+    border: "2px solid {colors.pp-ink}"
   grownup-button:
-    backgroundColor: "{colors.felt}"
-    textColor: "{colors.chalk}"
+    backgroundColor: "{colors.pp-go}"
+    textColor: "{colors.pp-ink}"
     typography: "{typography.grownup-body}"
     rounded: "{rounded.button}"
     padding: "8px 20px"
-    height: "44px"
+    minHeight: "44px"
+    border: "2px solid {colors.pp-ink}"
+    boxShadow: "0 3px 0 {colors.pp-ink}"
   grownup-button-danger:
     backgroundColor: "{colors.danger}"
-    textColor: "{colors.chalk}"
+    textColor: "{colors.pp-white}"
     typography: "{typography.grownup-body}"
     rounded: "{rounded.button}"
     padding: "8px 20px"
-    height: "44px"
+    minHeight: "44px"
+    border: "2px solid {colors.danger-deep}"
+    boxShadow: "0 3px 0 {colors.danger-deep}"
   grownup-input:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
     typography: "{typography.grownup-body}"
     rounded: "{rounded.input}"
     padding: "8px 12px"
-    height: "44px"
+    minHeight: "44px"
+    border: "2px solid {colors.pp-ink}"
+  grownup-pin:
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
+    rounded: "{rounded.input}"
+    height: "52px"
+    border: "2px solid {colors.pp-ink}"
   index-card:
-    backgroundColor: "#ffffff"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
     rounded: "{rounded.card}"
-    padding: "12px 16px 12px 26px"
+    padding: "12px 16px"
+    border: "1.5px solid {colors.pp-ink}"
+    boxShadow: "0 3px 0 {colors.pp-ink}"
+  grownup-sticky-note:
+    backgroundColor: "{colors.pp-sun}"
+    textColor: "{colors.pp-ink}"
+    rounded: "{rounded.sticky}"
+    padding: "12px 16px"
+  grownup-info-note:
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
+    rounded: "6px"
+    padding: "10px 14px"
+    borderLeft: "6px solid {colors.pp-link}"
+  grownup-islands-card:
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-ink}"
+    rounded: "{rounded.card}"
+  grownup-shells:
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-sun}"
+  grownup-sun-dots:
+    backgroundColor: "{colors.pp-white}"
+    textColor: "{colors.pp-sun}"
+    rounded: "{rounded.round}"
+    size: "16px"
   island-map:
     backgroundColor: "{colors.pp-sea}"
     textColor: "{colors.pp-ink}"
@@ -186,7 +229,7 @@ components:
 
 The kid side is a bright, sunny little planet of islands in the sea. Nova is a purple planet with a yellow ring. A sandy island holds the maths, white tiles offer answers, and a look-only island chain shows lasting progress. Code chooses every problem; the child never chooses an island. The board remains the most important thing on screen.
 
-The grown-up side still uses the **squared exercise book**: grid paper, index cards with coloured tabs, a sticky note for drafts, and maths cubes. Its palette, typography, spacing and components stay as they are. The planet Nova is intended to be the shared character at 120 px on play, 96 px on sign-in and 32 px in the grown-up strip.
+The grown-up side is **The Logbook**, a calm version of the same world: pale sky pages, a white strip, white cards with thin ink borders and small hard edges, orange buttons, island maps, shells and sun dots. Nova is shared at 120 px on play, 96 px on sign-in and 32 px in the grown-up strip.
 
 Kid controls are chunky: 3 px ink borders, hard bottom edges and tablet targets of at least 88 px. Motion is reserved for Nova during a problem, a short right-answer burst and the end-card map moment. Backgrounds stay still. No glossy candy surfaces, coins, streak flames, confetti storms or loot-box rewards.
 
@@ -212,18 +255,20 @@ These variables live in `src/app/play/tokens.css`; frontmatter `pp-*` names map 
 
 Kid text is always ink on light: contrast on sky 10.2:1, sky-deep 7.9:1, sand 10.4:1, white 13.3:1, go 5.7:1, sun 9.0:1, grass 6.2:1 and sea 5.6:1. No white text and no text directly on `--pp-sea-deep` (3.3:1). Ink outlines on deep sea meet the 3:1 non-text requirement. Counter colours remain for maths; counter red also marks a listening mic, never a wrong answer.
 
-### Exercise-book grown-up tokens
+### The Logbook grown-up tokens
 
-- **Classroom Felt** (`felt`) and **Deep Felt** (`felt-deep`): top strip, main buttons and their solid edges. Chalk on felt is 5.75:1.
-- **Chalk** (`chalk`), **Answer Tray** (`tray`) and **Classroom Ink** (`ink`): the existing light surfaces, strip text and dark reading text.
-- **Counter Yellow** (`counter-yellow`): sticky drafts and selected avatar tiles.
-- **Cube Blue** (`cube-blue`) and **Cube Green** (`cube-green`): maths cubes; green remains hard-coded in `grownup.module.css`.
-- **Counter Red** (`counter-red`): maths counters, never wrong-answer feedback.
-- **Exercise-Book Paper** (`paper`): page ground.
-- **Grid Line** (`grid`): 1 px lines on a 20 px square grid, card borders and dividers.
-- **Quiet Ink** (`ink-quiet`): secondary 15 px text, 6.6:1 on paper.
-- **Link Blue** (`link`): links and 3 px focus rings, 5.4:1 on paper.
-- **Danger Red** (`danger`) / **Danger Edge** (`danger-deep`): final delete actions only.
+Grown-up pages reuse Pocket Planet ink, white, orange go, sun, sea and Nova. Additional tokens live in `src/app/play/tokens.css`:
+
+| Token | Hex | Use / text contrast |
+|---|---|---|
+| `--pp-page` | `#eef8fb` | Pale sky page; ink 12.3:1 |
+| `--pp-quiet` | `#3f5a6c` | Secondary 15 px text; 6.7:1 on page, 7.3:1 on white |
+| `--pp-link` | `#1f5fa8` | Links and focus; 6.0:1 on page, 6.4:1 on white |
+| `--danger` | `#c3332d` | Final delete only; white text 5.5:1 |
+| `--danger-deep` | `#8f2420` | Danger border and hard edge |
+| Record divider | `#cfe3ea` | Record lists and PIN cell dividers |
+
+Legacy felt, paper and grid tokens stay defined for existing art (including stickers); grown-up pages use no felt, squared-paper grid or card side tabs.
 
 ## Typography
 
@@ -237,11 +282,11 @@ Kid text is always ink on light: contrast on sky 10.2:1, sky-deep 7.9:1, sand 10
 - **Kid headline** (700, 40 px, 1.2): "Who's playing?", the end-card title, and the digits on answer tiles and keys.
 - **Kid title** (400, 28 px, 1.25): the problem prompt, Nova's speech bubble, and kid buttons and cards.
 - **Kid body** (400, 22 px, 1.3): notices, "heard" strips, end-card labels. This is the smallest text a child ever has to read.
-- **Grown-up display** (700, 48 px, 1.1): the app name on sign-in and "check your email", in felt green.
+- **Grown-up display** (700, 48 px, 1.1): the app name on sign-in and "check your email", in Pocket Planet ink.
 - **Grown-up headline** (700, 32 px, 1.2): page h1.
 - **Grown-up title** (700, 21 px, 1.3): section h2 and kid names on cards.
 - **Grown-up body** (400 / 700, 17 px, 1.5): all reading text. Lines stay under 65–70 characters.
-- **Grown-up label** (400, 15 px): secondary text in Quiet Ink, strip links, the "+N" after cubes.
+- **Grown-up label** (400, 15 px): secondary text in Quiet Ink, strip links, the "+N" after sun dots.
 
 ### Named Rules
 **The Twenty-Two Floor Rule.** No text a child is meant to read is smaller than 22 px. Kid chrome (the picker level/shell line and quiet grown-up links) may sit at 18 px; instructional text stays at least 22 px. The full map names its current island at 22 px. Long picker names stay within two lines and use ellipsis rather than breaking mid-word.
@@ -260,7 +305,7 @@ Answer tiles share one centred row, at least 88 px on tablets. The number pad ha
 
 **Narrow screens (600 px or less).** Nova shrinks to 72 px and the done link gets its own row. Tiles are at least 72 px tall; number keys at least 64 px, with entry and mic above. End-card buttons stack and the map shrinks first. Picker cards shrink to 156 px with two per row; names and the level/shell line must stay contained. Picker content may scroll vertically.
 
-**Grown-up pages.** One left-aligned column, at most 560 px wide, with a 20 px side gutter, on the grid paper, plus a felt top strip at the same width. It works from 320 px to tablet landscape. Spacing steps are 8, 12, 16, 24, 28 and 48 px. Sections are separated by 28 px, and the page ends with 48 px of space.
+**Grown-up pages.** One left-aligned column, at most 560 px wide, with a 20 px side gutter, on pale sky (`--pp-page`), with a white top strip whose content follows the same column. It works from 320 px to tablet landscape. Spacing steps are 8, 12, 16, 24, 28 and 48 px. Sections are separated by 28 px, and the page ends with 48 px of space.
 
 ### Named Rules
 **The Fill the Board Rule.** A maths picture is cropped to what it draws (plus a 24-unit margin, never shorter than 200 units), so it fills the board instead of shrinking with an empty canvas. It is capped at 960 × 440 px so a big tablet doesn't blow three apples up past hand size.
@@ -271,14 +316,14 @@ Answer tiles share one centred row, at least 88 px on tablets. The number pad ha
 
 Kid depth is a **hard ink edge**: `0 5px 0 var(--pp-ink)`, without blur. Pressing moves the control down the same amount and removes its edge; under reduced motion there is no movement. The sandy board has no inset shadow. No glow or gradients except the sky.
 
-Grown-up surfaces keep their existing physical paper and button treatments.
+Logbook cards and buttons use small hard ink edges without blur.
 
 ### Shadow Vocabulary
 - **Kid edge** (`box-shadow: 0 5px 0 var(--pp-ink)`): white tiles, buttons and cards.
-- **Button edge** (`box-shadow: 0 3px 0 var(--felt-deep)`, or `#8f2420` for danger): grown-up buttons. On `:active` the button moves down 3 px and loses the edge.
-- **Selected edge** (`box-shadow: 0 3px 0 var(--ink)`): the selected avatar tile.
-- **Card lip** (`box-shadow: 0 1px 0 rgba(30, 43, 40, 0.15)`): index cards.
-- **Sticky lift** (`box-shadow: 2px 3px 0 rgba(30, 43, 40, 0.25)`, rotated −1.2°): only the sticky draft note.
+- **Button edge** (`box-shadow: 0 3px 0 var(--pp-ink)`, or `#8f2420` for danger): grown-up buttons. On `:active` the button moves down 3 px and loses the edge.
+- **Selected edge** (`box-shadow: 0 3px 0 var(--pp-ink)`): the selected avatar tile.
+- **Card edge** (`box-shadow: 0 3px 0 var(--pp-ink)`): index cards.
+- **Sticky lift** (`box-shadow: 2px 3px 0 var(--pp-ink)`, rotated −1.2°): only the sticky draft note.
 
 ### Named Rules
 **The Solid Edge Rule.** If something can be pressed, it has a hard, unblurred bottom edge in a deeper shade, and pressing it removes that edge. Never use a blurred drop shadow as an affordance.
@@ -287,9 +332,8 @@ Grown-up surfaces keep their existing physical paper and button treatments.
 
 Shapes are rounded, like the corners of classroom objects, and the radius depends on size and purpose:
 - **Kid surfaces** are generous: the board and cards at 28 px, bubble, kid buttons, tiles and keys at 22 px, the mic a full circle.
-- **Grown-up surfaces** are tighter, like paper goods: buttons 12 px, inputs 8 px, index cards 6 px, cubes 3 px, the sticky note 2 px.
-- **Borders:** 3 px ink on kid tiles, keys, the mic and secondary buttons. 2 px ink on grown-up inputs, avatar tiles and cubes. 4 px Pocket Planet ink frames the sandy board.
-- **The index-card tab:** a 10 px coloured strip down the left edge of every card (`--tab`, felt by default).
+- **Grown-up surfaces** are tighter, like paper goods: cards 14 px, buttons 12 px, inputs 8 px, the sticky note 2 px; sun dots are circles.
+- **Borders:** 3 px ink on kid tiles, keys, the mic and secondary buttons. 2 px ink on grown-up inputs, avatar tiles and sun dots. 4 px Pocket Planet ink frames the sandy board.
 
 ## Components
 
@@ -297,9 +341,9 @@ Shapes are rounded, like the corners of classroom objects, and the radius depend
 Chunky and tactile, like classroom pieces you can press.
 - **Kid primary** ("Play again"): orange go with ink text, a 3 px ink border, 22 px radius, hard ink edge, at least 88 px tall, 0 32 px padding, 28 px Andika.
 - **Kid secondary**: white with ink text and a 3 px ink border, same size.
-- **Grown-up button:** felt with chalk 17 px bold text, 12 px radius, at least 44 px tall, 8 px × 20 px padding, with a 3 px felt-deep drop edge that disappears as the button moves down 3 px when pressed. The press movement is turned off under reduced motion.
-- **Grown-up danger:** the same shape in danger red with a `#8f2420` edge. Only for final, destructive steps.
-- **Link button:** a text-only underlined link in Link Blue, at least 44 px tall.
+- **Grown-up button:** orange go with Pocket Planet ink 17 px bold text and a 2 px ink border, 12 px radius, at least 44 px tall, 8 px × 20 px padding, with a 3 px ink drop edge that disappears as the button moves down 3 px when pressed. The press movement is turned off under reduced motion.
+- **Grown-up danger:** the same shape in danger red with white text and a `#8f2420` border and edge. Only for final, destructive steps.
+- **Link button:** a text-only underlined link in `--pp-link`, at least 44 px tall.
 - **Disabled:** 0.6 opacity on grown-up pages, 0.45 on kid tiles.
 
 ### Answer Tiles and Number Keys
@@ -314,21 +358,22 @@ Chunky and tactile, like classroom pieces you can press.
 - **Thinking:** Pocket Planet sea.
 
 ### Cards / Containers
-- **Index card:** white on paper, 6 px radius, a 1 px grid border, the card lip, 12 px × 16 px padding (26 px on the left, to clear the 10 px coloured tab).
+- **Index card:** white on pale sky, 14 px radius, a 1.5 px ink border, a 3 px hard ink edge and 12 px × 16 px padding. No side tab; the retained `color` prop does not draw one.
 - **Picker kid card:** white, 28 px radius, ink border and hard edge, sky avatar circle, mini map and level/shell line.
 - **End card:** white on sky, 28 px radius, hard ink edge, hero map and 64 px stat numbers.
 - **Speech bubble:** white, 22 px radius, 16 px × 24 px padding, 28 px ink text, with an ink-bordered white tail pointing at Nova. The earlier line is shown at 0.8 em so the new one leads.
-- **Sticky note:** counter yellow, 2 px radius, rotated −1.2°. Only for draft or provisional notices.
-- **Note:** white with a 6 px Link Blue left rule and 6 px radius, for grown-up info callouts.
+- **Sticky note:** Pocket Planet sun with ink text and a small hard ink edge, 2 px radius, rotated −1.2°. Only for draft or provisional notices.
+- **Note:** white with a 6 px `--pp-link` left rule and 6 px radius, for grown-up info callouts.
 
 ### Inputs / Fields
 - **Style:** white, a 2 px ink border, 8 px radius, at least 44 px tall, 17 px text. The label sits above in bold.
-- **Focus:** a 3 px Link Blue outline, offset 2 px. There is no glow or border-colour change.
-- **PIN field:** a 4-cell white box with grid-line dividers and monospace 24 px digits, one per 48 px cell.
-- **Avatar picker:** a 4-column grid of 72 px tiles with a 2 px ink border. When selected, the tile turns counter yellow with an ink drop edge.
+- **Focus:** a 3 px `--pp-link` outline, offset 2 px. There is no glow or border-colour change.
+- **PIN field:** a 52 px tall, 4-cell white box with a 2 px ink border and 8 px radius with `#cfe3ea` dividers and monospace 24 px digits, one per 48 px cell.
+- **Avatar picker:** a 4-column grid of 72 px tiles with a 2 px ink border. When selected, the tile turns Pocket Planet sun with an ink drop edge.
 
 ### Navigation
-- **Grown-up strip:** a felt band with small Nova (32 px), "For grown-ups" in bold Andika, and one chalk back link on the right (15 px, at least 44 px tall). Focus is a chalk outline.
+- **Grown-up strip:** white with a 2 px ink bottom border, small planet Nova (32 px), "For grown-ups" in bold Andika ink, and one ink back link on the right (15 px, at least 44 px tall). Focus is a 3 px `--pp-link` outline.
+- **Bare head:** sign-in and check-your-email use planet Nova at 96 px and "Brightling AI" in 48 px Andika ink. A still `--pp-sea` wave runs along the page bottom.
 - **Kid chrome:** only one quiet link, "Done" on play or "Grown-ups" on the picker. It is Pocket Planet ink at 18 px, underlined, at 0.85 opacity, top right, and never competes with the board.
 
 ### Nova (signature)
@@ -341,13 +386,15 @@ The fixed 400 × 160 SVG shows sand/grass islands with up flags and pale dashed 
 
 At the end-card map moment, new flags rise in sequence (about 250 ms each), then the boat sails (about 600 ms), all within two seconds. It follows the existing rewards drop trigger. Reduced motion shows flags up and boat in place immediately, with no animation.
 
-### Maths Cubes (signature)
-A row of 16 px squares with a 2 px ink border and a 3 px radius, filled cube blue or green for each day or session, with "+N" after them. They are the one bold element on grown-up pages.
+### Grown-up Islands Card and Sun Dots
+The child's first card is "{nickname}'s islands": a full `IslandMap` with animation off and its caption below, from `progress.map`. Hide the card when rewards are off or unavailable. Your kids shows a 200 px mini map per kid, aria-hidden; if progress fails, the kid card still renders without it.
+
+Week summaries and session counts use round 16 px sun dots with 2 px ink borders and 3 px gaps: filled sun, empty white. Keep the existing counts, image labels and "+N" overflow text. The `Cubes` component name and its `color` prop remain for callers; the drawing is sun dots.
 
 ### Shell Rod / Grown-up Rewards Rod
 Kid rewards keep their XP, levels and timing; ten shells replace the cubes visually. Earned shells are filled, and new ones drop into place with the existing reward timing. Under reduced motion they are already in place. The kid rod is labelled "N of 10 shells"; the picker uses a small shell and count instead of a rod. A level-up keeps the full rod above the new one.
 
-The grown-up child page retains ten maths cubes, 16 px each, 2 px ink borders, 3 px radius and 3 px gaps. Earned cubes are cube blue and the rest tray, with the label "N of 10 cubes".
+The grown-up child page uses the small `Rod look="shell"`: ten shells, labelled "N of 10 shells", with the existing level and reward copy.
 
 ### Stickers
 Round tray discs with an ink outline, drawn in the maths-picture family: counters, cubes, ten-frames and number lines for maths stickers, and a cube-blue star for the first game. Counter red and yellow are only for maths stickers. They are 72 px on the end card (at most three, then "+N more") with the label underneath at 22 px, and 36 px on the child page, followed by the label, the reason and the date.
@@ -358,19 +405,20 @@ Seven counters for Sunday to Saturday: 28 px on the end card; none on the picker
 ## Do's and Don'ts
 
 ### Do:
-- **Do** use Pocket Planet `--pp-*` tokens on kid screens; keep exercise-book materials and tokens on grown-up pages.
+- **Do** use Pocket Planet `--pp-*` tokens on kid screens; use The Logbook palette on grown-up pages.
 - **Do** keep kid touch targets at 88 px or more on a tablet (64 px or more on a phone) and grown-up targets at 44 px or more.
 - **Do** crop every new maths picture to its drawing with the `box` prop of `Svg`, so it fills the board.
-- **Do** give anything pressable a hard drop edge in Pocket Planet ink on kid screens and felt-deep or ink on grown-up screens, and remove it on press.
+- **Do** give anything pressable a hard drop edge in Pocket Planet ink on kid screens and Pocket Planet ink on grown-up screens (danger-deep for delete), and remove it on press.
 - **Do** set kid-readable text at 22 px or larger in Andika, and keep grown-up body text at 17 px Atkinson Hyperlegible, with lines under 70 characters.
-- **Do** show focus as a 3 px solid outline: Pocket Planet ink on kid surfaces, chalk on the grown-up strip, Link Blue on paper.
+- **Do** show focus as a 3 px solid outline: Pocket Planet ink on kid surfaces, `--pp-link` on grown-up surfaces.
 - **Do** wrap every animation in a `prefers-reduced-motion` fallback (a still state, not just "no animation" when the state carries meaning).
 - **Do** keep text contrast at 4.5:1 or above. Kid text is always ink on a light ground; no text on `--pp-sea-deep`.
 - **Do** word rewards as what was earned or what comes next ("+75", "Level 2!", "2 more days for your week goal"). Rewards copy never says "lose", "lost", "miss", "break" or "broke", never urges playing more right now, and uses the nickname instead of a gendered pronoun.
 
 ### Don't:
+- **Don't** use felt green, squared-paper grids or index-card side tabs on grown-up pages; shells and sun dots replace the maths-cube signature.
 - **Don't** add a gamey arcade look: no glossy candy colours, coins, streak flames, confetti storms or loot-box style rewards.
-- **Don't** take a reward away or show one shrinking: stickers stay, map flags never come down, levels and shells/cubes only go up, and a quiet week shows empty dots, not a broken streak.
+- **Don't** take a reward away or show one shrinking: stickers stay, map flags never come down, levels and shells only go up, and a quiet week shows empty dots, not a broken streak.
 - **Don't** add cartoon clutter: no extra mascots, background scenes or decorative illustrations next to the board. Nova is the only character.
 - **Don't** use counter red to mark a wrong answer, or use counter colours as decoration.
 - **Don't** use felt on the kid side, white kid text, text on `--pp-sea-deep`, glassmorphism or soft blurred drop shadows as affordances. The sky is the only kid gradient.
