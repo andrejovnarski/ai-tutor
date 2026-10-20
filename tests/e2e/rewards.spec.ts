@@ -14,11 +14,22 @@ async function answerOnce(page: Page) {
   await expect(page.locator("main")).not.toHaveAttribute("data-version", before!);
 }
 
-/** From the picker: plays as Mia, ages the session 25 minutes so it winds down, and answers until the end card shows. */
+/** Seeds Mia just below a cube, plays, ages the session 25 minutes, and answers until the end card shows. */
 async function finishSession(page: Page, parentId: string) {
   const { data: kid } = await admin().from("kids").select("id").eq("parent_id", parentId).single();
   const kidId = kid!.id as string;
   await admin().from("kids").update({ placed: true }).eq("id", kidId);
+  // Two problems with no first-try bonus + finished = 40 XP. Even the next session's
+  // guaranteed finish bonus crosses 50 XP, regardless of which answers are right.
+  // Last week keeps the picker from resuming an end card and leaves this week's day count unchanged.
+  const priorEnd = Date.now() - 7 * 24 * 60 * 60_000;
+  const { error: seedError } = await admin().from("sessions").insert({
+    kid_id: kidId,
+    started_at: new Date(priorEnd - 10 * 60_000).toISOString(),
+    ended_at: new Date(priorEnd).toISOString(),
+    state: { problems: 2, firstTryCorrect: 0, mastered: [], lastActivity: priorEnd },
+  });
+  if (seedError) throw seedError;
   await page.getByRole("link", { name: /Mia/ }).click();
   await expect(page.getByTestId("say")).toBeVisible();
   const { data: open } = await admin().from("sessions").select("id, state").eq("kid_id", kidId).is("ended_at", null).single();
@@ -44,6 +55,7 @@ test("a finished session shows XP, the rod and the week; the picker and the chil
   await expect(strip).toBeVisible();
   await expect(strip.getByText(/^\+\d+$/)).toBeVisible();
   await expect(rodOf(page)).toHaveAttribute("aria-label", /^[1-9]\d* of 10 cubes$/);
+  await expect(rodOf(page).locator("[data-drop=true]").first()).toBeAttached();
   await expect(strip.getByRole("img", { name: /^Played 1 day this week$/ })).toBeVisible();
   expect(await page.getByTestId("end-card").innerText()).not.toMatch(/lose|lost|miss|break|broke/i);
   const shown = await strip.innerText();

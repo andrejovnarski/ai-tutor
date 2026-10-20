@@ -53,9 +53,9 @@ export async function latestEmailLink(email: string): Promise<string> {
   return m[0].replace(/&amp;/g, "&");
 }
 
-/** Polls Mailpit for the newest message to an address. */
+/** Polls Mailpit for the newest message to an address for up to about 15 seconds. */
 export async function latestEmailTo(email: string): Promise<{ Subject: string; Text: string; HTML: string }> {
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 75; i++) {
     const [msg] = await searchTo(email);
     if (msg) return (await fetch(`${MAILPIT}/message/${msg.ID}`)).json();
     await new Promise((r) => setTimeout(r, 200));
