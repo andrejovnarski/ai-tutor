@@ -40,7 +40,39 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-_None — waiting for the next task._
+### T3 — Make two flaky e2e checks deterministic
+- **Branch:** `codex/e2e-flakes` (already checked out, from `main`)
+- **Goal:** full e2e runs stop failing at random. Two causes found by Claude:
+  1. **Mail wait too short.** `latestEmailTo()` in `tests/helpers/admin.ts` polls Mailpit 10 × 200 ms
+     (2 s). Under a full parallel run, sign-in mail arrives later → `Error: no mail for <email>`
+     (seen in kid-shots, screen, speech, play specs).
+  2. **Rewards test relies on luck.** `tests/e2e/rewards.spec.ts` taps the first choice until the end
+     card. XP per session varies (`src/domain/rewards/rules.ts`: 10/problem, +5 first try, +20
+     finished; 1 cube = `XP_PER_CUBE` 50). A short or mostly-wrong session earns < 50 XP → rod reads
+     "0 of 10 cubes" → the test at line 39 fails (`/^[1-9]\d* of 10 cubes$/`) and the reduced-motion test
+     at line 67 finds no `[data-drop=true]`. Repro: `npx playwright test tests/e2e/rewards.spec.ts
+     --repeat-each=6` → 2 of 6 fail. This is a test problem, not a product bug: 0 cubes after < 50 XP is correct.
+- **Context:** XP/cubes come from `src/domain/rewards/progress.ts` (derived from finished sessions —
+  read how before choosing a fix). Test helpers: `tests/e2e/helpers.ts`, `tests/helpers/admin.ts`.
+- **Do:**
+  1. Mail: poll for up to ~15 s total (keep 200 ms steps, or back off). Keep the error message.
+  2. Rewards: make both tests guarantee at least one new cube in the finished session, without
+     depending on which answers are right. Preferred: seed prior progress through the db (e.g. an
+     earlier finished session / XP the code already reads) so the kid sits just below a cube boundary,
+     so the guaranteed +20 "finished" XP always adds a cube. If that isn't possible cleanly, explain and
+     instead make the line-39 assertion derive the expected cube count from the shown "+N" and the
+     prior XP, and the reduced-motion test seed as above.
+  3. You can't run e2e in your sandbox: run `npm run typecheck` (it covers tests/) and `npm test`,
+     and say exactly what Claude should run to check.
+- **Don't:** change product code under `src/`, change timeouts in `playwright.config.ts`, or add retries.
+- **Acceptance (Claude runs):** `npx playwright test tests/e2e/rewards.spec.ts --repeat-each=10` all
+  pass; full `npm run test:e2e` passes with no "no mail for" errors.
+
+#### Codex report
+- Files changed:
+- Test results:
+- Choices I made:
+- Open questions:
 
 <!-- Template:
 ### T1 — <title>
