@@ -23,19 +23,32 @@ export function NumberLine({ v }: { v: Extract<Visual, { kind: "number-line" }> 
   if (j && j.by !== 0) {
     const a = x(j.from);
     const b = x(j.from + j.by);
-    const h = Math.min(100, 40 + Math.abs(b - a) / 3);
-    const peak = LINE_Y - 30 - h;
-    const ctl = LINE_Y - 30 - 2 * h;
-    const dir = b >= a ? 1 : -1;
-    top = peak - 12 - 28;
+    const dx = Math.abs(b - a);
+    // A hop: leaves straight up from the start, lands straight down on the answer's tick.
+    const y0 = LINE_Y - 20; // just clear of a mark's ring and the tick tops
+    const h = Math.min(80, Math.max(34, 20 + dx * 0.3));
+    const k = r1((4 / 3) * h); // cubic handles this tall peak at exactly h
+    const tip = LINE_Y - 18;
+    const head = 22;
+    const wing = Math.min(13, Math.max(9, dx / 3)); // half the arrowhead's width
+    const end = tip - head + 6; // the stroke ends inside the head
+    const hi = Math.min(y0, end) - k; // both handles at one height so the peak sits in the middle
+    const hop = `M ${a} ${y0} C ${a} ${r1(hi)} ${b} ${r1(hi)} ${b} ${end}`;
+    const peak = r1(Math.min(y0, end) - h);
+    const sign = `${j.by > 0 ? "+" : "−"}${Math.abs(j.by)}`;
+    const chipW = r1(sign.length * 15 + 22);
+    const chipH = 36;
+    const chipY = r1(peak - 10 - chipH);
+    top = chipY;
     jump = (
       <g data-jump="true">
-        {/* ink casing so the yellow jump reads on the light sand board */}
-        <path d={`M ${a} ${LINE_Y - 30} Q ${r1((a + b) / 2)} ${ctl} ${b} ${LINE_Y - 30}`} fill="none" stroke="var(--pp-ink)" strokeWidth="9" strokeLinecap="round" />
-        <path d={`M ${a} ${LINE_Y - 30} Q ${r1((a + b) / 2)} ${ctl} ${b} ${LINE_Y - 30}`} fill="none" stroke="var(--counter-yellow)" strokeWidth="5" strokeLinecap="round" />
-        <path d={`M ${b} ${LINE_Y - 22} L ${r1(b - 9 * dir)} ${LINE_Y - 40} L ${r1(b + 1 * dir)} ${LINE_Y - 40} Z`} fill="var(--counter-yellow)" stroke="var(--pp-ink)" strokeWidth="2" strokeLinejoin="round" />
-        <text data-label={`${j.by > 0 ? "+" : "−"}${Math.abs(j.by)}`} x={r1((a + b) / 2)} y={r1(peak - 12)} textAnchor="middle" fontSize="28" fill="var(--pp-ink)">
-          {`${j.by > 0 ? "+" : "−"}${Math.abs(j.by)}`}
+        {/* ink casing so the yellow hop reads on the light sand board */}
+        <path d={hop} fill="none" stroke="var(--pp-ink)" strokeWidth="10" strokeLinecap="round" />
+        <path d={hop} fill="none" stroke="var(--counter-yellow)" strokeWidth="5" strokeLinecap="round" />
+        <path d={`M ${b} ${tip} L ${r1(b - wing)} ${tip - head} L ${r1(b + wing)} ${tip - head} Z`} fill="var(--counter-yellow)" stroke="var(--pp-ink)" strokeWidth="3" strokeLinejoin="round" />
+        <rect x={r1((a + b) / 2 - chipW / 2)} y={chipY} width={chipW} height={chipH} rx="18" fill="var(--pp-white)" stroke="var(--pp-ink)" strokeWidth="3" />
+        <text data-label={sign} x={r1((a + b) / 2)} y={r1(chipY + chipH / 2 + 9)} textAnchor="middle" fontSize="26" fontWeight="700" fill="var(--pp-ink)">
+          {sign}
         </text>
       </g>
     );

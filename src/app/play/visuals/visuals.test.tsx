@@ -199,7 +199,7 @@ describe("number-line", () => {
     expect(describeVisual(v)).not.toContain("47");
     expect(describeVisual(v)).toContain("7");
     expect(count(html, "data-tick")).toBe(21);
-    expect(html).toContain('viewBox="-11 99.2 822 228.8"'); // cropped to the line, its labels and the jump
+    expect(html).toContain('viewBox="-11 110.9 822 217.1"'); // cropped to the line, its labels and the jump
     assertInside(html);
   });
   it("uses a minus sign for backward jumps", () => {
@@ -225,6 +225,27 @@ describe("number-line", () => {
     const d = html.match(/data-jump="true"><path d="([^"]*)"/)![1]!.match(/-?[\d.]+/g)!.map(Number);
     expect(d[0]).toBe(tickX(30));
     expect(d[d.length - 2]).toBe(tickX(60));
+  });
+  it("lands the arrowhead straight down on the answer's tick, above the line", () => {
+    for (const v of [
+      { kind: "number-line", from: 0, to: 10, marks: [6], jump: { from: 6, by: 1 } },
+      { kind: "number-line", from: 0, to: 20, marks: [12], jump: { from: 12, by: -5 } },
+    ] as V[]) {
+      const html = render(v);
+      const j = (v as Extract<V, { kind: "number-line" }>).jump!;
+      const tickX = (n: number) => Number(html.match(new RegExp(`data-tick="${n}" x1="([\\d.]+)"`))![1]);
+      const tickTop = Number(html.match(new RegExp(`data-tick="${j.from + j.by}" x1="[\\d.]+" y1="([\\d.]+)"`))![1]);
+      const paths = [...html.matchAll(/<path d="([^"]*)"/g)].map((m) => m[1]!.match(/-?[\d.]+/g)!.map(Number));
+      const [tx, ty, lx, ly, rx, ry] = paths[2]!; // casing, fill, then the arrowhead
+      expect(tx).toBe(tickX(j.from + j.by));
+      expect(ty).toBeLessThan(tickTop);
+      expect(ly).toBe(ry); // flat base, so the head points straight down
+      expect(ly!).toBeLessThan(ty!);
+      expect((lx! + rx!) / 2).toBeCloseTo(tx!, 5);
+      // the hop's handles sit at one height, so the peak is in the middle
+      expect(paths[0]![3]).toBe(paths[0]![5]);
+      assertInside(html);
+    }
   });
 });
 

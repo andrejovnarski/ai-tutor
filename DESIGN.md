@@ -299,6 +299,8 @@ Legacy felt, paper and grid tokens stay defined for existing art (including stic
 
 Answer tiles share one centred row, at least 88 px on tablets. The number pad has six keys per row. In portrait the entry and mic sit beside the keys. Maths pictures retain their geometry and counter fills, with ink replacing chalk line art.
 
+**Number-line jump.** A counter-yellow hop with an ink casing: it leaves straight up from the start and lands straight down on the answer's tick with a solid yellow arrowhead, ink-outlined, stopping just above the line. Its height grows with the jump's length (34 to 80 units), so a +1 stays a small hop. The amount (+4, −5) sits in a white ink-outlined chip above the peak.
+
 **Picker.** Sky ground with a still sea strip, cheer Nova (120 px) above "Who's playing?". Equal-width white kid cards have an ink edge, avatar in a sky circle, 28 px nickname, a roughly 200 px wide mini island map without text, and one line "Level N · shells K of 10" at least 18 px. No picker week dots. "Grown-ups" stays top right. The empty-state action is white.
 
 **End card.** White on sky: "Great work today!", full-width hero map, progress lines, numbers, rewards and buttons. Play again is orange with ink text; Back to kids is white. The map is absent when rewards are unavailable. Keep the map at least 140 px tall on tablets and 90 px on smaller sizes; the card and all its text must fit. All-islands-done keeps the same layout.
