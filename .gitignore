@@ -9,3 +9,6 @@ playwright-report/
 next-env.d.ts
 *.tsbuildinfo
 scripts/.out/
+
+# brainstorm mockups and plan-run notes (local only)
+.superpowers/
