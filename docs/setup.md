@@ -28,7 +28,7 @@ Pick a US region everywhere (Supabase, Vercel functions, Azure) so data stays in
 ## Hosted Supabase
 
 1. Create a project at supabase.com. Save the database password.
-2. Link and push the schema (every file in `supabase/migrations`, `0001` to `0008`):
+2. Link and push the schema (every file in `supabase/migrations`, `0001` to `0010`):
    ```
    npx supabase link --project-ref <ref>
    npx supabase db push

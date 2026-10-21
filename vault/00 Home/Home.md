@@ -5,7 +5,9 @@ tags: [home]
 
 > An AI tutor that adapts to each child in real time. Private-school quality help for any family.
 
-Status: **Spec approved** (2026-10-09) — implementation plan in progress. Spec: `docs/superpowers/specs/2026-10-08-adaptive-tutor-design.md`
+Status (2026-10-21): **v1 built, learning improvements built — next: playtests with real kids, then a beta pilot with ~10 families.** Brand: Brightling AI. Spec: `docs/superpowers/specs/2026-10-08-adaptive-tutor-design.md`. Feature status: `docs/improvements/learning-experience-roadmap.md`.
+
+Switched off until the owner's to-dos are done: Nova's Claude voice (canned lines for now) and speech (Azure).
 
 ## Map
 - Vision → [[Product Vision]], [[Users]], [[Success Metrics]]

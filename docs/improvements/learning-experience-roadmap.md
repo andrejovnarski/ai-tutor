@@ -2,7 +2,25 @@
 
 Review date: October 19, 2026
 
-This document turns the code review into a practical improvement roadmap. It describes the original findings, why each change matters, the proposed behavior, and how to decide whether the work is complete. Some improvements have since been implemented; the status audit below takes precedence over historical descriptions.
+This document turns the code review into a practical improvement roadmap. It describes the original findings, why each change matters, the proposed behavior, and how to decide whether the work is complete. Some improvements have since been implemented; the status updates below take precedence over historical descriptions.
+
+## Implementation status update — October 21, 2026
+
+This update supersedes the October 19 audit below for the rows it lists. As before, "Implemented" means the code and automated tests are present; no real-child playtest has been observed yet.
+
+| Roadmap item | Status | Evidence and remaining work |
+| --- | --- | --- |
+| §5 Placement by skill branch | Partly addressed | Placement still searches one ordered list, but each probe can now move at most `MAX_STEP = 6` skills (`src/domain/kid/placement.ts`), so a young child no longer jumps to hard sums after two right answers. Simulations are grade-matched. Branch-specific probes are still outstanding. |
+| §7 Child-requested help | Implemented | Help me button on every problem: Help 1 = hint + teaching picture, Help 2 = Nova shows how and the child types the answer. Stored as `helped` (migration `0009_helped_attempts.sql`), scored like a wrong first try with no visible penalty. Spec `docs/superpowers/specs/2026-10-20-help-me-design.md`. Voice "help" is later work. |
+| §8 Interactive math objects | First interaction implemented | Fill the frame on Make 10: tap empty ten-frame cells to add counters, undo, Start over; a helping tool only, tiles still answer. Spec `2026-10-20-fill-the-frame-design.md`. Needs playtesting with 2–3 children before more interactions. |
+| §9 Personal progress journey | Implemented (short form) | End card shows a "Today" line (learned / kept going / practiced) and a "Next time" line. Spec `2026-10-20-progress-lines-design.md`. Open: placement + Help 1 rescue shows "kept going"; "practiced" counts problems served, not answered. The Pocket Planet island map (flags per mastered skill) adds a look-only journey view. |
+| §10 Delayed mastery checks | Implemented | Recall checks at growing gaps of 1, 3, 7, 21 days (a "day" is 20 hours), two problems per recall (migration `0010_recall.sql`). Spec `2026-10-20-recall-checks-design.md`. |
+| §11 Actionable parent reports | Improved | Child page now says `Learned … · not checked yet`, `remembered …`, or `Practicing again`, and session lines count helped problems. Weekly email home tip is still chosen per family. |
+| §12 Observed child pilot | Not done | Owner-run playtests (Milestone B) are next. |
+
+Also built since October 19 (outside the numbered items): rewards (XP, levels, streaks, stickers; `2026-10-19-rewards-design.md`), the Pocket Planet look for kid screens (`2026-10-20-pocket-planet-design.md`) and the matching grown-up Logbook look (`2026-10-21-grownup-logbook-design.md`).
+
+Last full run on `main` (October 21, after the Logbook merge): unit 1,444 passed, database 136, browser 67, typecheck clean. Migrations `0009` and `0010` must be pushed to hosted Supabase before the next deploy.
 
 ## Implementation status audit — October 19, 2026
 
@@ -145,7 +163,7 @@ Do not rely on AI to invent visual quantities or arithmetic. Some templates may 
 
 ## 5. Improvement: place children by skill branch
 
-Status: **Outstanding.**
+Status: **Partly addressed** (step cap, October 20). Branch-specific probes are still outstanding.
 
 ### Current behavior
 
@@ -202,7 +220,7 @@ Initially describe the product around early math foundations and children who ne
 
 ## 7. New feature: child-requested help
 
-Status: **Outstanding.**
+Status: **Implemented** (October 20). See `docs/superpowers/specs/2026-10-20-help-me-design.md`.
 
 ### Purpose
 
@@ -232,7 +250,7 @@ Let children ask for support before submitting an incorrect answer. The current 
 
 ## 8. New feature: interactive math objects
 
-Status: **Outstanding.**
+Status: **First interaction implemented** (Fill the frame on Make 10, October 20). See `docs/superpowers/specs/2026-10-20-fill-the-frame-design.md`.
 
 ### Purpose
 
@@ -259,7 +277,7 @@ Start with one skill and one interaction. Making ten is a useful candidate becau
 
 ## 9. New feature: a personal progress journey
 
-Status: **Outstanding.**
+Status: **Implemented in short form** (Today / Next time lines, October 20). See `docs/superpowers/specs/2026-10-20-progress-lines-design.md`.
 
 ### Purpose
 
@@ -282,7 +300,7 @@ Give children a simple view of what they have learned and what comes next.
 
 ## 10. New feature: delayed mastery checks
 
-Status: **Outstanding.** Existing oldest-first review is present, but the proposed time-based refinement is not.
+Status: **Implemented** (recall checks, October 20). See `docs/superpowers/specs/2026-10-20-recall-checks-design.md`.
 
 ### Current behavior
 
@@ -305,7 +323,7 @@ The engine already reviews mastered skills approximately every fifth problem and
 
 ## 11. Refinement: make existing parent reports more actionable
 
-Status: **Partially covered by existing reports.** See the audit for remaining distinctions and home-tip limitations.
+Status: **Improved** (learned vs remembered, helped counts, October 20). The home tip is still chosen per family; see the October 21 update.
 
 The application already has weekly reporting and parent progress screens. Improve those before adding another dashboard.
 
