@@ -94,6 +94,9 @@ back under the task. The owner (Andrej) has the final say on everything.
 - **Allowed test changes (not weakening):** the `WeekSummary` "Learned: …" assertions become the new count
   wording; `RewardsSection` assertions about one row per sticker become tile + fold assertions with the same
   label/reason/date text; the two e2e locators in step 8.
+  Ruling (Claude, after Codex stop): `kidRecord.test.ts` "is empty for a kid with no data" may become
+  `{ skills: [], sessions: [], flags: [], needsHand: [], islands: <8 islands, all Not started yet> }` — keep the
+  three empty checks and assert the new fields too.
 - **Don't:** change `exportKid`, the download, `skills` ordering, the island map, the weekly email, or any
   kid-side screen. No new dependencies, no client components.
 - **Acceptance:** `npm run typecheck`, `npm test` green. A kid with 33 skill rows, 30 sessions and 20 stickers
