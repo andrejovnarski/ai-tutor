@@ -97,7 +97,7 @@ Each vendor is meant to be under a data processing agreement that forbids traini
    - Is emailing the exact line to the parent appropriate?
    - Do we have any duty beyond telling the parent?
 6. **Weekly report email.** It includes the child's nickname and progress. Is that fine over email?
-7. **Reviewing a child's data.** The child's page shows progress and sessions in plain words, not every stored field. The complete record is the download link on the same page. Is the download enough to meet the parent's right to review what we collected?
+7. **Reviewing a child's data.** The child's page shows progress and sessions in plain words, not every stored field; progress is grouped by topic in folds the parent opens, and only the newest five sessions show until the parent opens the rest. The complete record is the download link on the same page. Is the download enough to meet the parent's right to review what we collected?
 8. **Pilot terms.** Do we need terms of service or a pilot agreement with the families?
 9. **Anything else** we should do before the first family signs up.
 10. **Notice changes and earlier consent.** The 2026-10-19 draft adds one line about rewards (cubes, levels and stickers). They are worked out from answers we already keep, so the change adds no new data and no new vendor. Do families who consented to an earlier version need to consent again? Rewards stay off (`REWARDS` unset) until you answer.

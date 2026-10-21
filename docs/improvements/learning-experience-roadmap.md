@@ -15,12 +15,12 @@ This update supersedes the October 19 audit below for the rows it lists. As befo
 | §8 Interactive math objects | First interaction implemented | Fill the frame on Make 10: tap empty ten-frame cells to add counters, undo, Start over; a helping tool only, tiles still answer. Spec `2026-10-20-fill-the-frame-design.md`. Needs playtesting with 2–3 children before more interactions. |
 | §9 Personal progress journey | Implemented (short form) | End card shows a "Today" line (learned / kept going / practiced) and a "Next time" line. Spec `2026-10-20-progress-lines-design.md`. Open: placement + Help 1 rescue shows "kept going"; "practiced" counts problems served, not answered. The Pocket Planet island map (flags per mastered skill) adds a look-only journey view. |
 | §10 Delayed mastery checks | Implemented | Recall checks at growing gaps of 1, 3, 7, 21 days (a "day" is 20 hours), two problems per recall (migration `0010_recall.sql`). Spec `2026-10-20-recall-checks-design.md`. |
-| §11 Actionable parent reports | Improved | Child page now says `Learned … · not checked yet`, `remembered …`, or `Practicing again`, and session lines count helped problems. Weekly email home tip is still chosen per family. |
+| §11 Actionable parent reports | Improved | Child page now says `Learned … · not checked yet`, `remembered …`, or `Practicing again`, and session lines count helped problems. Since October 22 it stays short: up to 3 "Needs a hand" skills, then one closed fold per island with a one-line summary ("2 of 5 learned · working on …"); newest 5 sessions open, older ones folded; stickers as a tile row with reasons folded (T25). Weekly email home tip is still chosen per family. |
 | §12 Observed child pilot | Not done | Owner-run playtests (Milestone B) are next. |
 
-Also built since October 19 (outside the numbered items): rewards (XP, levels, streaks, stickers; `2026-10-19-rewards-design.md`), the Pocket Planet look for kid screens (`2026-10-20-pocket-planet-design.md`) and the matching grown-up Logbook look (`2026-10-21-grownup-logbook-design.md`).
+Also built since October 19 (outside the numbered items): rewards (XP, levels, streaks, stickers; `2026-10-19-rewards-design.md`), the Pocket Planet look for kid screens (`2026-10-20-pocket-planet-design.md`) and the matching grown-up Logbook look (`2026-10-21-grownup-logbook-design.md`). October 22: the number-line jump is redrawn as a hop that lands straight down on the answer's tick (`DESIGN.md`, "Number-line jump").
 
-Last full run on `main` (October 21, after the Logbook merge): unit 1,444 passed, database 136, browser 67, typecheck clean. Migrations `0009` and `0010` must be pushed to hosted Supabase before the next deploy.
+Last full run on `main` (October 22, after T25): unit 1,460 passed, database 136, browser 67, typecheck clean. Migrations `0009` and `0010` must be pushed to hosted Supabase before the next deploy.
 
 ## Implementation status audit — October 19, 2026
 

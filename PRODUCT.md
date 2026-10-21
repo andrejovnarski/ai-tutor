@@ -28,7 +28,7 @@ Success for v1 is that children **come back 3 or more times a week without being
 ## Operating Context
 
 - Kid flow: "Who's playing?" picker → play screen (problem, SVG maths visual, large tap choices or number pad, mic, Nova's line) → end-of-session summary card. The end card stays for the rest of the day, with "Play again" as an explicit choice.
-- Grown-up flow: sign-in / check your email → privacy notice → consent → parent PIN → your kids → child page (played today, this week, progress, sessions, flagged messages, data download) → account (delete, revoke).
+- Grown-up flow: sign-in / check your email → privacy notice → consent → parent PIN → your kids → child page (played today, this week, rewards, progress by island in folds with "Needs a hand" on top, newest sessions with older ones folded, flagged messages, data download) → account (delete, revoke).
 - Weekly report email every Sunday. A distress email goes out immediately if a child says something on the trigger list; the child hears a fixed line telling them to talk to a grown-up they trust.
 - Two visual worlds are already in use: the kid side is a "felt board", and the grown-up side is an "exercise book" (Plan 6).
 

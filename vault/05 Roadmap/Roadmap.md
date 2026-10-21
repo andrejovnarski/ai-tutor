@@ -4,7 +4,7 @@ status: active
 ---
 # Roadmap
 
-Updated 2026-10-21. Details per feature: `docs/improvements/learning-experience-roadmap.md` and `docs/superpowers/specs/`.
+Updated 2026-10-22. Details per feature: `docs/improvements/learning-experience-roadmap.md` and `docs/superpowers/specs/`.
 
 ```mermaid
 gantt
@@ -28,8 +28,9 @@ gantt
   Placement step cap, Help me, Fill the frame :done, m3, 2026-10-20, 1d
   Progress lines, recall checks :done, m4, 2026-10-20, 1d
   Pocket Planet + grown-up Logbook look :done, m5, 2026-10-21, 1d
+  Number-line hop + compact child page :done, m6, 2026-10-22, 1d
   section Pilot
-  Playtests with real kids  :active, p0, 2026-10-21, 7d
+  Playtests with real kids  :active, p0, 2026-10-22, 7d
   Beta with ~10 families    :p1, after p0, 21d
 ```
 
