@@ -49,4 +49,5 @@ Codex runs sandboxed: it can edit the workspace but can't write `.git` or use th
 - Move the task to the **Done log** (branch, commit range, one-line result); reset Active task
   to "_None_". Commit.
 - Report to the owner in plain words: what changed, test results, choices Codex made, open
-  questions. Ask before merging to `main`; never push (owner pushes from their terminal).
+  questions. Then merge to `main` (fast-forward) without asking, re-run suites, delete the branch
+  and refresh docs; never push (owner pushes from their terminal).

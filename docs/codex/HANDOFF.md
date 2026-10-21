@@ -36,7 +36,7 @@ back under the task. The owner (Andrej) has the final say on everything.
   `echo '<cmd>' | newgrp docker` if Docker is needed), then review.
   Fixes go back to Codex as a new "Fix round" under the same task.
 - Move finished tasks to the Done log with the commit range.
-- Ask the owner before merging to `main` or pushing.
+- Merge to `main` (fast-forward) without asking once review is clean and all suites are green (owner, 2026-10-22). Never push — the owner pushes.
 
 ---
 
