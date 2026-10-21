@@ -42,7 +42,69 @@ back under the task. The owner (Andrej) has the final say on everything.
 
 ## Active task
 
-_None — waiting for the next task._
+### T25 — Child page: Progress by island, folded lists
+- **Branch:** `codex/progress-folds`
+- **Goal:** the parent's child page (`/parent/kids/[kidId]`) stays short however far the kid gets. Progress
+  becomes "Needs a hand" + one folded line per island; stickers become a compact picture row; only the newest
+  5 sessions show open. Owner approved this design in chat on 2026-10-21.
+- **Context:** `src/app/parent/kids/[kidId]/page.tsx`, `src/server/kidRecord.ts` (+ `.test.ts`),
+  `src/app/parent/ui/RewardsSection.tsx` (+ `ui.test.tsx`), `src/app/parent/kids/[kidId]/WeekSummary.tsx`
+  (+ `.test.tsx`), `src/app/parent/ui/grownup.module.css`, island names `ISLAND_NAMES` in
+  `src/domain/rewards/map.ts`, clusters/skills in teaching order `CLUSTERS` in `src/domain/curriculum/index.ts`,
+  `DESIGN.md` (grown-up half). Today every skill, session and sticker is its own two-line row.
+- **Do:**
+  1. `kidRecord.ts`: keep `skills` exactly as it is (existing tests stay). Add to `KidRecord`:
+     - `needsHand: SkillLine[]` — skills that are not mastered now and either have status "Practicing again" or a
+       `tricky` part; newest `last_seen` first; at most 3.
+     - `islands: IslandLine[]`, one per cluster in `CLUSTERS` order:
+       `{ name: string /* ISLAND_NAMES */; summary: string; skills: SkillLine[] /* every skill in the cluster, teaching order */ }`.
+       A skill with no `skill_state` row is `{ name, status: "Not started yet", tricky: null }`. Rows for skill ids
+       not in the curriculum are left out of islands (they stay in `skills`).
+       `summary` ("learned" = mastered now, same `isMastered` rule as `skillLine`; n = skills in the cluster):
+       - all learned → `All ${n} learned ✓`
+       - no skill learned and none with attempts > 0 → `Not started yet`
+       - otherwise → `${k} of ${n} learned`, plus ` · working on ${name}` for the not-mastered skill with
+         attempts > 0 and the newest `last_seen` (omit when there is none).
+  2. Page, Progress section: if `record.skills` is empty keep today's empty message word for word (e2e relies on
+     it). Otherwise: when `needsHand` is non-empty, an `<h3>Needs a hand</h3>` and a `recordList` of those
+     (name, status, "Tricky part: …" as today). Then one native `<details>` per island (closed by default),
+     `<summary>` shows the island name in bold and the summary text; inside, the island's skills as a
+     `recordList` with today's wording. No client JS.
+  3. Sessions: show the newest 5 as today. If there are more, a `<details>` with
+     `<summary>Show ${n} older session(s)</summary>` (1 → "session") holding the rest in the same list format.
+  4. `RewardsSection`: stickers newest first (by `at`). Replace the one-line-per-sticker list with a wrapping
+     `<ul aria-label="Stickers">` of small tiles: `StickerArt` at 36 px with the sticker label under it (short,
+     may wrap, never clipped). Below it, `<details><summary>What each sticker is for</summary>` containing a
+     list with today's text `${label} — ${reason}, ${date}`. Keep level, rod and week-goal lines unchanged.
+  5. `WeekSummary`: replace the `Learned: A, B, C` text with `Learned ${n} new skill(s) this week` (1 → "skill");
+     keep the green cubes.
+  6. CSS (`grownup.module.css`): `summary` is a full-width row, min-height 44 px, with a visible chevron that
+     turns when open, island name and summary may wrap; a focus ring like other grown-up links. Sticker tiles
+     ~88 px wide, centred art, 14–15 px label. Calm Logbook look per `DESIGN.md`; no new colours.
+  7. Tests first: unit tests for `islands` (all learned / partly with working-on / not started / missing rows
+     / unknown skill ids / placed counts as learned / practicing again is not learned) and `needsHand`
+     (filter, order, cap 3); `RewardsSection` (tiles newest first, fold text); `WeekSummary` (count wording);
+     a render test that the page's islands are `<details>` without `open`.
+  8. e2e (you can't run them; Claude will): in `tests/e2e/grownup-shots.spec.ts` add `summary` to the
+     44 px target check selector (`"a, button, input, select, summary"`). Where `getByText(/First game/)` would
+     now match both the tile and the fold text (`grownup-shots.spec.ts`, `rewards.spec.ts`), scope it to the
+     tile list: `page.getByRole("list", { name: "Stickers" }).getByText("First game")`.
+  9. `DESIGN.md` grown-up half: one short paragraph on the child page folds (islands, older sessions, sticker
+     reasons) and the sticker tile row.
+- **Allowed test changes (not weakening):** the `WeekSummary` "Learned: …" assertions become the new count
+  wording; `RewardsSection` assertions about one row per sticker become tile + fold assertions with the same
+  label/reason/date text; the two e2e locators in step 8.
+- **Don't:** change `exportKid`, the download, `skills` ordering, the island map, the weekly email, or any
+  kid-side screen. No new dependencies, no client components.
+- **Acceptance:** `npm run typecheck`, `npm test` green. A kid with 33 skill rows, 30 sessions and 20 stickers
+  renders Progress as ≤ 3 needs-a-hand rows + 8 closed island lines, 5 open sessions + one fold, one sticker
+  tile row + one fold.
+
+#### Codex report
+- Files changed:
+- Test results:
+- Choices I made:
+- Open questions:
 
 <!-- Template:
 ### T1 — <title>
