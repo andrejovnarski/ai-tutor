@@ -70,7 +70,7 @@ for (const size of SIZES) {
         expect.soft(text.x, `${size.name} ${screen} "${text.text}" clips horizontally`).toBeLessThanOrEqual(SLACK);
         expect.soft(text.y, `${size.name} ${screen} "${text.text}" clips vertically`).toBeLessThanOrEqual(SLACK);
       }
-      for (const control of await page.locator("a, button, input, select").all()) {
+      for (const control of await page.locator("a, button, input, select, summary").all()) {
         if (!(await control.isVisible())) continue;
         // Visually hidden avatar radios, and checkboxes, use their wrapping label as the tap target.
         const target = await control.evaluate(el => {
@@ -159,7 +159,7 @@ for (const size of SIZES) {
     await page.getByRole("link", { name: /Mia/ }).first().click();
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Mia");
     await expect(page.getByRole("heading", { name: "Rewards" })).toBeVisible();
-    await expect(page.getByText(/First game/)).toBeVisible();
+    await expect(page.getByRole("list", { name: "Stickers" }).getByText("First game")).toBeVisible();
     await shot("12-mia-progress-and-sessions");
 
     await page.goto("/parent");

@@ -309,6 +309,8 @@ Answer tiles share one centred row, at least 88 px on tablets. The number pad ha
 
 **Grown-up pages.** One left-aligned column, at most 560 px wide, with a 20 px side gutter, on pale sky (`--pp-page`), with a white top strip whose content follows the same column. It works from 320 px to tablet landscape. Spacing steps are 8, 12, 16, 24, 28 and 48 px. Sections are separated by 28 px, and the page ends with 48 px of space.
 
+The child page keeps progress in closed native folds, one per island, below at most three “Needs a hand” skills. Only the newest five sessions stay open; older sessions and sticker reasons each have their own fold. Stickers form a compact wrapping row of 88 px tiles with centred 36 px art and readable 15 px labels. Fold summaries span the column, have a 44 px minimum target, a turning chevron and the shared link focus ring.
+
 ### Named Rules
 **The Fill the Board Rule.** A maths picture is cropped to what it draws (plus a 24-unit margin, never shorter than 200 units), so it fills the board instead of shrinking with an empty canvas. It is capped at 960 × 440 px so a big tablet doesn't blow three apples up past hand size.
 

@@ -251,6 +251,39 @@
 .dataLinks a.dangerLink { color: var(--danger); }
 
 .rewardLine { display: flex; align-items: center; gap: 12px; margin: 0 0 8px; }
-.stickerRow { display: flex; align-items: center; gap: 12px; }
+/* Native folds keep the child record compact without client scripting. */
+.fold { border-bottom: 1px solid #cfe3ea; }
+.fold > summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 0 8px 24px;
+  list-style: none;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: calc(50% - 4px);
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--pp-ink);
+  border-bottom: 2px solid var(--pp-ink);
+  transform: rotate(-45deg);
+}
+.fold[open] > summary::before { transform: rotate(45deg); }
+.fold > summary > * { min-width: 0; max-width: 100%; }
+.col h3 { font-family: var(--font-andika), sans-serif; font-size: 17px; margin: 12px 0 4px; }
+.stickerTiles { display: flex; flex-wrap: wrap; gap: 12px; list-style: none; margin: 0 0 12px; padding: 0; }
+.stickerTiles li { width: 88px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; font-size: 15px; overflow-wrap: anywhere; }
+.stickerTiles svg { flex: none; }
 
 .kidMap { display: block; width: 200px; max-width: 100%; margin: 12px auto 0; }

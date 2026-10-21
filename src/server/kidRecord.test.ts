@@ -1,3 +1,5 @@
+import { CLUSTERS } from "../domain/curriculum";
+import { ISLAND_NAMES } from "../domain/rewards/map";
 import { describe, it, expect, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -133,7 +135,7 @@ describe("kidRecord flagged messages", () => {
 
 describe("kidRecord", () => {
   it("is empty for a kid with no data", () => {
-    expect(kidRecord(empty)).toEqual({ skills: [], sessions: [], flags: [] });
+    expect(kidRecord(empty)).toEqual({ skills: [], sessions: [], flags: [], needsHand: [], islands: CLUSTERS.map(c => ({ name: ISLAND_NAMES[c.id], summary: "Not started yet", skills: c.skills.map(s => ({ name: s.name, status: "Not started yet", tricky: null })) })) });
   });
 
   it("never carries ids, seeds or other internal fields into what the page shows", () => {
@@ -167,5 +169,76 @@ describe("recall skill status", () => {
     expect(status({ ...row, p_known: 0.4, attempts: 2 })).toBe("Practicing again");
     expect(status({ ...row, p_known: 0.98, attempts: 8 })).toBe("Knew at start · not checked yet");
     expect(status({ ...row, p_known: 0.98, attempts: 8, remembered_at: "2026-10-20T02:00:00Z" })).toBe("Knew at start · remembered Oct 19");
+  });
+});
+
+
+describe("island progress", () => {
+  const cluster = CLUSTERS[0]!;
+  const rows = () => cluster.skills.map(s => skill({ skill_id: s.id, p_known: 0.98, attempts: 5 }));
+  it("lists every island and missing skill in teaching order, excluding unknown ids", () => {
+    const record = kidRecord({ ...empty, skill_state: [skill({ skill_id: "retired.skill" })] });
+    expect(record.islands).toEqual(CLUSTERS.map(c => ({ name: ISLAND_NAMES[c.id], summary: "Not started yet", skills: c.skills.map(s => ({ name: s.name, status: "Not started yet", tricky: null })) })));
+    expect(record.skills[0]!.name).toBe("retired.skill");
+  });
+  it("counts all currently learned skills, including placement without attempts", () => {
+    const all = rows();
+    all[0] = skill({ skill_id: cluster.skills[0]!.id, placed: true, attempts: 0, p_known: 0.98 });
+    expect(kidRecord({ ...empty, skill_state: all }).islands[0]!.summary).toBe(`All ${all.length} learned ✓`);
+  });
+  it("counts partial mastery and chooses the newest attempted unmastered skill", () => {
+    const all = rows();
+    all[0] = skill({ skill_id: cluster.skills[0]!.id, mastered_at: "2026-10-01", last_seen: "2026-10-20" });
+    all[1] = skill({ skill_id: cluster.skills[1]!.id, last_seen: "2026-10-19" });
+    const island = kidRecord({ ...empty, skill_state: all }).islands[0]!;
+    expect(island.summary).toBe(`${all.length - 2} of ${all.length} learned · working on ${cluster.skills[0]!.name}`);
+    expect(island.skills[0]!.status).toBe("Practicing again");
+  });
+  it("omits working-on when only placement and missing rows exist", () => {
+    expect(kidRecord({ ...empty, skill_state: [skill({ skill_id: cluster.skills[0]!.id, placed: true, attempts: 0, p_known: 0.98 })] }).islands[0]!.summary).toBe(`1 of ${cluster.skills.length} learned`);
+  });
+  it("says zero learned for attempted skills and not started for zero attempts", () => {
+    expect(kidRecord({ ...empty, skill_state: [skill({ skill_id: cluster.skills[0]!.id })] }).islands[0]!.summary).toBe(`0 of ${cluster.skills.length} learned · working on ${cluster.skills[0]!.name}`);
+    expect(kidRecord({ ...empty, skill_state: [skill({ skill_id: cluster.skills[0]!.id, attempts: 0 })] }).islands[0]!.summary).toBe("Not started yet");
+  });
+  it("filters needs-hand, orders newest first and caps at three", () => {
+    const states = [
+      skill({ skill_id: "old", recent_tags: ["off-by-ten"], last_seen: null }),
+      skill({ skill_id: "again", mastered_at: "2026-10-01", last_seen: "2026-10-21" }),
+      skill({ skill_id: "tricky", recent_tags: ["off-by-ten"], last_seen: "2026-10-20" }),
+      skill({ skill_id: "third", recent_tags: ["off-by-ten"], last_seen: "2026-10-19" }),
+      skill({ skill_id: "plain", last_seen: "2026-10-22" }),
+      skill({ skill_id: "learned", p_known: 0.98, attempts: 5, recent_tags: ["off-by-ten"], last_seen: "2026-10-23" }),
+    ];
+    expect(kidRecord({ ...empty, skill_state: states }).needsHand.map(s => s.name)).toEqual(["again", "tricky", "third"]);
+    expect(kidRecord({ ...empty, skill_state: states.slice(4) }).needsHand).toEqual([]);
+  });
+});
+
+describe("island current-skill fallback", () => {
+  const cluster = CLUSTERS[2]!;
+  const current = cluster.skills[0]!;
+  it("uses the current skill when it has no row, without changing stored skills", () => {
+    const record = kidRecord(empty, current.name);
+    expect(record.islands[2]!.summary).toBe(`0 of ${cluster.skills.length} learned · working on ${current.name}`);
+    expect(record.islands[2]!.skills[0]).toEqual({ name: current.name, status: "Working on it", tricky: null });
+    expect(record.islands[2]!.skills.slice(1).every(s => s.status === "Not started yet")).toBe(true);
+    expect(record.islands.filter((_, i) => i !== 2)).toEqual(kidRecord(empty).islands.filter((_, i) => i !== 2));
+    expect(record.skills).toEqual([]);
+    expect(record.needsHand).toEqual([]);
+  });
+  it("keeps the row rule when the current skill has a row", () => {
+    const data = { ...empty, skill_state: [skill({ skill_id: current.id, last_seen: "2026-10-19" }), skill({ skill_id: cluster.skills[1]!.id, last_seen: "2026-10-20" })] };
+    expect(kidRecord(data, current.name)).toEqual(kidRecord(data));
+    expect(kidRecord(data, current.name).islands[2]!.skills[0]!.status).toBe("Learning, level 2");
+  });
+  it("prefers an attempted row over the current skill with no row", () => {
+    const data = { ...empty, skill_state: [skill({ skill_id: cluster.skills[1]!.id })] };
+    const island = kidRecord(data, current.name).islands[2]!;
+    expect(island.summary).toBe(`0 of ${cluster.skills.length} learned · working on ${cluster.skills[1]!.name}`);
+    expect(island.skills[0]!.status).toBe("Working on it");
+  });
+  it.each([null, "Unknown skill"])("leaves everything unchanged for %s", currentSkill => {
+    expect(kidRecord(empty, currentSkill)).toEqual(kidRecord(empty));
   });
 });

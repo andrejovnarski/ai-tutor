@@ -104,10 +104,29 @@ back under the task. The owner (Andrej) has the final say on everything.
   tile row + one fold.
 
 #### Codex report
-- Files changed:
-- Test results:
-- Choices I made:
-- Open questions:
+- Files changed: `src/server/kidRecord.ts`, `src/server/kidRecord.test.ts`; `src/app/parent/kids/[kidId]/page.tsx`, `page.test.tsx`, `WeekSummary.tsx`, `WeekSummary.test.tsx`; `src/app/parent/ui/RewardsSection.tsx`, `ui.test.tsx`, `grownup.module.css`; `tests/e2e/grownup-shots.spec.ts`, `tests/e2e/rewards.spec.ts`; `DESIGN.md`; `docs/codex/HANDOFF.md`.
+- Test results: Tests written first; targeted run initially failed as expected. `npm run typecheck` → `tsc --noEmit` (exit 0). `npm test` → `Test Files 88 passed (88)`; `Tests 1454 passed (1454)`. `git diff --check` clean. Database/e2e suites not run, as instructed; e2e selectors updated for Claude's run.
+- Choices I made: Shared server-only list helpers preserve existing skill/session wording. All folds use native details, closed by default; sticker tiles wrap with full labels. Used the recorded ruling for the empty-record assertion; retained all existing page tests. Changes left uncommitted.
+- Open questions: None.
+
+#### Fix round 1 (Claude review)
+Claude already changed `tests/e2e/recall.spec.ts` (opens the island fold before reading the skill row); leave it.
+1. **"Working on" contradicts the island line.** On a fresh kid the week summary says "Working on **Add with
+   pictures**" while the island line says "Adding Island — Not started yet" (the current skill has no
+   `skill_state` row yet). Fix: `kidRecord(data, currentSkill?: string | null)` takes the week's current skill
+   name (the page passes `week?.currentSkill ?? null`). In the island that contains a skill with that name:
+   - when the row-based rule found no working skill, use it: `${k} of ${n} learned · working on ${name}`
+     (so "Not started yet" never shows for the island the kid is working on);
+   - inside the fold that skill's status, when it has no row, is `Working on it` instead of `Not started yet`.
+   Unit tests first: island with the current skill and no row; current skill with a row (row rule wins, as now);
+   `currentSkill` null/unknown changes nothing.
+
+
+#### Fix round 1 report
+- Files changed: `src/server/kidRecord.ts`, `kidRecord.test.ts`; child page `page.tsx`, `page.test.tsx`; `docs/codex/HANDOFF.md`. Added the current-skill fallback and `Working on it` for missing rows; stored-row working skills take precedence.
+- Test results: Tests first (3 expected failures). `npm run typecheck` → `tsc --noEmit` (exit 0). `npm test` → `Test Files 88 passed (88)`; `Tests 1460 passed (1460)`. `git diff --check` clean. Database/e2e suites not run as instructed.
+- Choices I made: Passed `week?.week.currentSkill ?? null`, matching the existing `kidWeek` result shape. Claude's `tests/e2e/recall.spec.ts` is unchanged (SHA-256 verified). Changes left uncommitted.
+- Open questions: None.
 
 <!-- Template:
 ### T1 — <title>

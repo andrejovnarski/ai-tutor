@@ -34,7 +34,7 @@ export function WeekSummary({
       </p>
       {week.mastered.length > 0 && (
         <p className={styles.weekRow}>
-          <span className={styles.block}>{`Learned: ${week.mastered.join(", ")}`}</span>
+          <span className={styles.block}>{`Learned ${week.mastered.length} new ${week.mastered.length === 1 ? "skill" : "skills"} this week`}</span>
           <Cubes
             filled={week.mastered.length}
             total={week.mastered.length}

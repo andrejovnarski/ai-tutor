@@ -22,7 +22,7 @@ export function RewardsSection({ nickname, progress }: { nickname: string; progr
   const stickers = progress.stickers.flatMap((e) => {
     const s = stickerById(e.id);
     return s ? [{ ...e, sticker: s }] : [];
-  });
+  }).sort((a, b) => b.at - a.at);
   const n = progress.weekStreak;
   return (
     <section className={styles.section}>
@@ -35,14 +35,24 @@ export function RewardsSection({ nickname, progress }: { nickname: string; progr
       {stickers.length === 0 ? (
         <p className={styles.quiet}>{`No stickers yet. They show up as ${nickname} plays.`}</p>
       ) : (
-        <ul className={styles.recordList}>
-          {stickers.map(({ id, at, sticker }) => (
-            <li key={id} className={styles.stickerRow}>
-              <StickerArt art={sticker.art} size={36} />
-              <span>{`${sticker.label} — ${stickerReason(sticker)}, ${monthDay.format(new Date(at))}`}</span>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul aria-label="Stickers" className={styles.stickerTiles}>
+            {stickers.map(({ id, sticker }) => (
+              <li key={id}>
+                <StickerArt art={sticker.art} size={36} />
+                <span>{sticker.label}</span>
+              </li>
+            ))}
+          </ul>
+          <details className={styles.fold}>
+            <summary>What each sticker is for</summary>
+            <ul className={styles.recordList}>
+              {stickers.map(({ id, at, sticker }) => (
+                <li key={id}>{`${sticker.label} — ${stickerReason(sticker)}, ${monthDay.format(new Date(at))}`}</li>
+              ))}
+            </ul>
+          </details>
+        </>
       )}
     </section>
   );

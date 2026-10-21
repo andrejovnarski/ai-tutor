@@ -73,7 +73,7 @@ test("a finished session shows XP, the rod and the week; the picker and the chil
   await page.goto("/parent");
   await page.getByRole("link", { name: /Mia/ }).first().click();
   await expect(page.getByRole("heading", { name: "Rewards" })).toBeVisible();
-  await expect(page.getByText(/First game/)).toBeVisible();
+  await expect(page.getByRole("list", { name: "Stickers" }).getByText("First game")).toBeVisible();
 });
 
 test("with reduced motion the rod's new cubes are already in place, with no animation running", async ({ page }) => {

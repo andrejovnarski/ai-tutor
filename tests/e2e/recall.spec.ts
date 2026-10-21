@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { SKILLS } from "../../src/domain/curriculum/index";
+import { CLUSTERS, SKILLS } from "../../src/domain/curriculum/index";
+import { ISLAND_NAMES } from "../../src/domain/rewards/map";
 import { admin } from "../helpers/admin";
 import { setUpMia } from "./helpers";
 
@@ -57,6 +58,9 @@ test("a due skill gets two correct recall answers and the parent page says remem
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/parent");
   await page.getByRole("link", { name: /Mia/ }).first().click();
+  // Skills sit in closed island folds; open the target's island first.
+  const island = ISLAND_NAMES[CLUSTERS.find((c) => c.skills.some((s) => s.id === target.id))!.id]!;
+  await page.locator("summary", { hasText: island }).click();
   const skillRow = page.getByRole("listitem").filter({ has: page.getByText(target.name, { exact: true }) });
   await expect(skillRow).toContainText("remembered");
 });

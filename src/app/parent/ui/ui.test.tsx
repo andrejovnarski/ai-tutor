@@ -66,7 +66,12 @@ describe("RewardsSection", () => {
     expect(html).toContain("Week goal met 4 weeks in a row");
     expect(html).toContain("first finished game, Oct 5");
     expect(html).toContain("week goal met 4 times, Oct 17");
-    expect(html.match(/<li /g)).toHaveLength(2);
+    const tiles = html.match(/<ul[^>]*aria-label="Stickers"[^>]*>(.*?)<\/ul>/s)![1]!;
+    expect(tiles.match(/<li\b/g)).toHaveLength(2);
+    expect(tiles.indexOf("4 great weeks")).toBeLessThan(tiles.indexOf("First game"));
+    expect(tiles).toContain('width="36"');
+    expect(html).toMatch(/<details[^>]*><summary>What each sticker is for<\/summary>/);
+    expect(html).toContain("First game — first finished game, Oct 5");
   });
   it("says 1 time, not 1 times", () => {
     const html = renderToStaticMarkup(<RewardsSection nickname="Mia" progress={prog({ stickers: [{ id: "weeks:1", at: Date.UTC(2026, 9, 5, 15) }] })} />);

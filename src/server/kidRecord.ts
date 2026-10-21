@@ -1,7 +1,8 @@
 import "server-only";
 import { isMastered } from "../domain/kid/bkt";
 import type { SkillState } from "../domain/kid/types";
-import { getSkill } from "../domain/curriculum";
+import { ISLAND_NAMES } from "../domain/rewards/map";
+import { CLUSTERS, getSkill } from "../domain/curriculum";
 import type { MistakeTag } from "../domain/types";
 import type { KidExport } from "./rights";
 import { minutesOf } from "./report/collect";
@@ -13,7 +14,8 @@ import { TAG_LABEL } from "./report/tips";
 export type SkillLine = { name: string; status: string; tricky: string | null };
 export type SessionLine = { when: string; length: string; problems: string; helped: number; mastered: string[] };
 export type FlagLine = { when: string; line: string; emailed: string };
-export type KidRecord = { skills: SkillLine[]; sessions: SessionLine[]; flags: FlagLine[] };
+export type IslandLine = { name: string; summary: string; skills: SkillLine[] };
+export type KidRecord = { skills: SkillLine[]; needsHand: SkillLine[]; islands: IslandLine[]; sessions: SessionLine[]; flags: FlagLine[] };
 
 type SkillStateRow = {
   skill_id: string; attempts: number; level: number; last_seen: string | null;
@@ -33,8 +35,10 @@ const nameOf = (id: string) => { try { return getSkill(id).name; } catch { retur
 const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
 const newestFirst = (a: string | null, b: string | null) => (b ? Date.parse(b) : 0) - (a ? Date.parse(a) : 0);
 
+const masteredNow = (r: SkillStateRow) => isMastered({ pKnown: r.p_known, attempts: r.attempts, placed: r.placed } as SkillState);
+
 function skillLine(r: SkillStateRow): SkillLine {
-  const mastered = isMastered({ pKnown: r.p_known, attempts: r.attempts, placed: r.placed } as SkillState);
+  const mastered = masteredNow(r);
   if (mastered) {
     const learned = r.placed ? "Knew at start" : r.mastered_at ? `Learned ${monthDay.format(new Date(r.mastered_at))}` : "Learned";
     const recall = r.remembered_at ? `remembered ${monthDay.format(new Date(r.remembered_at))}` : "not checked yet";
@@ -48,7 +52,7 @@ function skillLine(r: SkillStateRow): SkillLine {
   };
 }
 
-export function kidRecord(data: Pick<KidExport, "skill_state" | "attempts" | "sessions" | "distress_flags">): KidRecord {
+export function kidRecord(data: Pick<KidExport, "skill_state" | "attempts" | "sessions" | "distress_flags">, currentSkill?: string | null): KidRecord {
   const skillRows = data.skill_state as SkillStateRow[];
   const attempts = data.attempts as AttemptRow[];
   const sessions = (data.sessions as SessionRow[])
@@ -72,7 +76,34 @@ export function kidRecord(data: Pick<KidExport, "skill_state" | "attempts" | "se
       line: f.line,
       emailed: f.emailed_at ? `We emailed you on ${monthDay.format(new Date(f.emailed_at))}` : "Not emailed yet",
     }));
+  const byId = new Map(skillRows.map(r => [r.skill_id, r]));
+  const islands = CLUSTERS.map((cluster): IslandLine => {
+    const rows = cluster.skills.flatMap(s => {
+      const row = byId.get(s.id);
+      return row ? [row] : [];
+    });
+    const learned = rows.filter(masteredNow).length;
+    const working = rows.filter(r => !masteredNow(r) && r.attempts > 0)
+      .sort((a, b) => newestFirst(a.last_seen, b.last_seen))[0];
+    const workingName = working ? nameOf(working.skill_id) : cluster.skills.find(s => s.name === currentSkill)?.name;
+    const n = cluster.skills.length;
+    const summary = learned === n ? `All ${n} learned ✓`
+      : learned === 0 && !rows.some(r => r.attempts > 0) && !workingName ? "Not started yet"
+      : `${learned} of ${n} learned${workingName ? ` · working on ${workingName}` : ""}`;
+    return {
+      name: ISLAND_NAMES[cluster.id]!, summary,
+      skills: cluster.skills.map(s => {
+        const row = byId.get(s.id);
+        return row ? skillLine(row) : { name: s.name, status: s.name === currentSkill ? "Working on it" : "Not started yet", tricky: null };
+      }),
+    };
+  });
+  const needsHand = [...skillRows].sort((a, b) => newestFirst(a.last_seen, b.last_seen))
+    .filter(r => !masteredNow(r)).map(skillLine)
+    .filter(s => s.status === "Practicing again" || s.tricky !== null).slice(0, 3);
   return {
+    needsHand,
+    islands,
     skills: [...skillRows].sort((a, b) => newestFirst(a.last_seen, b.last_seen)).map(skillLine),
     sessions,
     flags,

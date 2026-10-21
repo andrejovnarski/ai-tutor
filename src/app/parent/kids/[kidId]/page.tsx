@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requireParent } from "@/server/parentGate";
 import { kidWeek } from "@/server/parentSummary";
 import { kidProgress } from "@/server/rewards";
-import { kidRecord } from "@/server/kidRecord";
+import { kidRecord, type SkillLine, type SessionLine } from "@/server/kidRecord";
 import { exportKid } from "@/server/rights";
 import { faceOf } from "../../../avatars";
 import { gradeName } from "../../../grades";
@@ -27,7 +27,7 @@ export default async function KidPage({
   if (!data) notFound();
   const { kid } = data;
   const [week, progress] = await Promise.all([kidWeek(supabase, kidId, new Date()), kidProgress(supabase, kidId, Date.now())]);
-  const record = kidRecord(data);
+  const record = kidRecord(data, week?.week.currentSkill ?? null);
   return (
     <GrownupFrame back={{ href: "/parent", label: "Your kids" }}>
       <h1>
@@ -43,15 +43,20 @@ export default async function KidPage({
         {record.skills.length === 0 ? (
           <p className={styles.quiet}>{`Nothing yet. Skills show up here once ${kid.nickname} has played a little more.`}</p>
         ) : (
-          <ul className={styles.recordList}>
-            {record.skills.map((s) => (
-              <li key={s.name}>
-                <b>{s.name}</b>
-                <span className={styles.block}>{s.status}</span>
-                {s.tricky && <span className={`${styles.block} ${styles.quiet}`}>{`Tricky part: ${s.tricky}`}</span>}
-              </li>
+          <>
+            {record.needsHand.length > 0 && (
+              <>
+                <h3>Needs a hand</h3>
+                <SkillList skills={record.needsHand} />
+              </>
+            )}
+            {record.islands.map(island => (
+              <details key={island.name} className={styles.fold}>
+                <summary><b>{island.name}</b><span className={styles.quiet}>{island.summary}</span></summary>
+                <SkillList skills={island.skills} />
+              </details>
             ))}
-          </ul>
+          </>
         )}
       </section>
       <section className={styles.section}>
@@ -59,16 +64,15 @@ export default async function KidPage({
         {record.sessions.length === 0 ? (
           <p className={styles.quiet}>No sessions yet.</p>
         ) : (
-          <ul className={styles.recordList}>
-            {record.sessions.map((s, i) => (
-              <li key={i}>
-                <b>{s.when}</b>
-                <span className={styles.block}>{`${s.length} · ${s.problems}`}</span>
-                {s.helped > 0 && <span className={styles.block}>{`Asked for help ${s.helped} ${s.helped === 1 ? "time" : "times"}`}</span>}
-                {s.mastered.length > 0 && <span className={styles.block}>{`Learned: ${s.mastered.join(", ")}`}</span>}
-              </li>
-            ))}
-          </ul>
+          <>
+            <SessionList sessions={record.sessions.slice(0, 5)} />
+            {record.sessions.length > 5 && (
+              <details className={styles.fold}>
+                <summary>{`Show ${record.sessions.length - 5} older ${record.sessions.length === 6 ? "session" : "sessions"}`}</summary>
+                <SessionList sessions={record.sessions.slice(5)} />
+              </details>
+            )}
+          </>
         )}
       </section>
       {record.flags.length > 0 && (
@@ -108,5 +112,34 @@ export default async function KidPage({
         </form>
       </section>
     </GrownupFrame>
+  );
+}
+
+function SkillList({ skills }: { skills: SkillLine[] }) {
+  return (
+    <ul className={styles.recordList}>
+      {skills.map(s => (
+        <li key={s.name}>
+          <b>{s.name}</b>
+          <span className={styles.block}>{s.status}</span>
+          {s.tricky && <span className={`${styles.block} ${styles.quiet}`}>{`Tricky part: ${s.tricky}`}</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SessionList({ sessions }: { sessions: SessionLine[] }) {
+  return (
+    <ul className={styles.recordList}>
+      {sessions.map((s, i) => (
+        <li key={i}>
+          <b>{s.when}</b>
+          <span className={styles.block}>{`${s.length} · ${s.problems}`}</span>
+          {s.helped > 0 && <span className={styles.block}>{`Asked for help ${s.helped} ${s.helped === 1 ? "time" : "times"}`}</span>}
+          {s.mastered.length > 0 && <span className={styles.block}>{`Learned: ${s.mastered.join(", ")}`}</span>}
+        </li>
+      ))}
+    </ul>
   );
 }
